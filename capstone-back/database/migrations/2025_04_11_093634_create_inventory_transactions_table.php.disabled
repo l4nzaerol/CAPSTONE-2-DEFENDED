@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('inventory_transactions', function (Blueprint $table) {
+            $table->id('transaction_id');
+            $table->unsignedBigInteger('material_id');
+            $table->enum('transaction_type', ['PURCHASE', 'CONSUMPTION', 'ADJUSTMENT', 'RETURN', 'PRODUCTION_OUTPUT', 'DAILY_OUTPUT']);
+            $table->decimal('quantity', 10, 2);
+            $table->string('reference')->nullable();
+            $table->timestamp('timestamp')->useCurrent();
+            $table->text('remarks')->nullable();
+            $table->json('metadata')->nullable(); // For storing additional data like alkansya output details
+            $table->timestamps();
+            
+            $table->foreign('material_id')->references('material_id')->on('materials')->onDelete('cascade');
+            
+            $table->index(['material_id', 'transaction_type']);
+            $table->index(['timestamp']);
+            $table->index(['reference']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('inventory_transactions');
+    }
+};

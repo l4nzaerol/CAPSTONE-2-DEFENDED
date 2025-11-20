@@ -1,0 +1,84 @@
+/* Order Table Mobile Responsive Styles */
+
+.order-container {
+  max-width: 100%;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .order-container {
+    padding: 0.5rem;
+  }
+  
+  /* Status Tracker - Stack on mobile */
+  .status-tracker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  /* Make status icons smaller on mobile */
+  .status-tracker small {
+    font-size: 0.7rem;
+  }
+  
+  /* Make order cards responsive */
+  .order-card {
+    margin-bottom: 1rem;
+  }
+  
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  /* Adjust badge sizing on mobile */
+  .order-header .badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Make order details stack properly */
+  .order-card .text-muted small {
+    font-size: 0.75rem;
+  }
+  
+  /* Improve spacing for order items */
+  .order-card .d-flex {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-container {
+    padding: 0.25rem;
+  }
+  
+  /* Even smaller status text on very small screens */
+  .status-tracker small {
+    font-size: 0.65rem;
+  }
+  
+  /* Compact card padding */
+  .order-card .card-body {
+    padding: 1rem 0.75rem;
+  }
+  
+  /* Make badges even smaller */
+  .order-header .badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+/* Prevent text wrapping issues */
+.text-nowrap {
+  white-space: nowrap;
+}
+
+/* Ensure flex wrapping works properly */
+.d-flex.flex-wrap {
+  flex-wrap: wrap;
+}
+

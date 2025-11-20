@@ -1,0 +1,155 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('inventory_transactions', function (Blueprint $table) {
+            // Add new transaction types
+            $table->enum('transaction_type', [
+                'PURCHASE', 
+                'CONSUMPTION', 
+                'ADJUSTMENT', 
+                'RETURN', 
+                'PRODUCTION_OUTPUT', 
+                'DAILY_OUTPUT',
+                'ORDER_ACCEPTANCE',      // When order is accepted and materials are deducted
+                'ORDER_FULFILLMENT',     // When order is completed and products are delivered
+                'PRODUCTION_COMPLETION', // When production is completed
+                'ALKANSYA_CONSUMPTION',  // When alkansya materials are consumed
+                'STOCK_TRANSFER',        // When materials are transferred between locations
+                'DEFECT_RETURN',         // When defective products are returned to inventory
+                'SALES_RETURN'           // When sold products are returned
+            ])->change();
+
+            // Add order reference (check if it doesn't exist)
+            if (!Schema::hasColumn('inventory_transactions', 'order_id')) {
+                $table->unsignedBigInteger('order_id')->nullable()->after('material_id');
+                $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            }
+
+            // Add production reference
+            if (!Schema::hasColumn('inventory_transactions', 'production_id')) {
+                $table->unsignedBigInteger('production_id')->nullable()->after('order_id');
+                $table->foreign('production_id')->references('id')->on('productions')->onDelete('cascade');
+            }
+
+            // Add user reference (who performed the transaction)
+            if (!Schema::hasColumn('inventory_transactions', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->after('production_id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            }
+
+            // Add location reference (optional - locations table may not exist)
+            if (!Schema::hasColumn('inventory_transactions', 'location_id')) {
+                $table->unsignedBigInteger('location_id')->nullable()->after('user_id');
+                // Note: Foreign key constraint removed as locations table may not exist
+            }
+
+            // Add cost tracking
+            if (!Schema::hasColumn('inventory_transactions', 'unit_cost')) {
+                $table->decimal('unit_cost', 10, 2)->nullable()->after('quantity');
+            }
+            if (!Schema::hasColumn('inventory_transactions', 'total_cost')) {
+                $table->decimal('total_cost', 12, 2)->nullable()->after('unit_cost');
+            }
+
+            // Add batch/lot tracking
+            if (!Schema::hasColumn('inventory_transactions', 'batch_number')) {
+                $table->string('batch_number')->nullable()->after('total_cost');
+            }
+            if (!Schema::hasColumn('inventory_transactions', 'expiry_date')) {
+                $table->date('expiry_date')->nullable()->after('batch_number');
+            }
+
+            // Add status tracking
+            if (!Schema::hasColumn('inventory_transactions', 'status')) {
+                $table->enum('status', ['pending', 'completed', 'cancelled', 'reversed'])->default('completed')->after('expiry_date');
+            }
+
+            // Add priority for transaction processing
+            if (!Schema::hasColumn('inventory_transactions', 'priority')) {
+                $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal')->after('status');
+            }
+
+            // Add additional metadata fields
+            if (!Schema::hasColumn('inventory_transactions', 'source_data')) {
+                $table->json('source_data')->nullable()->after('metadata'); // Original data that triggered this transaction
+            }
+            if (!Schema::hasColumn('inventory_transactions', 'cost_breakdown')) {
+                $table->json('cost_breakdown')->nullable()->after('source_data'); // Detailed cost breakdown
+            }
+            if (!Schema::hasColumn('inventory_transactions', 'quality_metrics')) {
+                $table->json('quality_metrics')->nullable()->after('cost_breakdown'); // Quality metrics if applicable
+            }
+
+            // Add indexes for better performance
+            $table->index(['order_id', 'transaction_type']);
+            $table->index(['production_id', 'transaction_type']);
+            $table->index(['user_id', 'timestamp']);
+            $table->index(['location_id', 'timestamp']);
+            $table->index(['status', 'timestamp']);
+            $table->index(['priority', 'timestamp']);
+            $table->index(['batch_number']);
+            $table->index(['expiry_date']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('inventory_transactions', function (Blueprint $table) {
+            // Drop foreign keys
+            $table->dropForeign(['order_id']);
+            $table->dropForeign(['production_id']);
+            $table->dropForeign(['user_id']);
+            // Note: location_id foreign key was not created
+
+            // Drop indexes
+            $table->dropIndex(['order_id', 'transaction_type']);
+            $table->dropIndex(['production_id', 'transaction_type']);
+            $table->dropIndex(['user_id', 'timestamp']);
+            $table->dropIndex(['location_id', 'timestamp']);
+            $table->dropIndex(['status', 'timestamp']);
+            $table->dropIndex(['priority', 'timestamp']);
+            $table->dropIndex(['batch_number']);
+            $table->dropIndex(['expiry_date']);
+
+            // Drop columns
+            $table->dropColumn([
+                'order_id',
+                'production_id', 
+                'user_id',
+                'location_id',
+                'unit_cost',
+                'total_cost',
+                'batch_number',
+                'expiry_date',
+                'status',
+                'priority',
+                'source_data',
+                'cost_breakdown',
+                'quality_metrics'
+            ]);
+
+            // Revert transaction_type to original values
+            $table->enum('transaction_type', [
+                'PURCHASE', 
+                'CONSUMPTION', 
+                'ADJUSTMENT', 
+                'RETURN', 
+                'PRODUCTION_OUTPUT', 
+                'DAILY_OUTPUT'
+            ])->change();
+        });
+    }
+};

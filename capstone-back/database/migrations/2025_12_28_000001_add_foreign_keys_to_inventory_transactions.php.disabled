@@ -1,0 +1,96 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('inventory_transactions', function (Blueprint $table) {
+            // Add foreign key constraints only for tables that exist
+            if (Schema::hasTable('raw_materials')) {
+                try {
+                    $table->foreign('material_id')->references('material_id')->on('raw_materials')->onDelete('cascade');
+                } catch (Exception $e) {
+                    // Foreign key might already exist, ignore error
+                }
+            }
+            
+            if (Schema::hasTable('products')) {
+                try {
+                    $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+                } catch (Exception $e) {
+                    // Foreign key might already exist, ignore error
+                }
+            }
+            
+            if (Schema::hasTable('orders')) {
+                try {
+                    $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+                } catch (Exception $e) {
+                    // Foreign key might already exist, ignore error
+                }
+            }
+            
+            if (Schema::hasTable('productions')) {
+                try {
+                    $table->foreign('production_id')->references('id')->on('productions')->onDelete('cascade');
+                } catch (Exception $e) {
+                    // Foreign key might already exist, ignore error
+                }
+            }
+            
+            if (Schema::hasTable('users')) {
+                try {
+                    $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+                } catch (Exception $e) {
+                    // Foreign key might already exist, ignore error
+                }
+            }
+            
+            // Add indexes for better performance
+            $table->index(['material_id', 'transaction_type']);
+            $table->index(['product_id', 'transaction_type']);
+            $table->index(['order_id', 'transaction_type']);
+            $table->index(['production_id', 'transaction_type']);
+            $table->index(['user_id', 'timestamp']);
+            $table->index(['location_id', 'timestamp']);
+            $table->index(['status', 'timestamp']);
+            $table->index(['priority', 'timestamp']);
+            $table->index(['batch_number']);
+            $table->index(['expiry_date']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('inventory_transactions', function (Blueprint $table) {
+            // Drop foreign keys
+            $table->dropForeign(['material_id']);
+            $table->dropForeign(['product_id']);
+            $table->dropForeign(['order_id']);
+            $table->dropForeign(['production_id']);
+            $table->dropForeign(['user_id']);
+            
+            // Drop indexes
+            $table->dropIndex(['material_id', 'transaction_type']);
+            $table->dropIndex(['product_id', 'transaction_type']);
+            $table->dropIndex(['order_id', 'transaction_type']);
+            $table->dropIndex(['production_id', 'transaction_type']);
+            $table->dropIndex(['user_id', 'timestamp']);
+            $table->dropIndex(['location_id', 'timestamp']);
+            $table->dropIndex(['status', 'timestamp']);
+            $table->dropIndex(['priority', 'timestamp']);
+            $table->dropIndex(['batch_number']);
+            $table->dropIndex(['expiry_date']);
+        });
+    }
+};

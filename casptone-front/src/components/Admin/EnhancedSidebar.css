@@ -1,0 +1,424 @@
+/* Enhanced Sidebar Styling - Brown & White Theme */
+
+/* Root Variables for Consistent Color Scheme */
+:root {
+  --primary-brown: #8B4513;
+  --secondary-brown: #A0522D;
+  --accent-brown: #D2691E;
+  --light-brown: #F4E4BC;
+  --dark-brown: #2C1810;
+  --wood-grain: #8B4513;
+  --gold-accent: #FFD700;
+  --cream: #FFF8DC;
+  --text-dark: #2C1810;
+  --text-light: #8B4513;
+  --shadow-soft: rgba(139, 69, 19, 0.1);
+  --shadow-medium: rgba(139, 69, 19, 0.2);
+  --shadow-strong: rgba(139, 69, 19, 0.3);
+}
+
+/* Sidebar Container */
+.enhanced-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--primary-brown) 0%, var(--secondary-brown) 50%, var(--accent-brown) 100%);
+  border-right: 2px solid var(--light-brown);
+  box-shadow: 8px 0 32px var(--shadow-strong), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Brand Section */
+.sidebar-brand {
+  padding: 2rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border-bottom: 2px solid var(--light-brown);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-brand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.sidebar-brand:hover::before {
+  left: 100%;
+}
+
+.sidebar-brand:hover {
+  transform: scale(1.02);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+.brand-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cream);
+  position: relative;
+  z-index: 1;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.brand-icon {
+  color: var(--gold-accent);
+  transition: all 0.3s ease;
+}
+
+.sidebar-brand:hover .brand-icon {
+  transform: rotate(5deg) scale(1.1);
+  color: var(--gold-accent);
+}
+
+/* Navigation Section */
+.sidebar-nav {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  background: transparent;
+  color: var(--cream);
+  border: none;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.nav-item:hover::before {
+  left: 100%;
+}
+
+.nav-item:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  transform: translateX(8px);
+  color: var(--cream);
+  border-left: 3px solid var(--gold-accent);
+  box-shadow: 0 4px 20px var(--shadow-medium);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+  color: var(--gold-accent);
+  border-left: 3px solid var(--gold-accent);
+  box-shadow: 0 4px 20px var(--shadow-strong);
+}
+
+.nav-icon {
+  transition: all 0.3s ease;
+  color: var(--cream);
+}
+
+.nav-item:hover .nav-icon {
+  color: var(--gold-accent);
+  transform: scale(1.1);
+}
+
+.nav-item.active .nav-icon {
+  color: var(--gold-accent);
+}
+
+/* Logout Section */
+.sidebar-logout {
+  margin: 1.5rem;
+}
+
+.logout-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--dark-brown) 0%, #3D2817 100%);
+  color: var(--cream);
+  border: 2px solid var(--light-brown);
+  padding: 1rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 0.3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px var(--shadow-strong);
+}
+
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.logout-btn:hover::before {
+  left: 100%;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-strong);
+  background: linear-gradient(135deg, var(--primary-brown) 0%, var(--dark-brown) 100%);
+  border-color: var(--gold-accent);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .enhanced-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-brand {
+    padding: 1.5rem 1rem;
+  }
+  
+  .brand-content {
+    font-size: 1.5rem;
+  }
+  
+  .nav-item {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .logout-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .enhanced-sidebar {
+    width: 240px;
+  }
+  
+  .sidebar-brand {
+    padding: 1.25rem 0.875rem;
+  }
+  
+  .brand-content {
+    font-size: 1.4rem;
+  }
+  
+  .nav-item {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.85rem;
+  }
+  
+  .logout-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Enhanced Hover Effects */
+.nav-item-group {
+  position: relative;
+}
+
+.nav-item-group::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.nav-item-group:hover::after {
+  opacity: 1;
+}
+
+/* Status Indicators */
+.nav-item.has-notification::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--gold-accent);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--gold-accent);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Loading State */
+.sidebar-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Additional Brown Theme Enhancements */
+.enhanced-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="woodPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="%238B4513" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23woodPattern)"/></svg>') repeat;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Wood grain texture overlay */
+.sidebar-brand::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.1) 50%, transparent 51%);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Simple and clean navigation items */
+.nav-item {
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.nav-item:hover {
+  border-radius: 12px;
+}
+
+.nav-item.active {
+  border-radius: 12px;
+}
+
+/* Subtle wood texture for active items */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 50%, transparent 52%);
+  border-radius: 12px;
+  pointer-events: none;
+}
+

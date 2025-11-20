@@ -1,0 +1,1748 @@
+{
+  "provinces": [
+    { "id": "metro-manila", "name": "Metro Manila", "region": "NCR", "functional": true },
+    { "id": "abra", "name": "Abra", "region": "CAR", "functional": false },
+    { "id": "apayao", "name": "Apayao", "region": "CAR", "functional": false },
+    { "id": "benguet", "name": "Benguet", "region": "CAR", "functional": false },
+    { "id": "ifugao", "name": "Ifugao", "region": "CAR", "functional": false },
+    { "id": "kalinga", "name": "Kalinga", "region": "CAR", "functional": false },
+    { "id": "mountain-province", "name": "Mountain Province", "region": "CAR", "functional": false },
+    { "id": "ilocos-norte", "name": "Ilocos Norte", "region": "Region I", "functional": false },
+    { "id": "ilocos-sur", "name": "Ilocos Sur", "region": "Region I", "functional": false },
+    { "id": "la-union", "name": "La Union", "region": "Region I", "functional": false },
+    { "id": "pangasinan", "name": "Pangasinan", "region": "Region I", "functional": false },
+    { "id": "batanes", "name": "Batanes", "region": "Region II", "functional": false },
+    { "id": "cagayan", "name": "Cagayan", "region": "Region II", "functional": false },
+    { "id": "isabela", "name": "Isabela", "region": "Region II", "functional": false },
+    { "id": "nueva-vizcaya", "name": "Nueva Vizcaya", "region": "Region II", "functional": false },
+    { "id": "quirino", "name": "Quirino", "region": "Region II", "functional": false },
+    { "id": "aurora", "name": "Aurora", "region": "Region III", "functional": true },
+    { "id": "bataan", "name": "Bataan", "region": "Region III", "functional": true },
+    { "id": "bulacan", "name": "Bulacan", "region": "Region III", "functional": true },
+    { "id": "nueva-ecija", "name": "Nueva Ecija", "region": "Region III", "functional": true },
+    { "id": "pampanga", "name": "Pampanga", "region": "Region III", "functional": true },
+    { "id": "tarlac", "name": "Tarlac", "region": "Region III", "functional": true },
+    { "id": "zambales", "name": "Zambales", "region": "Region III", "functional": true },
+    { "id": "batangas", "name": "Batangas", "region": "Region IV-A", "functional": true },
+    { "id": "cavite", "name": "Cavite", "region": "Region IV-A", "functional": true },
+    { "id": "laguna", "name": "Laguna", "region": "Region IV-A", "functional": true },
+    { "id": "quezon", "name": "Quezon", "region": "Region IV-A", "functional": true },
+    { "id": "rizal", "name": "Rizal", "region": "Region IV-A", "functional": true },
+    { "id": "marinduque", "name": "Marinduque", "region": "Region IV-B", "functional": false },
+    { "id": "occidental-mindoro", "name": "Occidental Mindoro", "region": "Region IV-B", "functional": false },
+    { "id": "oriental-mindoro", "name": "Oriental Mindoro", "region": "Region IV-B", "functional": false },
+    { "id": "palawan", "name": "Palawan", "region": "Region IV-B", "functional": false },
+    { "id": "romblon", "name": "Romblon", "region": "Region IV-B", "functional": false },
+    { "id": "albay", "name": "Albay", "region": "Region V", "functional": false },
+    { "id": "camarines-norte", "name": "Camarines Norte", "region": "Region V", "functional": false },
+    { "id": "camarines-sur", "name": "Camarines Sur", "region": "Region V", "functional": false },
+    { "id": "catanduanes", "name": "Catanduanes", "region": "Region V", "functional": false },
+    { "id": "masbate", "name": "Masbate", "region": "Region V", "functional": false },
+    { "id": "sorsogon", "name": "Sorsogon", "region": "Region V", "functional": false },
+    { "id": "aklan", "name": "Aklan", "region": "Region VI", "functional": false },
+    { "id": "antique", "name": "Antique", "region": "Region VI", "functional": false },
+    { "id": "capiz", "name": "Capiz", "region": "Region VI", "functional": false },
+    { "id": "guimaras", "name": "Guimaras", "region": "Region VI", "functional": false },
+    { "id": "iloilo", "name": "Iloilo", "region": "Region VI", "functional": false },
+    { "id": "negros-occidental", "name": "Negros Occidental", "region": "Region VI", "functional": false },
+    { "id": "bohol", "name": "Bohol", "region": "Region VII", "functional": false },
+    { "id": "cebu", "name": "Cebu", "region": "Region VII", "functional": false },
+    { "id": "negros-oriental", "name": "Negros Oriental", "region": "Region VII", "functional": false },
+    { "id": "siquijor", "name": "Siquijor", "region": "Region VII", "functional": false },
+    { "id": "biliran", "name": "Biliran", "region": "Region VIII", "functional": false },
+    { "id": "eastern-samar", "name": "Eastern Samar", "region": "Region VIII", "functional": false },
+    { "id": "leyte", "name": "Leyte", "region": "Region VIII", "functional": false },
+    { "id": "northern-samar", "name": "Northern Samar", "region": "Region VIII", "functional": false },
+    { "id": "samar", "name": "Samar", "region": "Region VIII", "functional": false },
+    { "id": "southern-leyte", "name": "Southern Leyte", "region": "Region VIII", "functional": false },
+    { "id": "zamboanga-del-norte", "name": "Zamboanga del Norte", "region": "Region IX", "functional": false },
+    { "id": "zamboanga-del-sur", "name": "Zamboanga del Sur", "region": "Region IX", "functional": false },
+    { "id": "zamboanga-sibugay", "name": "Zamboanga Sibugay", "region": "Region IX", "functional": false },
+    { "id": "bukidnon", "name": "Bukidnon", "region": "Region X", "functional": false },
+    { "id": "camiguin", "name": "Camiguin", "region": "Region X", "functional": false },
+    { "id": "lanao-del-norte", "name": "Lanao del Norte", "region": "Region X", "functional": false },
+    { "id": "misamis-occidental", "name": "Misamis Occidental", "region": "Region X", "functional": false },
+    { "id": "misamis-oriental", "name": "Misamis Oriental", "region": "Region X", "functional": false },
+    { "id": "compostela-valley", "name": "Compostela Valley", "region": "Region XI", "functional": false },
+    { "id": "davao-del-norte", "name": "Davao del Norte", "region": "Region XI", "functional": false },
+    { "id": "davao-del-sur", "name": "Davao del Sur", "region": "Region XI", "functional": false },
+    { "id": "davao-oriental", "name": "Davao Oriental", "region": "Region XI", "functional": false },
+    { "id": "davao-occidental", "name": "Davao Occidental", "region": "Region XI", "functional": false },
+    { "id": "davao-de-oro", "name": "Davao de Oro", "region": "Region XI", "functional": false },
+    { "id": "north-cotabato", "name": "North Cotabato", "region": "Region XII", "functional": false },
+    { "id": "south-cotabato", "name": "South Cotabato", "region": "Region XII", "functional": false },
+    { "id": "sultan-kudarat", "name": "Sultan Kudarat", "region": "Region XII", "functional": false },
+    { "id": "sarangani", "name": "Sarangani", "region": "Region XII", "functional": false },
+    { "id": "agusan-del-norte", "name": "Agusan del Norte", "region": "Region XIII", "functional": false },
+    { "id": "agusan-del-sur", "name": "Agusan del Sur", "region": "Region XIII", "functional": false },
+    { "id": "surigao-del-norte", "name": "Surigao del Norte", "region": "Region XIII", "functional": false },
+    { "id": "surigao-del-sur", "name": "Surigao del Sur", "region": "Region XIII", "functional": false },
+    { "id": "dinagat-islands", "name": "Dinagat Islands", "region": "Region XIII", "functional": false },
+    { "id": "basilan", "name": "Basilan", "region": "BARMM", "functional": false },
+    { "id": "lanao-del-sur", "name": "Lanao del Sur", "region": "BARMM", "functional": false },
+    { "id": "maguindanao", "name": "Maguindanao", "region": "BARMM", "functional": false },
+    { "id": "sulu", "name": "Sulu", "region": "BARMM", "functional": false },
+    { "id": "tawi-tawi", "name": "Tawi-Tawi", "region": "BARMM", "functional": false }
+  ],
+  "cities": {
+    "metro-manila": [
+      { "id": "caloocan", "name": "Caloocan" },
+      { "id": "las-pinas", "name": "Las Piñas" },
+      { "id": "makati", "name": "Makati" },
+      { "id": "malabon", "name": "Malabon" },
+      { "id": "mandaluyong", "name": "Mandaluyong" },
+      { "id": "manila", "name": "Manila" },
+      { "id": "marikina", "name": "Marikina" },
+      { "id": "muntinlupa", "name": "Muntinlupa" },
+      { "id": "navotas", "name": "Navotas" },
+      { "id": "paranaque", "name": "Parañaque" },
+      { "id": "pasay", "name": "Pasay" },
+      { "id": "pasig", "name": "Pasig" },
+      { "id": "pateros", "name": "Pateros" },
+      { "id": "quezon-city", "name": "Quezon City" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "taguig", "name": "Taguig" },
+      { "id": "valenzuela", "name": "Valenzuela" }
+    ],
+    "laguna": [
+      { "id": "alaminos", "name": "Alaminos" },
+      { "id": "bay", "name": "Bay" },
+      { "id": "biñan", "name": "Biñan" },
+      { "id": "cabuyao", "name": "Cabuyao" },
+      { "id": "calamba", "name": "Calamba" },
+      { "id": "calauan", "name": "Calauan" },
+      { "id": "cavinti", "name": "Cavinti" },
+      { "id": "famy", "name": "Famy" },
+      { "id": "kalayaan", "name": "Kalayaan" },
+      { "id": "liliw", "name": "Liliw" },
+      { "id": "los-banos", "name": "Los Baños" },
+      { "id": "luisiana", "name": "Luisiana" },
+      { "id": "lumban", "name": "Lumban" },
+      { "id": "mabitac", "name": "Mabitac" },
+      { "id": "magdalena", "name": "Magdalena" },
+      { "id": "majayjay", "name": "Majayjay" },
+      { "id": "nagcarlan", "name": "Nagcarlan" },
+      { "id": "paete", "name": "Paete" },
+      { "id": "pagsanjan", "name": "Pagsanjan" },
+      { "id": "pakil", "name": "Pakil" },
+      { "id": "panukulan", "name": "Panukulan" },
+      { "id": "pila", "name": "Pila" },
+      { "id": "rizal", "name": "Rizal" },
+      { "id": "san-pablo", "name": "San Pablo" },
+      { "id": "san-pedro", "name": "San Pedro" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "santa-maria", "name": "Santa Maria" },
+      { "id": "santa-rosa", "name": "Santa Rosa" },
+      { "id": "siniloan", "name": "Siniloan" },
+      { "id": "victoria", "name": "Victoria" }
+    ],
+    "cavite": [
+      { "id": "alfonso", "name": "Alfonso" },
+      { "id": "amadeo", "name": "Amadeo" },
+      { "id": "bacoor", "name": "Bacoor" },
+      { "id": "carmona", "name": "Carmona" },
+      { "id": "cavite-city", "name": "Cavite City" },
+      { "id": "dasmarinas", "name": "Dasmariñas" },
+      { "id": "general-emilio-aguinaldo", "name": "General Emilio Aguinaldo" },
+      { "id": "general-mariano-alvarez", "name": "General Mariano Alvarez" },
+      { "id": "general-trias", "name": "General Trias" },
+      { "id": "imus", "name": "Imus" },
+      { "id": "indang", "name": "Indang" },
+      { "id": "kawit", "name": "Kawit" },
+      { "id": "magallanes", "name": "Magallanes" },
+      { "id": "maragondon", "name": "Maragondon" },
+      { "id": "mendez", "name": "Mendez" },
+      { "id": "naic", "name": "Naic" },
+      { "id": "noveleta", "name": "Noveleta" },
+      { "id": "rosario", "name": "Rosario" },
+      { "id": "silang", "name": "Silang" },
+      { "id": "tagaytay", "name": "Tagaytay" },
+      { "id": "tanza", "name": "Tanza" },
+      { "id": "ternate", "name": "Ternate" },
+      { "id": "trece-martires", "name": "Trece Martires" }
+    ],
+    "rizal": [
+      { "id": "angono", "name": "Angono" },
+      { "id": "antipolo", "name": "Antipolo" },
+      { "id": "baras", "name": "Baras" },
+      { "id": "binangonan", "name": "Binangonan" },
+      { "id": "cainta", "name": "Cainta" },
+      { "id": "cardona", "name": "Cardona" },
+      { "id": "jalajala", "name": "Jalajala" },
+      { "id": "morong", "name": "Morong" },
+      { "id": "pililla", "name": "Pililla" },
+      { "id": "rodriguez", "name": "Rodriguez" },
+      { "id": "san-mateo", "name": "San Mateo" },
+      { "id": "tanay", "name": "Tanay" },
+      { "id": "taytay", "name": "Taytay" },
+      { "id": "teresa", "name": "Teresa" }
+    ],
+    "bulacan": [
+      { "id": "angat", "name": "Angat" },
+      { "id": "balagtas", "name": "Balagtas" },
+      { "id": "baliuag", "name": "Baliuag" },
+      { "id": "bocaue", "name": "Bocaue" },
+      { "id": "bulakan", "name": "Bulakan" },
+      { "id": "bustos", "name": "Bustos" },
+      { "id": "calumpit", "name": "Calumpit" },
+      { "id": "doña-remedios-trinidad", "name": "Doña Remedios Trinidad" },
+      { "id": "guiguinto", "name": "Guiguinto" },
+      { "id": "hagonoy", "name": "Hagonoy" },
+      { "id": "malolos", "name": "Malolos" },
+      { "id": "marilao", "name": "Marilao" },
+      { "id": "meycauayan", "name": "Meycauayan" },
+      { "id": "norzagaray", "name": "Norzagaray" },
+      { "id": "obando", "name": "Obando" },
+      { "id": "pandi", "name": "Pandi" },
+      { "id": "paombong", "name": "Paombong" },
+      { "id": "plaridel", "name": "Plaridel" },
+      { "id": "pulilan", "name": "Pulilan" },
+      { "id": "san-ildefonso", "name": "San Ildefonso" },
+      { "id": "san-jose-del-monte", "name": "San Jose del Monte" },
+      { "id": "san-miguel", "name": "San Miguel" },
+      { "id": "san-rafael", "name": "San Rafael" },
+      { "id": "santa-maria", "name": "Santa Maria" }
+    ],
+    "pampanga": [
+      { "id": "angeles", "name": "Angeles" },
+      { "id": "apalit", "name": "Apalit" },
+      { "id": "arayat", "name": "Arayat" },
+      { "id": "bacolor", "name": "Bacolor" },
+      { "id": "candaba", "name": "Candaba" },
+      { "id": "floridablanca", "name": "Floridablanca" },
+      { "id": "guagua", "name": "Guagua" },
+      { "id": "lubao", "name": "Lubao" },
+      { "id": "mabalacat", "name": "Mabalacat" },
+      { "id": "macabebe", "name": "Macabebe" },
+      { "id": "magalang", "name": "Magalang" },
+      { "id": "masantol", "name": "Masantol" },
+      { "id": "mexico", "name": "Mexico" },
+      { "id": "minalin", "name": "Minalin" },
+      { "id": "porac", "name": "Porac" },
+      { "id": "san-fernando", "name": "San Fernando" },
+      { "id": "san-luis", "name": "San Luis" },
+      { "id": "san-simon", "name": "San Simon" },
+      { "id": "santa-ana", "name": "Santa Ana" },
+      { "id": "santa-rita", "name": "Santa Rita" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "sasmuan", "name": "Sasmuan" }
+    ],
+    "bataan": [
+      { "id": "abucay", "name": "Abucay" },
+      { "id": "bagac", "name": "Bagac" },
+      { "id": "balanga", "name": "Balanga" },
+      { "id": "dinalupihan", "name": "Dinalupihan" },
+      { "id": "hermosa", "name": "Hermosa" },
+      { "id": "limay", "name": "Limay" },
+      { "id": "mariveles", "name": "Mariveles" },
+      { "id": "morong", "name": "Morong" },
+      { "id": "orani", "name": "Orani" },
+      { "id": "orion", "name": "Orion" },
+      { "id": "pilar", "name": "Pilar" },
+      { "id": "samal", "name": "Samal" }
+    ],
+    "nueva-ecija": [
+      { "id": "aliaga", "name": "Aliaga" },
+      { "id": "bongabon", "name": "Bongabon" },
+      { "id": "cabanatuan", "name": "Cabanatuan" },
+      { "id": "cabiao", "name": "Cabiao" },
+      { "id": "carranglan", "name": "Carranglan" },
+      { "id": "cuyapo", "name": "Cuyapo" },
+      { "id": "gabaldon", "name": "Gabaldon" },
+      { "id": "gapan", "name": "Gapan" },
+      { "id": "general-mamerto-natividad", "name": "General Mamerto Natividad" },
+      { "id": "general-tinio", "name": "General Tinio" },
+      { "id": "guimba", "name": "Guimba" },
+      { "id": "jaen", "name": "Jaen" },
+      { "id": "laur", "name": "Laur" },
+      { "id": "licab", "name": "Licab" },
+      { "id": "llanera", "name": "Llanera" },
+      { "id": "lupao", "name": "Lupao" },
+      { "id": "muñoz", "name": "Muñoz" },
+      { "id": "nampicuan", "name": "Nampicuan" },
+      { "id": "palayan", "name": "Palayan" },
+      { "id": "pantabangan", "name": "Pantabangan" },
+      { "id": "peñaranda", "name": "Peñaranda" },
+      { "id": "quezon", "name": "Quezon" },
+      { "id": "rizal", "name": "Rizal" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-leonardo", "name": "San Leonardo" },
+      { "id": "santa-rosa", "name": "Santa Rosa" },
+      { "id": "santo-domingo", "name": "Santo Domingo" },
+      { "id": "talavera", "name": "Talavera" },
+      { "id": "talugtug", "name": "Talugtug" },
+      { "id": "zaragoza", "name": "Zaragoza" }
+    ],
+    "tarlac": [
+      { "id": "anao", "name": "Anao" },
+      { "id": "bamban", "name": "Bamban" },
+      { "id": "camiling", "name": "Camiling" },
+      { "id": "capas", "name": "Capas" },
+      { "id": "concepcion", "name": "Concepcion" },
+      { "id": "gerona", "name": "Gerona" },
+      { "id": "la-paz", "name": "La Paz" },
+      { "id": "mayantoc", "name": "Mayantoc" },
+      { "id": "moncada", "name": "Moncada" },
+      { "id": "paniqui", "name": "Paniqui" },
+      { "id": "pura", "name": "Pura" },
+      { "id": "ramos", "name": "Ramos" },
+      { "id": "san-clemente", "name": "San Clemente" },
+      { "id": "san-manuel", "name": "San Manuel" },
+      { "id": "santa-ignacia", "name": "Santa Ignacia" },
+      { "id": "tarlac-city", "name": "Tarlac City" },
+      { "id": "victoria", "name": "Victoria" }
+    ],
+    "zambales": [
+      { "id": "botolan", "name": "Botolan" },
+      { "id": "candelaria", "name": "Candelaria" },
+      { "id": "castillejos", "name": "Castillejos" },
+      { "id": "iba", "name": "Iba" },
+      { "id": "masinloc", "name": "Masinloc" },
+      { "id": "olongapo", "name": "Olongapo" },
+      { "id": "palauig", "name": "Palauig" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-felipe", "name": "San Felipe" },
+      { "id": "san-marceloino", "name": "San Marcelino" },
+      { "id": "san-narciso", "name": "San Narciso" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "subic", "name": "Subic" }
+    ],
+    "aurora": [
+      { "id": "baler", "name": "Baler" },
+      { "id": "casiguran", "name": "Casiguran" },
+      { "id": "dilasag", "name": "Dilasag" },
+      { "id": "dinalungan", "name": "Dinalungan" },
+      { "id": "dingalan", "name": "Dingalan" },
+      { "id": "dipaculao", "name": "Dipaculao" },
+      { "id": "maria-aurora", "name": "Maria Aurora" },
+      { "id": "san-luis", "name": "San Luis" }
+    ],
+    "batangas": [
+      { "id": "agoncillo", "name": "Agoncillo" },
+      { "id": "alitagtag", "name": "Alitagtag" },
+      { "id": "balayan", "name": "Balayan" },
+      { "id": "balete", "name": "Balete" },
+      { "id": "bauan", "name": "Bauan" },
+      { "id": "calaca", "name": "Calaca" },
+      { "id": "calatagan", "name": "Calatagan" },
+      { "id": "cuenca", "name": "Cuenca" },
+      { "id": "ibaan", "name": "Ibaan" },
+      { "id": "laurel", "name": "Laurel" },
+      { "id": "lemery", "name": "Lemery" },
+      { "id": "lian", "name": "Lian" },
+      { "id": "lipa", "name": "Lipa" },
+      { "id": "lobo", "name": "Lobo" },
+      { "id": "mabini", "name": "Mabini" },
+      { "id": "malvar", "name": "Malvar" },
+      { "id": "mataasnakahoy", "name": "Mataasnakahoy" },
+      { "id": "nasugbu", "name": "Nasugbu" },
+      { "id": "padre-garcia", "name": "Padre Garcia" },
+      { "id": "rosario", "name": "Rosario" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "san-luis", "name": "San Luis" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "san-pascual", "name": "San Pascual" },
+      { "id": "santa-teresita", "name": "Santa Teresita" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "taal", "name": "Taal" },
+      { "id": "talisay", "name": "Talisay" },
+      { "id": "tanauan", "name": "Tanauan" },
+      { "id": "taysan", "name": "Taysan" },
+      { "id": "tingloy", "name": "Tingloy" },
+      { "id": "tuy", "name": "Tuy" }
+    ],
+    "quezon": [
+      { "id": "agdangan", "name": "Agdangan" },
+      { "id": "alabat", "name": "Alabat" },
+      { "id": "atimonan", "name": "Atimonan" },
+      { "id": "buenavista", "name": "Buenavista" },
+      { "id": "burdeos", "name": "Burdeos" },
+      { "id": "calauag", "name": "Calauag" },
+      { "id": "candelaria", "name": "Candelaria" },
+      { "id": "catanauan", "name": "Catanauan" },
+      { "id": "dolores", "name": "Dolores" },
+      { "id": "general-luna", "name": "General Luna" },
+      { "id": "general-nakar", "name": "General Nakar" },
+      { "id": "guinayangan", "name": "Guinayangan" },
+      { "id": "gumaca", "name": "Gumaca" },
+      { "id": "infanta", "name": "Infanta" },
+      { "id": "jomalig", "name": "Jomalig" },
+      { "id": "lopez", "name": "Lopez" },
+      { "id": "lucban", "name": "Lucban" },
+      { "id": "lucena", "name": "Lucena" },
+      { "id": "macalelon", "name": "Macalelon" },
+      { "id": "mauban", "name": "Mauban" },
+      { "id": "mulanay", "name": "Mulanay" },
+      { "id": "padre-burgos", "name": "Padre Burgos" },
+      { "id": "pagbilao", "name": "Pagbilao" },
+      { "id": "panukulan", "name": "Panukulan" },
+      { "id": "patnanungan", "name": "Patnanungan" },
+      { "id": "perez", "name": "Perez" },
+      { "id": "pitogo", "name": "Pitogo" },
+      { "id": "plaridel", "name": "Plaridel" },
+      { "id": "polillo", "name": "Polillo" },
+      { "id": "quezon", "name": "Quezon" },
+      { "id": "real", "name": "Real" },
+      { "id": "sampaloc", "name": "Sampaloc" },
+      { "id": "san-andres", "name": "San Andres" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-francisco", "name": "San Francisco" },
+      { "id": "san-narciso", "name": "San Narciso" },
+      { "id": "sariaya", "name": "Sariaya" },
+      { "id": "tagkawayan", "name": "Tagkawayan" },
+      { "id": "tayabas", "name": "Tayabas" },
+      { "id": "tiaong", "name": "Tiaong" },
+      { "id": "unisan", "name": "Unisan" }
+    ],
+    "abra": [
+      { "id": "bangued", "name": "Bangued" }
+    ],
+    "pangasinan": [
+      { "id": "dagupan", "name": "Dagupan" },
+      { "id": "san-carlos", "name": "San Carlos" }
+    ],
+    "ilocos-norte": [
+      { "id": "laoag", "name": "Laoag" }
+    ],
+    "ilocos-sur": [
+      { "id": "vigan", "name": "Vigan" }
+    ],
+    "la-union": [
+      { "id": "san-fernando", "name": "San Fernando" }
+    ],
+    "benguet": [
+      { "id": "baguio", "name": "Baguio" }
+    ],
+    "mountain-province": [
+      { "id": "bontoc", "name": "Bontoc" }
+    ],
+    "ifugao": [
+      { "id": "lagawe", "name": "Lagawe" }
+    ],
+    "kalinga": [
+      { "id": "tabuk", "name": "Tabuk" }
+    ],
+    "apayao": [
+      { "id": "kabugao", "name": "Kabugao" }
+    ],
+    "cagayan": [
+      { "id": "tuguegarao", "name": "Tuguegarao" }
+    ],
+    "isabela": [
+      { "id": "ilagan", "name": "Ilagan" },
+      { "id": "santiago", "name": "Santiago" }
+    ],
+    "nueva-vizcaya": [
+      { "id": "bayombong", "name": "Bayombong" }
+    ],
+    "quirino": [
+      { "id": "cabarroguis", "name": "Cabarroguis" }
+    ],
+    "batanes": [
+      { "id": "basco", "name": "Basco" }
+    ],
+    "marinduque": [
+      { "id": "boac", "name": "Boac" }
+    ],
+    "occidental-mindoro": [
+      { "id": "mamburao", "name": "Mamburao" }
+    ],
+    "oriental-mindoro": [
+      { "id": "calapan", "name": "Calapan" }
+    ],
+    "palawan": [
+      { "id": "puerto-princesa", "name": "Puerto Princesa" }
+    ],
+    "romblon": [
+      { "id": "romblon", "name": "Romblon" }
+    ],
+    "albay": [
+      { "id": "legazpi", "name": "Legazpi" }
+    ],
+    "camarines-norte": [
+      { "id": "daet", "name": "Daet" }
+    ],
+    "camarines-sur": [
+      { "id": "naga", "name": "Naga" }
+    ],
+    "catanduanes": [
+      { "id": "virac", "name": "Virac" }
+    ],
+    "masbate": [
+      { "id": "masbate-city", "name": "Masbate City" }
+    ],
+    "sorsogon": [
+      { "id": "sorsogon-city", "name": "Sorsogon City" }
+    ],
+    "aklan": [
+      { "id": "kalibo", "name": "Kalibo" }
+    ],
+    "antique": [
+      { "id": "san-jose", "name": "San Jose" }
+    ],
+    "capiz": [
+      { "id": "roxas", "name": "Roxas" }
+    ],
+    "guimaras": [
+      { "id": "jordan", "name": "Jordan" }
+    ],
+    "iloilo": [
+      { "id": "iloilo-city", "name": "Iloilo City" }
+    ],
+    "negros-occidental": [
+      { "id": "bacolod", "name": "Bacolod" }
+    ],
+    "bohol": [
+      { "id": "tagbilaran", "name": "Tagbilaran" }
+    ],
+    "cebu": [
+      { "id": "cebu-city", "name": "Cebu City" }
+    ],
+    "negros-oriental": [
+      { "id": "dumaguete", "name": "Dumaguete" }
+    ],
+    "siquijor": [
+      { "id": "siquijor", "name": "Siquijor" }
+    ],
+    "biliran": [
+      { "id": "naval", "name": "Naval" }
+    ],
+    "eastern-samar": [
+      { "id": "borongan", "name": "Borongan" }
+    ],
+    "leyte": [
+      { "id": "tacloban", "name": "Tacloban" }
+    ],
+    "northern-samar": [
+      { "id": "catarman", "name": "Catarman" }
+    ],
+    "samar": [
+      { "id": "catbalogan", "name": "Catbalogan" }
+    ],
+    "southern-leyte": [
+      { "id": "maasin", "name": "Maasin" }
+    ],
+    "zamboanga-del-norte": [
+      { "id": "dipolog", "name": "Dipolog" }
+    ],
+    "zamboanga-del-sur": [
+      { "id": "zamboanga-city", "name": "Zamboanga City" }
+    ],
+    "zamboanga-sibugay": [
+      { "id": "ipil", "name": "Ipil" }
+    ],
+    "bukidnon": [
+      { "id": "valencia", "name": "Valencia" }
+    ],
+    "camiguin": [
+      { "id": "mambajao", "name": "Mambajao" }
+    ],
+    "lanao-del-norte": [
+      { "id": "iligan", "name": "Iligan" }
+    ],
+    "misamis-occidental": [
+      { "id": "ozamiz", "name": "Ozamiz" }
+    ],
+    "misamis-oriental": [
+      { "id": "cagayan-de-oro", "name": "Cagayan de Oro" }
+    ],
+    "compostela-valley": [
+      { "id": "nabunturan", "name": "Nabunturan" }
+    ],
+    "davao-del-norte": [
+      { "id": "tagum", "name": "Tagum" }
+    ],
+    "davao-del-sur": [
+      { "id": "davao-city", "name": "Davao City" }
+    ],
+    "davao-oriental": [
+      { "id": "mati", "name": "Mati" }
+    ],
+    "davao-occidental": [
+      { "id": "malita", "name": "Malita" }
+    ],
+    "davao-de-oro": [
+      { "id": "nabunturan", "name": "Nabunturan" }
+    ],
+    "north-cotabato": [
+      { "id": "kidapawan", "name": "Kidapawan" }
+    ],
+    "south-cotabato": [
+      { "id": "koronadal", "name": "Koronadal" }
+    ],
+    "sultan-kudarat": [
+      { "id": "isulan", "name": "Isulan" }
+    ],
+    "sarangani": [
+      { "id": "alabel", "name": "Alabel" }
+    ],
+    "agusan-del-norte": [
+      { "id": "butuan", "name": "Butuan" }
+    ],
+    "agusan-del-sur": [
+      { "id": "prosperidad", "name": "Prosperidad" }
+    ],
+    "surigao-del-norte": [
+      { "id": "surigao-city", "name": "Surigao City" }
+    ],
+    "surigao-del-sur": [
+      { "id": "tandag", "name": "Tandag" }
+    ],
+    "dinagat-islands": [
+      { "id": "san-jose", "name": "San Jose" }
+    ],
+    "basilan": [
+      { "id": "isabela", "name": "Isabela" }
+    ],
+    "lanao-del-sur": [
+      { "id": "marawi", "name": "Marawi" }
+    ],
+    "maguindanao": [
+      { "id": "buluan", "name": "Buluan" }
+    ],
+    "sulu": [
+      { "id": "jolo", "name": "Jolo" }
+    ],
+    "tawi-tawi": [
+      { "id": "bongao", "name": "Bongao" }
+    ]
+  },
+  "barangays": {
+    "manila": [
+      { "id": "binondo", "name": "Binondo" },
+      { "id": "ermita", "name": "Ermita" },
+      { "id": "intramuros", "name": "Intramuros" },
+      { "id": "malate", "name": "Malate" },
+      { "id": "paco", "name": "Paco" },
+      { "id": "pandacan", "name": "Pandacan" },
+      { "id": "port-area", "name": "Port Area" },
+      { "id": "quiapo", "name": "Quiapo" },
+      { "id": "sampaloc", "name": "Sampaloc" },
+      { "id": "san-andres", "name": "San Andres" },
+      { "id": "san-miguel", "name": "San Miguel" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "santa-ana", "name": "Santa Ana" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "santa-mesa", "name": "Santa Mesa" },
+      { "id": "tondo", "name": "Tondo" }
+    ],
+    "quezon-city": [
+      { "id": "bagong-silangan", "name": "Bagong Silangan" },
+      { "id": "batasan-hills", "name": "Batasan Hills" },
+      { "id": "commonwealth", "name": "Commonwealth" },
+      { "id": "diliman", "name": "Diliman" },
+      { "id": "east-kamias", "name": "East Kamias" },
+      { "id": "holy-spirit", "name": "Holy Spirit" },
+      { "id": "katipunan", "name": "Katipunan" },
+      { "id": "loyola-heights", "name": "Loyola Heights" },
+      { "id": "matandang-balara", "name": "Matandang Balara" },
+      { "id": "novaliches-proper", "name": "Novaliches Proper" },
+      { "id": "pansol", "name": "Pansol" },
+      { "id": "payatas", "name": "Payatas" },
+      { "id": "pinyahan", "name": "Pinyahan" },
+      { "id": "project-4", "name": "Project 4" },
+      { "id": "project-6", "name": "Project 6" },
+      { "id": "project-7", "name": "Project 7" },
+      { "id": "project-8", "name": "Project 8" },
+      { "id": "sangandaan", "name": "Sangandaan" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "santo-cristo", "name": "Santo Cristo" },
+      { "id": "santo-domingo", "name": "Santo Domingo" },
+      { "id": "socorro", "name": "Socorro" },
+      { "id": "tatalon", "name": "Tatalon" },
+      { "id": "up-campus", "name": "UP Campus" },
+      { "id": "veterans-village", "name": "Veterans Village" },
+      { "id": "west-kamias", "name": "West Kamias" }
+    ],
+    "calamba": [
+      { "id": "bagong-kalsada", "name": "Bagong Kalsada" },
+      { "id": "banco", "name": "Banco" },
+      { "id": "banlic", "name": "Banlic" },
+      { "id": "bubukal", "name": "Bubukal" },
+      { "id": "burol", "name": "Burol" },
+      { "id": "camaligan", "name": "Camaligan" },
+      { "id": "canlubang", "name": "Canlubang" },
+      { "id": "halang", "name": "Halang" },
+      { "id": "hornalan", "name": "Hornalan" },
+      { "id": "kay-anlog", "name": "Kay-anlog" },
+      { "id": "la-mesa", "name": "La Mesa" },
+      { "id": "lawa", "name": "Lawa" },
+      { "id": "lecaros", "name": "Lecaros" },
+      { "id": "lingga", "name": "Lingga" },
+      { "id": "looc", "name": "Looc" },
+      { "id": "mabato", "name": "Mabato" },
+      { "id": "majada-labas", "name": "Majada Labas" },
+      { "id": "makiling", "name": "Makiling" },
+      { "id": "mapagong", "name": "Mapagong" },
+      { "id": "masili", "name": "Masili" },
+      { "id": "maunong", "name": "Maunong" },
+      { "id": "mayapa", "name": "Mayapa" },
+      { "id": "paciano-rizal", "name": "Paciano Rizal" },
+      { "id": "palingon", "name": "Palingon" },
+      { "id": "palo-alto", "name": "Palo Alto" },
+      { "id": "pansol", "name": "Pansol" },
+      { "id": "parian", "name": "Parian" },
+      { "id": "prinza", "name": "Prinza" },
+      { "id": "punta", "name": "Punta" },
+      { "id": "puting-lupa", "name": "Puting Lupa" },
+      { "id": "real", "name": "Real" },
+      { "id": "saimsim", "name": "Saimsim" },
+      { "id": "sucol", "name": "Sucol" },
+      { "id": "turbina", "name": "Turbina" },
+      { "id": "ulango", "name": "Ulango" },
+      { "id": "uzon", "name": "Uzon" }
+    ],
+    "santa-rosa": [
+      { "id": "aplaya", "name": "Aplaya" },
+      { "id": "balibago", "name": "Balibago" },
+      { "id": "caingin", "name": "Caingin" },
+      { "id": "dila", "name": "Dila" },
+      { "id": "dita", "name": "Dita" },
+      { "id": "don-jose", "name": "Don Jose" },
+      { "id": "ibabang-ayo", "name": "Ibabang Ayo" },
+      { "id": "ilaya", "name": "Ilaya" },
+      { "id": "labas", "name": "Labas" },
+      { "id": "macabling", "name": "Macabling" },
+      { "id": "malitlit", "name": "Malitlit" },
+      { "id": "malusak", "name": "Malusak" },
+      { "id": "pooc", "name": "Pooc" },
+      { "id": "pulong-santa-cruz", "name": "Pulong Santa Cruz" },
+      { "id": "santo-domingo", "name": "Santo Domingo" },
+      { "id": "sinalhan", "name": "Sinalhan" },
+      { "id": "tagapo", "name": "Tagapo" }
+    ],
+    "cabuyao": [
+      { "id": "banaybanay", "name": "Banaybanay" },
+      { "id": "banlic", "name": "Banlic" },
+      { "id": "bigaa", "name": "Bigaa" },
+      { "id": "butong", "name": "Butong" },
+      { "id": "casile", "name": "Casile" },
+      { "id": "diezmo", "name": "Diezmo" },
+      { "id": "gulod", "name": "Gulod" },
+      { "id": "mamatid", "name": "Mamatid" },
+      { "id": "marinig", "name": "Marinig" },
+      { "id": "niugan", "name": "Niugan" },
+      { "id": "pittland", "name": "Pittland" },
+      { "id": "pulo", "name": "Pulo" },
+      { "id": "sala", "name": "Sala" },
+      { "id": "salinas", "name": "Salinas" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "villa-nueva", "name": "Villa Nueva" }
+    ],
+    "san-pedro": [
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "calendola", "name": "Calendola" },
+      { "id": "chrysanthemum", "name": "Chrysanthemum" },
+      { "id": "cuyab", "name": "Cuyab" },
+      { "id": "estrellita", "name": "Estrellita" },
+      { "id": "fatima", "name": "Fatima" },
+      { "id": "g.s.i.s", "name": "G.S.I.S" },
+      { "id": "landayan", "name": "Landayan" },
+      { "id": "langgam", "name": "Langgam" },
+      { "id": "laran", "name": "Laran" },
+      { "id": "magdalena", "name": "Magdalena" },
+      { "id": "maharlika", "name": "Maharlika" },
+      { "id": "narag", "name": "Narag" },
+      { "id": "nueva", "name": "Nueva" },
+      { "id": "pacita", "name": "Pacita" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "rivera", "name": "Rivera" },
+      { "id": "rosario", "name": "Rosario" },
+      { "id": "sampaguita", "name": "Sampaguita" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-roque", "name": "San Roque" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "sunnyville", "name": "Sunnyville" },
+      { "id": "united-bayanihan", "name": "United Bayanihan" },
+      { "id": "veterans", "name": "Veterans" }
+    ],
+    "biñan": [
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "bambang", "name": "Bambang" },
+      { "id": "buli", "name": "Buli" },
+      { "id": "bungahan", "name": "Bungahan" },
+      { "id": "canlalay", "name": "Canlalay" },
+      { "id": "casile", "name": "Casile" },
+      { "id": "de-la-paz", "name": "De La Paz" },
+      { "id": "ganado", "name": "Ganado" },
+      { "id": "langkiwa", "name": "Langkiwa" },
+      { "id": "loma", "name": "Loma" },
+      { "id": "malaban", "name": "Malaban" },
+      { "id": "malamig", "name": "Malamig" },
+      { "id": "mampalasan", "name": "Mampalasan" },
+      { "id": "platero", "name": "Platero" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "soro-soro", "name": "Soro-soro" },
+      { "id": "south-silangan", "name": "South Silangan" },
+      { "id": "timpas", "name": "Timpas" },
+      { "id": "tubigan", "name": "Tubigan" },
+      { "id": "zapote", "name": "Zapote" }
+    ],
+    "dasmarinas": [
+      { "id": "burol", "name": "Burol" },
+      { "id": "dasmariñas-bagong-bayan", "name": "Dasmariñas Bagong Bayan" },
+      { "id": "emmanuel-bergado", "name": "Emmanuel Bergado" },
+      { "id": "fatima", "name": "Fatima" },
+      { "id": "francisco-paule", "name": "Francisco Paule" },
+      { "id": "langkaan", "name": "Langkaan" },
+      { "id": "luciano", "name": "Luciano" },
+      { "id": "luzviminda", "name": "Luzviminda" },
+      { "id": "paliparan", "name": "Paliparan" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "sampaguita", "name": "Sampaguita" },
+      { "id": "san-agustin", "name": "San Agustin" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-dionisio", "name": "San Dionisio" },
+      { "id": "san-esteban", "name": "San Esteban" },
+      { "id": "san-francisco", "name": "San Francisco" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "san-lorenzo", "name": "San Lorenzo" },
+      { "id": "san-manuel", "name": "San Manuel" },
+      { "id": "san-miguel", "name": "San Miguel" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "san-pedro", "name": "San Pedro" },
+      { "id": "santa-cristina", "name": "Santa Cristina" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "santa-fe", "name": "Santa Fe" },
+      { "id": "santa-lucia", "name": "Santa Lucia" },
+      { "id": "santa-maria", "name": "Santa Maria" },
+      { "id": "santo-cristo", "name": "Santo Cristo" },
+      { "id": "santo-domingo", "name": "Santo Domingo" },
+      { "id": "victoria", "name": "Victoria" }
+    ],
+    "imus": [
+      { "id": "alapan", "name": "Alapan" },
+      { "id": "anabu-i", "name": "Anabu I" },
+      { "id": "anabu-ii", "name": "Anabu II" },
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "bayan-luma", "name": "Bayan Luma" },
+      { "id": "bucandala", "name": "Bucandala" },
+      { "id": "buho", "name": "Buho" },
+      { "id": "carsadang-bago", "name": "Carsadang Bago" },
+      { "id": "florentino-duenas", "name": "Florentino Dueñas" },
+      { "id": "gen-ricarte", "name": "Gen. Ricarte" },
+      { "id": "gov-d-m-camerino", "name": "Gov. D.M. Camerino" },
+      { "id": "habay", "name": "Habay" },
+      { "id": "hugo-perez", "name": "Hugo Perez" },
+      { "id": "imus", "name": "Imus" },
+      { "id": "kapitan-pepe", "name": "Kapitan Pepe" },
+      { "id": "luklukan", "name": "Luklukan" },
+      { "id": "malagasang-i", "name": "Malagasang I" },
+      { "id": "malagasang-ii", "name": "Malagasang II" },
+      { "id": "mariano-espeleta", "name": "Mariano Espeleta" },
+      { "id": "medicion-i", "name": "Medicion I" },
+      { "id": "medicion-ii", "name": "Medicion II" },
+      { "id": "medicion-iii", "name": "Medicion III" },
+      { "id": "medicion-iv", "name": "Medicion IV" },
+      { "id": "paco", "name": "Paco" },
+      { "id": "palico", "name": "Palico" },
+      { "id": "pasong-buaya", "name": "Pasong Buaya" },
+      { "id": "poblacion-i", "name": "Poblacion I" },
+      { "id": "poblacion-ii", "name": "Poblacion II" },
+      { "id": "poblacion-iii", "name": "Poblacion III" },
+      { "id": "poblacion-iv", "name": "Poblacion IV" },
+      { "id": "sampaguita", "name": "Sampaguita" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "tanzang-luma", "name": "Tanzang Luma" },
+      { "id": "toclong", "name": "Toclong" },
+      { "id": "wakas", "name": "Wakas" }
+    ],
+    "general-trias": [
+      { "id": "alangilan", "name": "Alangilan" },
+      { "id": "arandia", "name": "Arandia" },
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "balsahan", "name": "Balsahan" },
+      { "id": "biclatan", "name": "Biclatan" },
+      { "id": "bucal", "name": "Bucal" },
+      { "id": "burol", "name": "Burol" },
+      { "id": "cavite", "name": "Cavite" },
+      { "id": "concepcion", "name": "Concepcion" },
+      { "id": "dulong-bayan", "name": "Dulong Bayan" },
+      { "id": "francisco", "name": "Francisco" },
+      { "id": "gentri", "name": "Gentri" },
+      { "id": "herrera", "name": "Herrera" },
+      { "id": "hugo-perez", "name": "Hugo Perez" },
+      { "id": "javalera", "name": "Javalera" },
+      { "id": "manggahan", "name": "Manggahan" },
+      { "id": "manuel-t-roxas", "name": "Manuel T. Roxas" },
+      { "id": "marcos-alvarez", "name": "Marcos Alvarez" },
+      { "id": "palangue", "name": "Palangue" },
+      { "id": "panamitan", "name": "Panamitan" },
+      { "id": "pasong-camachile", "name": "Pasong Camachile" },
+      { "id": "pasong-kawayan", "name": "Pasong Kawayan" },
+      { "id": "pinagtipunan", "name": "Pinagtipunan" },
+      { "id": "sabang", "name": "Sabang" },
+      { "id": "salitran", "name": "Salitran" },
+      { "id": "santiago", "name": "Santiago" },
+      { "id": "santol", "name": "Santol" },
+      { "id": "tartaria", "name": "Tartaria" },
+      { "id": "tejero", "name": "Tejero" },
+      { "id": "tugbok", "name": "Tugbok" },
+      { "id": "vibora", "name": "Vibora" }
+    ],
+    "makati": [
+      { "id": "ayala", "name": "Ayala" },
+      { "id": "bel-air", "name": "Bel-Air" },
+      { "id": "cembo", "name": "Cembo" },
+      { "id": "comembo", "name": "Comembo" },
+      { "id": "dasmariñas", "name": "Dasmariñas" },
+      { "id": "forbes-park", "name": "Forbes Park" },
+      { "id": "guadalupe-nuevo", "name": "Guadalupe Nuevo" },
+      { "id": "guadalupe-viejo", "name": "Guadalupe Viejo" },
+      { "id": "kasilawan", "name": "Kasilawan" },
+      { "id": "la paz", "name": "La Paz" },
+      { "id": "magallanes", "name": "Magallanes" },
+      { "id": "olympia", "name": "Olympia" },
+      { "id": "palanan", "name": "Palanan" },
+      { "id": "pembo", "name": "Pembo" },
+      { "id": "pio-del-pilar", "name": "Pio del Pilar" },
+      { "id": "pitogo", "name": "Pitogo" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "rembo", "name": "Rembo" },
+      { "id": "rizal", "name": "Rizal" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-lorenzo", "name": "San Lorenzo" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "singkamas", "name": "Singkamas" },
+      { "id": "south-cembo", "name": "South Cembo" },
+      { "id": "tejeros", "name": "Tejeros" },
+      { "id": "upembo", "name": "U.Pembo" },
+      { "id": "valenzuela", "name": "Valenzuela" },
+      { "id": "west-rembo", "name": "West Rembo" }
+    ],
+    "pasig": [
+      { "id": "bagong-ilog", "name": "Bagong Ilog" },
+      { "id": "bagong-katipunan", "name": "Bagong Katipunan" },
+      { "id": "bambang", "name": "Bambang" },
+      { "id": "buting", "name": "Buting" },
+      { "id": "caniogan", "name": "Caniogan" },
+      { "id": "dela-paz", "name": "Dela Paz" },
+      { "id": "kalawaan", "name": "Kalawaan" },
+      { "id": "kapasigan", "name": "Kapasigan" },
+      { "id": "kapitolyo", "name": "Kapitolyo" },
+      { "id": "malinao", "name": "Malinao" },
+      { "id": "manggahan", "name": "Manggahan" },
+      { "id": "maybunga", "name": "Maybunga" },
+      { "id": "oros", "name": "Oros" },
+      { "id": "palatiw", "name": "Palatiw" },
+      { "id": "pinagbuhatan", "name": "Pinagbuhatan" },
+      { "id": "pineda", "name": "Pineda" },
+      { "id": "rosario", "name": "Rosario" },
+      { "id": "sagad", "name": "Sagad" },
+      { "id": "san-antonio", "name": "San Antonio" },
+      { "id": "san-eugenio", "name": "San Eugenio" },
+      { "id": "san-joaquin", "name": "San Joaquin" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-miguel", "name": "San Miguel" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "santa-lucia", "name": "Santa Lucia" },
+      { "id": "santa-rosa", "name": "Santa Rosa" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "sumilang", "name": "Sumilang" },
+      { "id": "ugong", "name": "Ugong" }
+    ],
+    "antipolo": [
+      { "id": "bagong-nayon", "name": "Bagong Nayon" },
+      { "id": "beverly-hills", "name": "Beverly Hills" },
+      { "id": "calawis", "name": "Calawis" },
+      { "id": "cupang", "name": "Cupang" },
+      { "id": "dela-paz", "name": "Dela Paz" },
+      { "id": "inarawan", "name": "Inarawan" },
+      { "id": "mambugan", "name": "Mambugan" },
+      { "id": "mayamot", "name": "Mayamot" },
+      { "id": "muntindilao", "name": "Muntindilao" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-luis", "name": "San Luis" },
+      { "id": "san-roque", "name": "San Roque" },
+      { "id": "santa-cruz", "name": "Santa Cruz" },
+      { "id": "sapang-palay", "name": "Sapang Palay" }
+    ],
+    "cainta": [
+      { "id": "san-andres", "name": "San Andres" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "st-santo", "name": "Sto. Santo" },
+      { "id": "santa-rosa", "name": "Santa Rosa" }
+    ],
+    "taytay": [
+      { "id": "dolores", "name": "Dolores" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "santa-ana", "name": "Santa Ana" }
+    ],
+    "malolos": [
+      { "id": "atlag", "name": "Atlag" },
+      { "id": "baba-norte", "name": "Baba Norte" },
+      { "id": "baba-sur", "name": "Baba Sur" },
+      { "id": "bagna", "name": "Bagna" },
+      { "id": "bagong-bayan", "name": "Bagong Bayan" },
+      { "id": "balayong", "name": "Balayong" },
+      { "id": "balite", "name": "Balite" },
+      { "id": "bangkal", "name": "Bangkal" },
+      { "id": "barihan", "name": "Barihan" },
+      { "id": "buliran", "name": "Buliran" },
+      { "id": "bunsuran", "name": "Bunsuran" },
+      { "id": "caingin", "name": "Caingin" },
+      { "id": "calero", "name": "Calero" },
+      { "id": "caliligawan", "name": "Caliligawan" },
+      { "id": "caniogan", "name": "Caniogan" },
+      { "id": "catmon", "name": "Catmon" },
+      { "id": "cofradia", "name": "Cofradia" },
+      { "id": "dakila", "name": "Dakila" },
+      { "id": "guinhawa", "name": "Guinhawa" },
+      { "id": "ligas", "name": "Ligas" },
+      { "id": "mabolo", "name": "Mabolo" },
+      { "id": "masile", "name": "Masile" },
+      { "id": "mataas-na-pahay", "name": "Mataas na Pahay" },
+      { "id": "namayan", "name": "Namayan" },
+      { "id": "niugan", "name": "Niugan" },
+      { "id": "pamarawan", "name": "Pamarawan" },
+      { "id": "panasahan", "name": "Panasahan" },
+      { "id": "pinagbakahan", "name": "Pinagbakahan" },
+      { "id": "san-agustin", "name": "San Agustin" },
+      { "id": "san-gabriel", "name": "San Gabriel" },
+      { "id": "san-juan", "name": "San Juan" },
+      { "id": "san-pablo", "name": "San Pablo" },
+      { "id": "san-vicente", "name": "San Vicente" },
+      { "id": "santiago", "name": "Santiago" },
+      { "id": "santo-cristo", "name": "Santo Cristo" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "santo-rosario", "name": "Santo Rosario" },
+      { "id": "santol", "name": "Santol" },
+      { "id": "sumapang-matiim", "name": "Sumapang Matiim" },
+      { "id": "sumapang-bata", "name": "Sumapang Bata" },
+      { "id": "taal", "name": "Taal" },
+      { "id": "tikay", "name": "Tikay" }
+    ],
+    "meycauayan": [
+      { "id": "bagong-baruang", "name": "Bagong Baruang" },
+      { "id": "bahay-pare", "name": "Bahay Pare" },
+      { "id": "bancal", "name": "Bancal" },
+      { "id": "bangkal", "name": "Bangkal" },
+      { "id": "bayan", "name": "Bayan" },
+      { "id": "calvario", "name": "Calvario" },
+      { "id": "camalig", "name": "Camalig" },
+      { "id": "hulo", "name": "Hulo" },
+      { "id": "iba", "name": "Iba" },
+      { "id": "langka", "name": "Langka" },
+      { "id": "lawang", "name": "Lawang" },
+      { "id": "libtong", "name": "Libtong" },
+      { "id": "liputan", "name": "Liputan" },
+      { "id": "longos", "name": "Longos" },
+      { "id": "malhacan", "name": "Malhacan" },
+      { "id": "pajo", "name": "Pajo" },
+      { "id": "pantoc", "name": "Pantoc" },
+      { "id": "perez", "name": "Perez" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "saluysoy", "name": "Saluysoy" },
+      { "id": "tugatog", "name": "Tugatog" },
+      { "id": "wakas", "name": "Wakas" },
+      { "id": "zamora", "name": "Zamora" }
+    ],
+    "san-fernando": [
+      { "id": "alasas", "name": "Alasas" },
+      { "id": "baliti", "name": "Baliti" },
+      { "id": "bulaon", "name": "Bulaon" },
+      { "id": "calulut", "name": "Calulut" },
+      { "id": "del-carmen", "name": "Del Carmen" },
+      { "id": "dolores", "name": "Dolores" },
+      { "id": "dolores-2", "name": "Dolores 2" },
+      { "id": "juli", "name": "Juli" },
+      { "id": "lara", "name": "Lara" },
+      { "id": "magliman", "name": "Magliman" },
+      { "id": "maimpis", "name": "Maimpis" },
+      { "id": "malino", "name": "Malino" },
+      { "id": "malpitic", "name": "Malpitic" },
+      { "id": "pandaras", "name": "Pandaras" },
+      { "id": "panipuan", "name": "Panipuan" },
+      { "id": "pulung-bulo", "name": "Pulung Bulo" },
+      { "id": "quezon", "name": "Quezon" },
+      { "id": "sagum", "name": "Sagum" },
+      { "id": "san-agustin", "name": "San Agustin" },
+      { "id": "san-felipe", "name": "San Felipe" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "san-pedro", "name": "San Pedro" },
+      { "id": "santa-lucia", "name": "Santa Lucia" },
+      { "id": "santo-rosario", "name": "Santo Rosario" },
+      { "id": "sindalan", "name": "Sindalan" },
+      { "id": "telebastagan", "name": "Telebastagan" }
+    ],
+    "angeles": [
+      { "id": "anunas", "name": "Anunas" },
+      { "id": "balibago", "name": "Balibago" },
+      { "id": "capaya", "name": "Capaya" },
+      { "id": "claro-m-recto", "name": "Claro M. Recto" },
+      { "id": "cuayan", "name": "Cuayan" },
+      { "id": "cutcut", "name": "Cutcut" },
+      { "id": "cutud", "name": "Cutud" },
+      { "id": "malabanias", "name": "Malabanias" },
+      { "id": "margot", "name": "Margot" },
+      { "id": "mining", "name": "Mining" },
+      { "id": "pampang", "name": "Pampang" },
+      { "id": "pandan", "name": "Pandan" },
+      { "id": "pulung-bulo", "name": "Pulung Bulo" },
+      { "id": "pulung-cacutud", "name": "Pulung Cacutud" },
+      { "id": "pulung-maragul", "name": "Pulung Maragul" },
+      { "id": "salapungan", "name": "Salapungan" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "santa-teresita", "name": "Santa Teresita" },
+      { "id": "santo-cristo", "name": "Santo Cristo" },
+      { "id": "santo-domingo", "name": "Santo Domingo" },
+      { "id": "sapalibutad", "name": "Sapalibutad" },
+      { "id": "sapangbato", "name": "Sapangbato" },
+      { "id": "tabun", "name": "Tabun" },
+      { "id": "villa-dolores", "name": "Villa Dolores" }
+    ],
+    "balanga": [
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "cabog-cabog", "name": "Cabog-Cabog" },
+      { "id": "cataning", "name": "Cataning" },
+      { "id": "central", "name": "Central" },
+      { "id": "dona-francisca", "name": "Dona Francisca" },
+      { "id": "ibayo", "name": "Ibayo" },
+      { "id": "lote", "name": "Lote" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "puerto-ricas-ulo", "name": "Puerto Ricas-Ulo" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "sibacan", "name": "Sibacan" },
+      { "id": "talisay", "name": "Talisay" },
+      { "id": "tanato", "name": "Tanato" },
+      { "id": "tenejero", "name": "Tenejero" },
+      { "id": "tortugas", "name": "Tortugas" }
+    ],
+    "cabanatuan": [
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "bantug", "name": "Bantug" },
+      { "id": "barlis", "name": "Barlis" },
+      { "id": "caalibangbangan", "name": "Caalibangbangan" },
+      { "id": "cabantuan-city", "name": "Cabanatuan City" },
+      { "id": "campo-tinio", "name": "Campo Tinio" },
+      { "id": "capitan-pedro", "name": "Capitan Pedro" },
+      { "id": "concepcion", "name": "Concepcion" },
+      { "id": "ibon", "name": "Ibon" },
+      { "id": "imelda", "name": "Imelda" },
+      { "id": "isla", "name": "Isla" },
+      { "id": "kalikid", "name": "Kalikid" },
+      { "id": "karanglan", "name": "Karanglan" },
+      { "id": "lagare", "name": "Lagare" },
+      { "id": "magsaysay", "name": "Magsaysay" },
+      { "id": "mayapyap-norte", "name": "Mayapyap Norte" },
+      { "id": "mayapyap-sur", "name": "Mayapyap Sur" },
+      { "id": "melojavilla", "name": "Melojavilla" },
+      { "id": "nabao", "name": "Nabao" },
+      { "id": "pamaldan", "name": "Pamaldan" },
+      { "id": "pangatian", "name": "Pangatian" },
+      { "id": "pantoc-bacon", "name": "Pantoc Bacon" },
+      { "id": "papaya", "name": "Papaya" },
+      { "id": "pinagpanaan", "name": "Pinagpanaan" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "san-antonio-pabahay", "name": "San Antonio Pabahay" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-roque", "name": "San Roque" },
+      { "id": "sangitan", "name": "Sangitan" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "sumacab-este", "name": "Sumacab Este" },
+      { "id": "sumacab-oeste", "name": "Sumacab Oeste" },
+      { "id": "talipapa", "name": "Talipapa" },
+      { "id": "valdefuente", "name": "Valdefuente" },
+      { "id": "villa-transfiguracion", "name": "Villa Transfiguracion" },
+      { "id": "zulueta", "name": "Zulueta" }
+    ],
+    "tarlac-city": [
+      { "id": "aguso", "name": "Aguso" },
+      { "id": "alvindia-separate", "name": "Alvindia Separate" },
+      { "id": "amucao", "name": "Amucao" },
+      { "id": "armenia", "name": "Armenia" },
+      { "id": "atlas", "name": "Atlas" },
+      { "id": "bagumbayan", "name": "Bagumbayan" },
+      { "id": "balingcanaway", "name": "Balingcanaway" },
+      { "id": "banaba", "name": "Banaba" },
+      { "id": "bantog", "name": "Bantog" },
+      { "id": "barangobong", "name": "Barangobong" },
+      { "id": "binauganan", "name": "Binauganan" },
+      { "id": "bora", "name": "Bora" },
+      { "id": "buenavista", "name": "Buenavista" },
+      { "id": "buhilit", "name": "Buhilit" },
+      { "id": "buliran", "name": "Buliran" },
+      { "id": "cabayaoasan", "name": "Cabayaoasan" },
+      { "id": "calingcuan", "name": "Calingcuan" },
+      { "id": "carangian", "name": "Carangian" },
+      { "id": "care", "name": "Care" },
+      { "id": "central", "name": "Central" },
+      { "id": "culipat", "name": "Culipat" },
+      { "id": "danao", "name": "Danao" },
+      { "id": "del-rosario", "name": "Del Rosario" },
+      { "id": "dolores", "name": "Dolores" },
+      { "id": "lanao", "name": "Lanao" },
+      { "id": "lourdes", "name": "Lourdes" },
+      { "id": "mabini", "name": "Mabini" },
+      { "id": "maligaya", "name": "Maligaya" },
+      { "id": "mapalacsiao", "name": "Mapalacsiao" },
+      { "id": "mapalad", "name": "Mapalad" },
+      { "id": "maliwalo", "name": "Maliwalo" },
+      { "id": "matatalaib", "name": "Matatalaib" },
+      { "id": "parayao", "name": "Parayao" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "san-isidro", "name": "San Isidro" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-nicolas", "name": "San Nicolas" },
+      { "id": "san-roque", "name": "San Roque" },
+      { "id": "san-vicente", "name": "San Vicente" },
+      { "id": "santiago", "name": "Santiago" },
+      { "id": "santo-cristo", "name": "Santo Cristo" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "saplad-davar", "name": "Saplad Davar" },
+      { "id": "sepsis", "name": "Sepsis" },
+      { "id": "sinait", "name": "Sinait" },
+      { "id": "sucol", "name": "Sucol" },
+      { "id": "tariji", "name": "Tariji" },
+      { "id": "tibag", "name": "Tibag" },
+      { "id": "trinidad", "name": "Trinidad" },
+      { "id": "ungot", "name": "Ungot" },
+      { "id": "villa-bacolor", "name": "Villa Bacolor" }
+    ],
+    "olongapo": [
+      { "id": "asinan", "name": "Asinan" },
+      { "id": "banicain", "name": "Banicain" },
+      { "id": "barretto", "name": "Barretto" },
+      { "id": "east-bajac-bajac", "name": "East Bajac-Bajac" },
+      { "id": "west-bajac-bajac", "name": "West Bajac-Bajac" },
+      { "id": "gordon-heights", "name": "Gordon Heights" },
+      { "id": "kalaklan", "name": "Kalaklan" },
+      { "id": "mabayuan", "name": "Mabayuan" },
+      { "id": "new-cabalan", "name": "New Cabalan" },
+      { "id": "new-ilib", "name": "New Ilalim" },
+      { "id": "old-cabalan", "name": "Old Cabalan" },
+      { "id": "paget", "name": "Paget" },
+      { "id": "santa-rita", "name": "Santa Rita" },
+      { "id": "subic-bay", "name": "Subic Bay" }
+    ],
+    "baler": [
+      { "id": "barangay-i", "name": "Barangay I" },
+      { "id": "barangay-ii", "name": "Barangay II" },
+      { "id": "barangay-iii", "name": "Barangay III" },
+      { "id": "barangay-iv", "name": "Barangay IV" },
+      { "id": "barangay-v", "name": "Barangay V" },
+      { "id": "calabuanan", "name": "Calabuanan" },
+      { "id": "obrero", "name": "Obrero" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "reservoir", "name": "Reservoir" },
+      { "id": "sabang", "name": "Sabang" },
+      { "id": "suklayin", "name": "Suklayin" },
+      { "id": "zabali", "name": "Zabali" }
+    ],
+    "lipa": [
+      { "id": "adya", "name": "Adya" },
+      { "id": "bagong-pook", "name": "Bagong Pook" },
+      { "id": "bagumbayan", "name": "Bagumbayan" },
+      { "id": "banaybanay", "name": "Banaybanay" },
+      { "id": "bolbok", "name": "Bolbok" },
+      { "id": "bugtong-na-pulo", "name": "Bugtong na Pulo" },
+      { "id": "bulaklakan", "name": "Bulaklakan" },
+      { "id": "calamias", "name": "Calamias" },
+      { "id": "cumba", "name": "Cumba" },
+      { "id": "dagatan", "name": "Dagatan" },
+      { "id": "duhatan", "name": "Duhatan" },
+      { "id": "halang", "name": "Halang" },
+      { "id": "hanggan", "name": "Hanggan" },
+      { "id": "lobo", "name": "Lobo" },
+      { "id": "mabini", "name": "Mabini" },
+      { "id": "malagonlong", "name": "Malagonlong" },
+      { "id": "marauy", "name": "Marauy" },
+      { "id": "mataas-na-lupa", "name": "Mataas na Lupa" },
+      { "id": "pagolingin-bata", "name": "Pagolingin Bata" },
+      { "id": "pagolingin-poblacion", "name": "Pagolingin Poblacion" },
+      { "id": "pinagkawitan", "name": "Pinagkawitan" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "pulot", "name": "Pulot" },
+      { "id": "quezon", "name": "Quezon" },
+      { "id": "sabang", "name": "Sabang" },
+      { "id": "san-carlos", "name": "San Carlos" },
+      { "id": "san-guillermo", "name": "San Guillermo" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "san-lucas", "name": "San Lucas" },
+      { "id": "san-sebastian", "name": "San Sebastian" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "santo-tomas", "name": "Santo Tomas" },
+      { "id": "talisay", "name": "Talisay" },
+      { "id": "tanauan", "name": "Tanauan" },
+      { "id": "tibig", "name": "Tibig" },
+      { "id": "tipakan", "name": "Tipakan" },
+      { "id": "tramo", "name": "Tramo" }
+    ],
+    "tanauan": [
+      { "id": "altura-bata", "name": "Altura Bata" },
+      { "id": "altura-matanda", "name": "Altura Matanda" },
+      { "id": "amat", "name": "Amat" },
+      { "id": "bagbag", "name": "Bagbag" },
+      { "id": "bagumbayan", "name": "Bagumbayan" },
+      { "id": "banadero", "name": "Banadero" },
+      { "id": "banilad", "name": "Banilad" },
+      { "id": "bulo", "name": "Bulo" },
+      { "id": "cale", "name": "Cale" },
+      { "id": "darasa", "name": "Darasa" },
+      { "id": "gonzalez", "name": "Gonzalez" },
+      { "id": "hidalgo", "name": "Hidalgo" },
+      { "id": "janopol", "name": "Janopol" },
+      { "id": "laurel", "name": "Laurel" },
+      { "id": "luyos", "name": "Luyos" },
+      { "id": "mabini", "name": "Mabini" },
+      { "id": "malaking-pulo", "name": "Malaking Pulo" },
+      { "id": "maria-paz", "name": "Maria Paz" },
+      { "id": "nata", "name": "Nata" },
+      { "id": "pantay-matas", "name": "Pantay Matas" },
+      { "id": "pantay-bata", "name": "Pantay Bata" },
+      { "id": "poblacion-barangay-1", "name": "Poblacion Barangay 1" },
+      { "id": "poblacion-barangay-2", "name": "Poblacion Barangay 2" },
+      { "id": "poblacion-barangay-3", "name": "Poblacion Barangay 3" },
+      { "id": "poblacion-barangay-4", "name": "Poblacion Barangay 4" },
+      { "id": "poblacion-barangay-5", "name": "Poblacion Barangay 5" },
+      { "id": "sala", "name": "Sala" },
+      { "id": "san-jose", "name": "San Jose" },
+      { "id": "santol", "name": "Santol" },
+      { "id": "santa-clara", "name": "Santa Clara" },
+      { "id": "santo-nino", "name": "Santo Niño" },
+      { "id": "sulok", "name": "Sulok" },
+      { "id": "suplang", "name": "Suplang" },
+      { "id": "talaga", "name": "Talaga" },
+      { "id": "tambo", "name": "Tambo" },
+      { "id": "tibig", "name": "Tibig" },
+      { "id": "wawa", "name": "Wawa" }
+    ],
+    "lucena": [
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" },
+      { "id": "barangay-3", "name": "Barangay 3" },
+      { "id": "barangay-4", "name": "Barangay 4" },
+      { "id": "barangay-5", "name": "Barangay 5" },
+      { "id": "barangay-6", "name": "Barangay 6" },
+      { "id": "barangay-7", "name": "Barangay 7" },
+      { "id": "barangay-8", "name": "Barangay 8" },
+      { "id": "barangay-9", "name": "Barangay 9" },
+      { "id": "barangay-10", "name": "Barangay 10" },
+      { "id": "barangay-11", "name": "Barangay 11" },
+      { "id": "barangay-12", "name": "Barangay 12" },
+      { "id": "barangay-13", "name": "Barangay 13" },
+      { "id": "barangay-14", "name": "Barangay 14" },
+      { "id": "barangay-15", "name": "Barangay 15" },
+      { "id": "barangay-16", "name": "Barangay 16" },
+      { "id": "barangay-17", "name": "Barangay 17" },
+      { "id": "barangay-18", "name": "Barangay 18" },
+      { "id": "barangay-19", "name": "Barangay 19" },
+      { "id": "barangay-20", "name": "Barangay 20" },
+      { "id": "barangay-21", "name": "Barangay 21" },
+      { "id": "barangay-22", "name": "Barangay 22" },
+      { "id": "barangay-23", "name": "Barangay 23" },
+      { "id": "barangay-24", "name": "Barangay 24" },
+      { "id": "barangay-25", "name": "Barangay 25" },
+      { "id": "barangay-26", "name": "Barangay 26" },
+      { "id": "barangay-27", "name": "Barangay 27" },
+      { "id": "barangay-28", "name": "Barangay 28" },
+      { "id": "barangay-29", "name": "Barangay 29" },
+      { "id": "barangay-30", "name": "Barangay 30" },
+      { "id": "barangay-31", "name": "Barangay 31" },
+      { "id": "barangay-32", "name": "Barangay 32" },
+      { "id": "barangay-33", "name": "Barangay 33" },
+      { "id": "barangay-34", "name": "Barangay 34" },
+      { "id": "barangay-35", "name": "Barangay 35" },
+      { "id": "barangay-36", "name": "Barangay 36" },
+      { "id": "barangay-37", "name": "Barangay 37" },
+      { "id": "barangay-38", "name": "Barangay 38" },
+      { "id": "barangay-39", "name": "Barangay 39" },
+      { "id": "barangay-40", "name": "Barangay 40" },
+      { "id": "barangay-41", "name": "Barangay 41" },
+      { "id": "barangay-42", "name": "Barangay 42" },
+      { "id": "barangay-43", "name": "Barangay 43" },
+      { "id": "barangay-44", "name": "Barangay 44" },
+      { "id": "barangay-45", "name": "Barangay 45" },
+      { "id": "barangay-46", "name": "Barangay 46" },
+      { "id": "barangay-47", "name": "Barangay 47" },
+      { "id": "barangay-48", "name": "Barangay 48" },
+      { "id": "barangay-49", "name": "Barangay 49" },
+      { "id": "barangay-50", "name": "Barangay 50" },
+      { "id": "barangay-51", "name": "Barangay 51" },
+      { "id": "barangay-52", "name": "Barangay 52" },
+      { "id": "barangay-53", "name": "Barangay 53" },
+      { "id": "barangay-54", "name": "Barangay 54" },
+      { "id": "barangay-55", "name": "Barangay 55" },
+      { "id": "barangay-56", "name": "Barangay 56" },
+      { "id": "barangay-57", "name": "Barangay 57" },
+      { "id": "barangay-58", "name": "Barangay 58" },
+      { "id": "barangay-59", "name": "Barangay 59" },
+      { "id": "barangay-60", "name": "Barangay 60" },
+      { "id": "barangay-61", "name": "Barangay 61" },
+      { "id": "barangay-62", "name": "Barangay 62" },
+      { "id": "barangay-63", "name": "Barangay 63" },
+      { "id": "barangay-64", "name": "Barangay 64" },
+      { "id": "barangay-65", "name": "Barangay 65" }
+    ],
+    "tayabas": [
+      { "id": "alitao", "name": "Alitao" },
+      { "id": "anas", "name": "Anas" },
+      { "id": "angeles", "name": "Angeles" },
+      { "id": "bagong-silang", "name": "Bagong Silang" },
+      { "id": "bambang", "name": "Bambang" },
+      { "id": "bangkal", "name": "Bangkal" },
+      { "id": "bantayan", "name": "Bantayan" },
+      { "id": "bayabas", "name": "Bayabas" },
+      { "id": "bilucao", "name": "Bilucao" },
+      { "id": "bukal", "name": "Bukal" },
+      { "id": "calumpang", "name": "Calumpang" },
+      { "id": "camaysa", "name": "Camaysa" },
+      { "id": "dapdap", "name": "Dapdap" },
+      { "id": "ibabang-bukal", "name": "Ibabang Bukal" },
+      { "id": "ibabang-calumpang", "name": "Ibabang Calumpang" },
+      { "id": "ibabang-castillo", "name": "Ibabang Castillo" },
+      { "id": "ilayang-bukal", "name": "Ilayang Bukal" },
+      { "id": "ilayang-calumpang", "name": "Ilayang Calumpang" },
+      { "id": "ilayang-castillo", "name": "Ilayang Castillo" },
+      { "id": "lalangan", "name": "Lalangan" },
+      { "id": "malinao-ilaya", "name": "Malinao Ilaya" },
+      { "id": "malinao-labas", "name": "Malinao Labas" },
+      { "id": "mangilag-norte", "name": "Mangilag Norte" },
+      { "id": "mangilag-sur", "name": "Mangilag Sur" },
+      { "id": "masalukot", "name": "Masalukot" },
+      { "id": "mate", "name": "Mate" },
+      { "id": "mayowe", "name": "Mayowe" },
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "santol", "name": "Santol" },
+      { "id": "talolong", "name": "Talolong" },
+      { "id": "tongko", "name": "Tongko" },
+      { "id": "valencia", "name": "Valencia" },
+      { "id": "wakas", "name": "Wakas" }
+    ],
+    "bangued": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "dagupan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "calmay", "name": "Calmay" },
+      { "id": "lasip", "name": "Lasip" }
+    ],
+    "san-carlos": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "laoag": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "vigan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "baguio": [
+      { "id": "central", "name": "Central" },
+      { "id": "camp-7", "name": "Camp 7" },
+      { "id": "loakan", "name": "Loakan" }
+    ],
+    "tuguegarao": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "ilagan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "santiago": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "boac": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "calapan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "puerto-princesa": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "legazpi": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "naga": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "kalibo": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "iloilo-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "bacolod": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "tagbilaran": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "cebu-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "dumaguete": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "tacloban": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "zamboanga-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "cagayan-de-oro": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "davao-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "butuan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "caloocan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "las-pinas": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "malabon": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "mandaluyong": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "marikina": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "muntinlupa": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "navotas": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "paranaque": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "pasay": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "pateros": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "san-juan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "taguig": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "valenzuela": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "bacoor": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "cavite-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "tagaytay": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "angono": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "binangonan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "san-mateo": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "tanay": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "baliuag": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "bocaue": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "marilao": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "san-jose-del-monte": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "mabalacat": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "dinalupihan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "gapan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "palayan": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "san-jose": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "capas": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "concepcion": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "iba": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "subic": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "casiguran": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "batangas-city": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "nasugbu": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "santo-tomas": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "sariaya": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ],
+    "tiaong": [
+      { "id": "poblacion", "name": "Poblacion" },
+      { "id": "barangay-1", "name": "Barangay 1" },
+      { "id": "barangay-2", "name": "Barangay 2" }
+    ]
+  }
+}
