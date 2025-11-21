@@ -34,7 +34,7 @@ return new class extends Migration
             $table->decimal('max_level', 10, 2)->default(0);
             
             // Calculated metrics
-            $table->decimal('avg_daily_consumption', 10, 2)->default(0);
+            $table->decimal('daily_usage', 10, 2)->default(0);
             $table->integer('days_until_stockout')->nullable(); // Days left
             $table->decimal('unit_cost', 10, 2)->default(0);
             $table->decimal('total_value', 12, 2)->default(0); // available_quantity * unit_cost

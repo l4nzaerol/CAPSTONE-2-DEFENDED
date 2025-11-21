@@ -81,7 +81,7 @@ class AccurateMaterialsSeeder extends Seeder
                 'description' => 'Traditional Filipino wooden savings box',
                 'price' => 0, // Will be calculated from BOM on frontend
                 'stock' => 0, // Will be updated by AlkansyaFactorySeeder
-                'image' => 'storage/products/Alkansya (100k).webp',
+                'image' => 'storage/products/100kyaw.webp',
                 'category_name' => 'Stocked Products',
                 'raw_materials' => json_encode([
                     'Pinewood 1x4x8ft' => 1/350, // 1 piece produces 350 Alkansya
@@ -124,6 +124,175 @@ class AccurateMaterialsSeeder extends Seeder
                     'Fragile Tape' => 1/500, // 1 piece per 500 Alkansya
                     'Bubble Wrap 40 inch x 100m' => 1/250, // 1 piece per 250 Alkansya
                     'Insulation 8mm 40 inch x 100m' => 1/250 // 1 piece per 250 Alkansya
+                ])
+            ]
+        );
+
+        // Create additional Alkansya products (Honda PCX, Honda ADV, Honda Click, Raider FI, Aerox, Nmax)
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK005'],
+            [
+                'product_name' => 'Alkansya (Honda PCX)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0, // Will be calculated from BOM on frontend
+                'stock' => 0, // Will be updated by AlkansyaFactorySeeder
+                'image' => 'storage/products/honda pcx.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
+                ])
+            ]
+        );
+
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK006'],
+            [
+                'product_name' => 'Alkansya (Honda ADV)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0,
+                'stock' => 0,
+                'image' => 'storage/products/honda adv.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
+                ])
+            ]
+        );
+
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK007'],
+            [
+                'product_name' => 'Alkansya (Honda Click)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0,
+                'stock' => 0,
+                'image' => 'storage/products/honda click.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
+                ])
+            ]
+        );
+
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK008'],
+            [
+                'product_name' => 'Alkansya (Raider FI)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0,
+                'stock' => 0,
+                'image' => 'storage/products/raider fi.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
+                ])
+            ]
+        );
+
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK009'],
+            [
+                'product_name' => 'Alkansya (Aerox)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0,
+                'stock' => 0,
+                'image' => 'storage/products/aerox.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
+                ])
+            ]
+        );
+
+        $alkansya = Product::updateOrCreate(
+            ['product_code' => 'ALK010'],
+            [
+                'product_name' => 'Alkansya (Nmax)',
+                'name' => 'Alkansya',
+                'description' => 'Traditional Filipino wooden savings box',
+                'price' => 0,
+                'stock' => 0,
+                'image' => 'storage/products/nmax.webp',
+                'category_name' => 'Stocked Products',
+                'raw_materials' => json_encode([
+                    'Pinewood 1x4x8ft' => 1/350,
+                    'Plywood 4.2mm 4x8ft' => 1/78,
+                    'Acrylic 1.5mm 4x8ft' => 1/78,
+                    'Pin Nail F30' => 14,
+                    'Black Screw 1 1/2' => 4,
+                    'Stikwell 250 grams' => 1/200,
+                    'Grinder pad 4inch 120 grit' => 1/50,
+                    'Sticker 24 inch Car Decals' => 1/78,
+                    'Transfer Tape' => 1/300,
+                    'TAPE 2 inch 200m' => 1/150,
+                    'Fragile Tape' => 1/500,
+                    'Bubble Wrap 40 inch x 100m' => 1/250,
+                    'Insulation 8mm 40 inch x 100m' => 1/250
                 ])
             ]
         );
@@ -218,6 +387,83 @@ class AccurateMaterialsSeeder extends Seeder
             ]
         );
 
+        // Create Square Back Chair product (uses Wooden Chair BOM)
+        $squareBackChair = Product::updateOrCreate(
+            ['product_code' => 'WC002'],
+            [
+                'product_name' => 'Square Back Chair',
+                'name' => 'Square Back Chair',
+                'description' => 'Comfortable mahogany wooden chair with square back and upholstered seat',
+                'price' => rand(8000, 12000), // Price for individual chair
+                'stock' => 0, // Made to order
+                'image' => 'storage/products/Chair.jpg',
+                'category_name' => 'Made to Order',
+                'raw_materials' => json_encode([
+                    'Mahogany Hardwood 2x2x6ft' => 1, // Chair frame
+                    'Mahogany Hardwood 1x4x6ft' => 0.5, // Chair back
+                    'Plywood 12mm 2x2ft' => 0.5, // Chair seat
+                    'Foam Cushion 2 inch' => 1, // Seat cushion
+                    'Upholstery Fabric' => 1, // Seat cover
+                    'Upholstery Staples' => 50, // Staples for upholstery
+                    'Wood Screws 2.5 inch' => 16, // Assembly screws
+                    'Wood Dowels 8mm' => 8, // Joinery dowels
+                    'Wood Glue 250ml' => 0.5, // Wood glue
+                    'Sandpaper 80 Grit' => 1, // Coarse sanding
+                    'Sandpaper 120 Grit' => 1.5, // Medium sanding
+                    'Sandpaper 220 Grit' => 1, // Fine sanding
+                    'Wood Stain Walnut 500ml' => 0.3, // Wood stain
+                    'Lacquer Spray Clear' => 1, // Clear finish
+                    'Felt Pads Small' => 1 // Floor protection
+                ])
+            ]
+        );
+
+        // Create Dining Table Set with no Bench product (Dining Table Set BOM without bench materials)
+        $diningTableSetNoBench = Product::updateOrCreate(
+            ['product_code' => 'DTS002'],
+            [
+                'product_name' => 'Dining Table Set with no Bench',
+                'name' => 'Dining Table Set with no Bench',
+                'description' => 'Complete mahogany dining set: 1 table (4ft x 3ft x 30in) and 2 curved chairs',
+                'price' => rand(35000, 50000), // Price for set without bench
+                'stock' => 0, // Made to order
+                'image' => 'storage/products/DiningTableSetNoBench.png',
+                'category_name' => 'Made to Order',
+                'raw_materials' => json_encode([
+                    // Table materials
+                    'Mahogany Hardwood 2x4x8ft' => 2, // Table top
+                    'Mahogany Hardwood 1x6x8ft' => 1, // Table frame
+                    'Steel Tubing 2x2x8ft' => 2, // Metal legs
+                    'Steel Tubing 1x1x8ft' => 1, // Cross support
+                    'Wood Screws 3 inch' => 16,
+                    'Wood Glue 500ml' => 0.5,
+                    'Sandpaper 80 Grit' => 2,
+                    'Sandpaper 120 Grit' => 3,
+                    'Sandpaper 220 Grit' => 2,
+                    'Wood Stain Walnut 1 Liter' => 0.4,
+                    'Polyurethane Gloss 1 Liter' => 0.5,
+                    'Felt Pads Large' => 4,
+                    
+                    // 2 Curved Chairs materials
+                    'Mahogany Hardwood 2x2x6ft' => 2, // Chair frames
+                    'Mahogany Hardwood 1x4x6ft' => 1, // Chair backs
+                    'Plywood 12mm 2x2ft' => 1, // Chair seats
+                    'Foam Cushion 2 inch' => 2, // Seat cushions
+                    'Upholstery Fabric' => 2, // Seat covers
+                    'Upholstery Staples' => 100,
+                    'Wood Screws 2.5 inch' => 32,
+                    'Wood Dowels 8mm' => 16,
+                    'Wood Glue 250ml' => 1,
+                    'Sandpaper 80 Grit' => 2,
+                    'Sandpaper 120 Grit' => 3,
+                    'Sandpaper 220 Grit' => 2,
+                    'Wood Stain Walnut 500ml' => 0.6,
+                    'Lacquer Spray Clear' => 2,
+                    'Felt Pads Small' => 2
+                ])
+            ]
+        );
+
         // Create materials in the materials table
         $this->createMaterials();
 
@@ -225,11 +471,11 @@ class AccurateMaterialsSeeder extends Seeder
         $this->createInventoryRecords();
 
         // Create raw materials entries for each product
-        $this->createRawMaterials($alkansya, $diningTableSet, $woodenChair);
+        $this->createRawMaterials($alkansya, $diningTableSet, $woodenChair, $squareBackChair, $diningTableSetNoBench);
 
         // Create BOM entries for all Alkansya products and made-to-order products
         $this->createBomEntriesForAllAlkansya();
-        $this->createBomEntriesForMadeToOrderProducts($diningTableSet, $woodenChair);
+        $this->createBomEntriesForMadeToOrderProducts($diningTableSet, $woodenChair, $squareBackChair, $diningTableSetNoBench);
 
         $this->command->info('Accurate materials data seeded successfully!');
     }
@@ -426,7 +672,7 @@ class AccurateMaterialsSeeder extends Seeder
         return 800;
     }
 
-    private function createRawMaterials($alkansya, $diningTableSet, $woodenChair)
+    private function createRawMaterials($alkansya, $diningTableSet, $woodenChair, $squareBackChair, $diningTableSetNoBench)
     {
         // Clear ALL existing raw materials to avoid conflicts
         RawMaterial::truncate();
@@ -548,6 +794,79 @@ class AccurateMaterialsSeeder extends Seeder
                 $rawMaterial->save();
             }
         }
+
+        // Square Back Chair raw materials (same as Wooden Chair)
+        foreach ($woodenChairMaterials as $material) {
+            if (isset($materials[$material['material_code']])) {
+                RawMaterial::updateOrCreate(
+                    [
+                        'product_id' => $squareBackChair->id,
+                        'material_code' => $material['material_code'] . '-P' . $squareBackChair->id
+                    ],
+                    [
+                        'material_name' => $material['material_name'],
+                        'quantity_needed' => $material['quantity_needed'],
+                        'unit_of_measure' => $material['unit_of_measure'],
+                        'unit_cost' => $material['unit_cost'],
+                        'total_cost' => $material['quantity_needed'] * $material['unit_cost'],
+                        'description' => 'Raw material for Square Back Chair production'
+                    ]
+                );
+            }
+        }
+
+        // Dining Table Set with no Bench raw materials (Dining Table Set BOM without bench materials)
+        // Combined quantities for materials used in both table and chairs
+        $diningTableSetNoBenchMaterials = [
+            // Table materials
+            ['material_name' => 'Mahogany Hardwood 2x4x8ft', 'material_code' => 'HW-MAHOG-2X4X8', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 1200.00],
+            ['material_name' => 'Mahogany Hardwood 1x6x8ft', 'material_code' => 'HW-MAHOG-1X6X8', 'quantity_needed' => 1, 'unit_of_measure' => 'pcs', 'unit_cost' => 1200.00],
+            ['material_name' => 'Steel Tubing 2x2x8ft', 'material_code' => 'ST-TUBE-2X2X8', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 800.00],
+            ['material_name' => 'Steel Tubing 1x1x8ft', 'material_code' => 'ST-TUBE-1X1X8', 'quantity_needed' => 1, 'unit_of_measure' => 'pcs', 'unit_cost' => 400.00],
+            ['material_name' => 'Wood Screws 3 inch', 'material_code' => 'WS-3', 'quantity_needed' => 16, 'unit_of_measure' => 'pcs', 'unit_cost' => 5.00],
+            ['material_name' => 'Wood Glue 500ml', 'material_code' => 'WG-500', 'quantity_needed' => 0.5, 'unit_of_measure' => 'pcs', 'unit_cost' => 200.00],
+            ['material_name' => 'Wood Stain Walnut 1 Liter', 'material_code' => 'STAIN-WALNUT-1L', 'quantity_needed' => 0.4, 'unit_of_measure' => 'pcs', 'unit_cost' => 800.00],
+            ['material_name' => 'Polyurethane Gloss 1 Liter', 'material_code' => 'POLY-GLOSS-1L', 'quantity_needed' => 0.5, 'unit_of_measure' => 'pcs', 'unit_cost' => 1000.00],
+            ['material_name' => 'Felt Pads Large', 'material_code' => 'FELT-PAD-LG', 'quantity_needed' => 4, 'unit_of_measure' => 'pcs', 'unit_cost' => 50.00],
+            
+            // 2 Curved Chairs materials
+            ['material_name' => 'Mahogany Hardwood 2x2x6ft', 'material_code' => 'HW-MAHOG-2X2X6', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 800.00],
+            ['material_name' => 'Mahogany Hardwood 1x4x6ft', 'material_code' => 'HW-MAHOG-1X4X6', 'quantity_needed' => 1, 'unit_of_measure' => 'pcs', 'unit_cost' => 900.00],
+            ['material_name' => 'Plywood 12mm 2x2ft', 'material_code' => 'PLY-12-2X4', 'quantity_needed' => 1, 'unit_of_measure' => 'pcs', 'unit_cost' => 500.00],
+            ['material_name' => 'Foam Cushion 2 inch', 'material_code' => 'FOAM-CUSHION-2', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 300.00],
+            ['material_name' => 'Upholstery Fabric', 'material_code' => 'FABRIC-UPHOLSTERY', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 400.00],
+            ['material_name' => 'Upholstery Staples', 'material_code' => 'STAPLES-UPHOLSTERY', 'quantity_needed' => 100, 'unit_of_measure' => 'pcs', 'unit_cost' => 0.10],
+            ['material_name' => 'Wood Screws 2.5 inch', 'material_code' => 'WS-2.5', 'quantity_needed' => 32, 'unit_of_measure' => 'pcs', 'unit_cost' => 4.00],
+            ['material_name' => 'Wood Dowels 8mm', 'material_code' => 'WD-8MM', 'quantity_needed' => 16, 'unit_of_measure' => 'pcs', 'unit_cost' => 2.00],
+            ['material_name' => 'Wood Glue 250ml', 'material_code' => 'WG-250', 'quantity_needed' => 1, 'unit_of_measure' => 'pcs', 'unit_cost' => 100.00],
+            ['material_name' => 'Wood Stain Walnut 500ml', 'material_code' => 'STAIN-WALNUT-500', 'quantity_needed' => 0.6, 'unit_of_measure' => 'pcs', 'unit_cost' => 400.00],
+            ['material_name' => 'Lacquer Spray Clear', 'material_code' => 'LACQUER-SPRAY', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 200.00],
+            ['material_name' => 'Felt Pads Small', 'material_code' => 'FELT-PAD-SM', 'quantity_needed' => 2, 'unit_of_measure' => 'pcs', 'unit_cost' => 25.00],
+            
+            // Combined sandpaper quantities (table: 2+3+2, chairs: 2+3+2)
+            ['material_name' => 'Sandpaper 80 Grit', 'material_code' => 'SAND-80', 'quantity_needed' => 4, 'unit_of_measure' => 'pcs', 'unit_cost' => 15.00], // 2 (table) + 2 (chairs)
+            ['material_name' => 'Sandpaper 120 Grit', 'material_code' => 'SAND-120', 'quantity_needed' => 6, 'unit_of_measure' => 'pcs', 'unit_cost' => 15.00], // 3 (table) + 3 (chairs)
+            ['material_name' => 'Sandpaper 220 Grit', 'material_code' => 'SAND-220', 'quantity_needed' => 4, 'unit_of_measure' => 'pcs', 'unit_cost' => 15.00], // 2 (table) + 2 (chairs)
+        ];
+
+        foreach ($diningTableSetNoBenchMaterials as $material) {
+            if (isset($materials[$material['material_code']])) {
+                RawMaterial::updateOrCreate(
+                    [
+                        'product_id' => $diningTableSetNoBench->id,
+                        'material_code' => $material['material_code'] . '-P' . $diningTableSetNoBench->id
+                    ],
+                    [
+                        'material_name' => $material['material_name'],
+                        'quantity_needed' => $material['quantity_needed'],
+                        'unit_of_measure' => $material['unit_of_measure'],
+                        'unit_cost' => $material['unit_cost'],
+                        'total_cost' => $material['quantity_needed'] * $material['unit_cost'],
+                        'description' => 'Raw material for Dining Table Set with no Bench production'
+                    ]
+                );
+            }
+        }
     }
 
     private function createBomEntriesForAllAlkansya()
@@ -603,7 +922,7 @@ class AccurateMaterialsSeeder extends Seeder
         $this->command->info('BOM entries created for all Alkansya products!');
     }
 
-    private function createBomEntriesForMadeToOrderProducts($diningTableSet, $woodenChair)
+    private function createBomEntriesForMadeToOrderProducts($diningTableSet, $woodenChair, $squareBackChair, $diningTableSetNoBench)
     {
         // Get materials for BOM entries
         $materials = Material::all()->keyBy('material_code');
@@ -692,6 +1011,73 @@ class AccurateMaterialsSeeder extends Seeder
                 Bom::updateOrCreate(
                     [
                         'product_id' => $woodenChair->id,
+                        'material_id' => $materials[$materialCode]->material_id
+                    ],
+                    [
+                        'material_name' => $materials[$materialCode]->material_name,
+                        'quantity_per_product' => $quantity,
+                        'unit_of_measure' => $materials[$materialCode]->unit_of_measure
+                    ]
+                );
+            }
+        }
+
+        // Create BOM entries for Square Back Chair (same as Wooden Chair)
+        $this->command->info("Creating BOM entries for {$squareBackChair->product_name} (ID: {$squareBackChair->id})");
+        foreach ($woodenChairBomMaterials as $materialCode => $quantity) {
+            if (isset($materials[$materialCode])) {
+                Bom::updateOrCreate(
+                    [
+                        'product_id' => $squareBackChair->id,
+                        'material_id' => $materials[$materialCode]->material_id
+                    ],
+                    [
+                        'material_name' => $materials[$materialCode]->material_name,
+                        'quantity_per_product' => $quantity,
+                        'unit_of_measure' => $materials[$materialCode]->unit_of_measure
+                    ]
+                );
+            }
+        }
+
+        // Dining Table Set with no Bench BOM entries (Dining Table Set BOM without bench materials)
+        $diningTableSetNoBenchBomMaterials = [
+            // Table materials
+            'HW-MAHOG-2X4X8' => 2,
+            'HW-MAHOG-1X6X8' => 1,
+            'ST-TUBE-2X2X8' => 2,
+            'ST-TUBE-1X1X8' => 1,
+            'WS-3' => 16,
+            'WG-500' => 0.5,
+            'SAND-80' => 2,
+            'SAND-120' => 3,
+            'SAND-220' => 2,
+            'STAIN-WALNUT-1L' => 0.4,
+            'POLY-GLOSS-1L' => 0.5,
+            'FELT-PAD-LG' => 4,
+            
+            // 2 Curved Chairs materials
+            'HW-MAHOG-2X2X6' => 2,
+            'HW-MAHOG-1X4X6' => 1,
+            'PLY-12-2X4' => 1,
+            'FOAM-CUSHION-2' => 2,
+            'FABRIC-UPHOLSTERY' => 2,
+            'STAPLES-UPHOLSTERY' => 100,
+            'WS-2.5' => 32,
+            'WD-8MM' => 16,
+            'WG-250' => 1,
+            'STAIN-WALNUT-500' => 0.6,
+            'LACQUER-SPRAY' => 2,
+            'FELT-PAD-SM' => 2,
+        ];
+
+        // Create BOM entries for Dining Table Set with no Bench
+        $this->command->info("Creating BOM entries for {$diningTableSetNoBench->product_name} (ID: {$diningTableSetNoBench->id})");
+        foreach ($diningTableSetNoBenchBomMaterials as $materialCode => $quantity) {
+            if (isset($materials[$materialCode])) {
+                Bom::updateOrCreate(
+                    [
+                        'product_id' => $diningTableSetNoBench->id,
                         'material_id' => $materials[$materialCode]->material_id
                     ],
                     [

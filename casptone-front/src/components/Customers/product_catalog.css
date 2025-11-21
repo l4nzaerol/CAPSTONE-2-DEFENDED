@@ -2560,3 +2560,232 @@
     height: 36px;
   }
 }
+
+/* Products Header with Filter Dropdown */
+.products-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+  position: relative;
+  padding: 0 0.5rem;
+}
+
+/* Creative Filter Dropdown */
+.filter-dropdown-wrapper {
+  position: relative;
+  z-index: 100;
+}
+
+.filter-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  color: #2F1B14;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+}
+
+.filter-dropdown-trigger:hover {
+  border-color: #8B4513;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+  transform: translateY(-2px);
+}
+
+.filter-trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-trigger-content i {
+  color: #8B4513;
+  font-size: 1rem;
+}
+
+.filter-text {
+  color: #2F1B14;
+}
+
+.filter-dropdown-trigger .fa-chevron-down {
+  color: #6c757d;
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.filter-dropdown-trigger .fa-chevron-down.rotate {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.filter-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.filter-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: #ffffff;
+  border: none;
+  color: #2F1B14;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.filter-menu-item:last-child {
+  border-bottom: none;
+}
+
+.filter-menu-item i:first-child {
+  color: #8B4513;
+  font-size: 0.9rem;
+  width: 20px;
+}
+
+.filter-menu-item:hover {
+  background: #f8f9fa;
+  color: #8B4513;
+}
+
+.filter-menu-item.active {
+  background: #f8f9fa;
+  color: #8B4513;
+  font-weight: 600;
+}
+
+.filter-menu-item.active i:first-child {
+  color: #8B4513;
+}
+
+.filter-menu-item .fa-check {
+  color: #8B4513;
+  font-size: 0.75rem;
+}
+
+/* Category Section Styles */
+.product-category-section {
+  margin-bottom: 3rem;
+  padding: 0 0.5rem;
+}
+
+.category-section-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2F1B14;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid #8B4513;
+}
+
+.category-section-title i {
+  color: #8B4513;
+  font-size: 1.75rem;
+}
+
+.category-section-title:first-of-type {
+  margin-top: 0;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2F1B14;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+/* Responsive Filter Dropdown */
+@media (max-width: 768px) {
+  .products-header {
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-dropdown-trigger {
+    min-width: 160px;
+    font-size: 0.9rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .filter-dropdown-menu {
+    min-width: 180px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .category-section-title {
+    font-size: 1.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .product-category-section {
+    margin-bottom: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-dropdown-trigger {
+    min-width: 140px;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .filter-dropdown-menu {
+    min-width: 160px;
+  }
+
+  .category-section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .product-category-section {
+    margin-bottom: 2rem;
+  }
+}

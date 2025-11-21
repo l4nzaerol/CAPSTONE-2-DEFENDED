@@ -30,7 +30,14 @@ const isAuthenticated = () => !!localStorage.getItem("token");
 function App() {
     return (
         <Router>
-            <Toaster position="top-right" richColors />
+            <Toaster 
+                position="top-right" 
+                richColors 
+                offset={60}
+                toastOptions={{
+                    duration: 2000
+                }}
+            />
             <main id="main-content">
             <Routes>
                 {/* Public Routes */}

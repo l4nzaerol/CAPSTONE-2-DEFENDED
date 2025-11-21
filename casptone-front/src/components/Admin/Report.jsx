@@ -42,21 +42,18 @@ const Report = () => {
         { 
             id: "inventory", 
             name: "Inventory Reports", 
-            component: EnhancedInventoryReports,
             icon: "📊",
             description: "Predictive analytics for material usage and inventory management"
         },
         { 
             id: "production", 
             name: "Production Reports", 
-            component: ProductionReports,
             icon: "🏭",
             description: "Advanced performance metrics and production analytics"
         },
         { 
             id: "sales", 
             name: "Sales Reports", 
-            component: SalesAnalytics,
             icon: "💰",
             description: "Revenue analysis and customer behavior insights"
         }

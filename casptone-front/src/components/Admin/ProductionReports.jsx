@@ -26,7 +26,7 @@ const ProductionReports = () => {
     const [productionOverview, setProductionOverview] = useState(null);
     const [productionOutput, setProductionOutput] = useState(null);
     const [madeToOrderStatus, setMadeToOrderStatus] = useState(null);
-    const [alkansyaDailyOutput, setAlkansyaDailyOutput] = useState(null);
+    const [alkansyaDailyOutput, setAlkansyaDailyOutput] = useState([]);
     const [productionAnalytics, setProductionAnalytics] = useState(null);
     const [efficiencyMetrics, setEfficiencyMetrics] = useState(null);
     const [resourceUtilization, setResourceUtilization] = useState(null);
@@ -49,6 +49,13 @@ const ProductionReports = () => {
     
     // Product performance data
     const [productPerformanceData, setProductPerformanceData] = useState(null);
+    
+    // Work Progress tab data
+    const [allProducts, setAllProducts] = useState([]);
+    const [mtoOrders, setMtoOrders] = useState([]);
+    const [workProgressSearch, setWorkProgressSearch] = useState('');
+    const [workProgressFilter, setWorkProgressFilter] = useState('all'); // all, alkansya, mto
+    const [workProgressStatusFilter, setWorkProgressStatusFilter] = useState('all'); // all, not_started, in_progress, completed
     
     // Loading states for each tab
     const [tabLoadingStates, setTabLoadingStates] = useState({
@@ -751,6 +758,156 @@ const ProductionReports = () => {
         }
     };
 
+    // Fetch all products for work progress
+    const fetchAllProducts = async () => {
+        try {
+            const response = await api.get('/products');
+            const products = response.data || [];
+            
+            // Enhance products with production status
+            const enhancedProducts = products.map(product => {
+                const categoryName = product.category_name || '';
+                const productName = (product.name || product.product_name || '').toLowerCase();
+                const isAlkansya = categoryName === 'Stocked Products' && 
+                    (productName.includes('alkansya'));
+                const isMTO = categoryName === 'Made to Order' || categoryName === 'made_to_order';
+                
+                // Default values
+                let status = 'Not Started';
+                let progress = 0;
+                let completedToday = 0;
+                let completedForOrder = 0;
+                let lastUpdatedBy = null;
+                let lastUpdatedAt = null;
+                
+                return {
+                    ...product,
+                    category: isAlkansya ? 'Alkansya' : isMTO ? 'Made-to-Order' : 'Other',
+                    status,
+                    progress,
+                    completedToday,
+                    completedForOrder,
+                    lastUpdatedBy,
+                    lastUpdatedAt
+                };
+            });
+            
+            setAllProducts(enhancedProducts);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            toast.error('Failed to load products');
+            setAllProducts([]);
+        }
+    };
+
+    // Fetch Alkansya daily output
+    const fetchAlkansyaDailyOutputData = async () => {
+        try {
+            const response = await api.get('/alkansya-daily-output');
+            // Handle different response formats
+            let outputData = [];
+            if (Array.isArray(response.data)) {
+                outputData = response.data;
+            } else if (response.data?.data && Array.isArray(response.data.data)) {
+                outputData = response.data.data;
+            } else if (response.data && typeof response.data === 'object') {
+                // Try to extract array from response
+                outputData = Object.values(response.data).find(val => Array.isArray(val)) || [];
+            }
+            
+            // Sort by date descending
+            const sortedData = outputData.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+            
+            setAlkansyaDailyOutput(sortedData);
+        } catch (error) {
+            console.error('Error fetching Alkansya daily output:', error);
+            toast.error('Failed to load Alkansya daily output');
+            setAlkansyaDailyOutput([]);
+        }
+    };
+
+    // Fetch Made-to-Order orders with production status
+    const fetchMTOOrders = async () => {
+        try {
+            // Fetch accepted orders
+            const ordersResponse = await api.get('/orders/accepted');
+            const orders = ordersResponse.data?.data || ordersResponse.data || [];
+            
+            // Filter for Made-to-Order products and enhance with production data
+            const mtoOrdersData = [];
+            
+            for (const order of orders) {
+                if (order.items && Array.isArray(order.items)) {
+                    for (const item of order.items) {
+                        const product = item.product || {};
+                        const categoryName = product.category_name || '';
+                        const isMTO = categoryName === 'Made to Order' || categoryName === 'made_to_order';
+                        
+                        if (isMTO) {
+                            // Fetch production status for this order
+                            let productionStatus = 'Not Accepted';
+                            let completedQuantity = 0;
+                            let requiredQuantity = item.quantity || 0;
+                            let progress = 0;
+                            let deadline = null;
+                            let lastUpdatedAt = order.updated_at || order.created_at;
+                            
+                            try {
+                                const statusResponse = await api.get(`/orders/${order.id}/production-status`);
+                                const statusData = statusResponse.data;
+                                
+                                if (statusData.isCompleted) {
+                                    productionStatus = 'Completed';
+                                    progress = 100;
+                                    completedQuantity = requiredQuantity;
+                                } else if (statusData.progress !== undefined) {
+                                    productionStatus = 'In Progress';
+                                    progress = statusData.progress || 0;
+                                    completedQuantity = Math.round((progress / 100) * requiredQuantity);
+                                } else {
+                                    productionStatus = 'Not Started';
+                                }
+                                
+                                // Calculate deadline (14 days from acceptance)
+                                if (order.accepted_at) {
+                                    const acceptedDate = new Date(order.accepted_at);
+                                    acceptedDate.setDate(acceptedDate.getDate() + 14);
+                                    deadline = acceptedDate.toISOString().split('T')[0];
+                                }
+                            } catch (err) {
+                                console.warn(`Could not fetch production status for order ${order.id}:`, err);
+                            }
+                            
+                            mtoOrdersData.push({
+                                orderId: order.id,
+                                orderNumber: order.order_number || `ORD-${order.id}`,
+                                productName: product.name || product.product_name || 'N/A',
+                                productId: product.id,
+                                requiredQuantity,
+                                completedQuantity,
+                                progress,
+                                deadline,
+                                status: productionStatus,
+                                lastUpdatedAt,
+                                order: order
+                            });
+                        }
+                    }
+                }
+            }
+            
+            setMtoOrders(mtoOrdersData);
+        } catch (error) {
+            console.error('Error fetching MTO orders:', error);
+            toast.error('Failed to load Made-to-Order orders');
+            setMtoOrders([]);
+        }
+    };
+
     // Lazy loading function for each tab
     const loadTabData = async (tabName) => {
         setTabLoadingStates(prev => ({ ...prev, [tabName]: true }));
@@ -805,6 +962,9 @@ const ProductionReports = () => {
                     
                 case 'workProgress':
                     // Fetch all data for work progress report
+                    await fetchAllProducts();
+                    await fetchAlkansyaDailyOutputData();
+                    await fetchMTOOrders();
                     await fetchAlkansyaProductionData();
                     await fetchMadeToOrderProductionData();
                     await fetchProductionOverview();
@@ -2366,295 +2526,518 @@ const ProductionReports = () => {
                                 <p className="text-muted">Analyzing work progress and status data</p>
                             </div>
                         </div>
-                    ) : productionOverview ? (
+                    ) : (
                         <>
-                            {/* Report Header */}
+                            {/* Summary Cards */}
+                            <div className="col-12 mb-4">
+                                <div className="row g-3">
+                                    <div className="col-lg-4 col-md-6">
+                                        <div className="card border-0 shadow-sm h-100" style={{ background: `linear-gradient(135deg, ${colors.success}15, ${colors.success}05)` }}>
+                                            <div className="card-body text-center p-4">
+                                                <div className="d-flex align-items-center justify-content-center mb-3">
+                                                    <div className="rounded-circle p-3 me-3" style={{ backgroundColor: `${colors.success}20` }}>
+                                                        <FaBoxes style={{ color: colors.success }} className="fs-4" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="mb-0 fw-bold" style={{ color: colors.success }}>
+                                                            {alkansyaDailyOutput.filter(item => {
+                                                                const itemDate = new Date(item.date).toISOString().split('T')[0];
+                                                                const today = new Date().toISOString().split('T')[0];
+                                                                return itemDate === today;
+                                                            }).reduce((sum, item) => sum + (item.quantity_produced || 0), 0)}
+                                                        </h3>
+                                                        <small className="text-muted fw-medium">Alkansya Today</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-lg-4 col-md-6">
+                                        <div className="card border-0 shadow-sm h-100" style={{ background: `linear-gradient(135deg, ${colors.warning}15, ${colors.warning}05)` }}>
+                                            <div className="card-body text-center p-4">
+                                                <div className="d-flex align-items-center justify-content-center mb-3">
+                                                    <div className="rounded-circle p-3 me-3" style={{ backgroundColor: `${colors.warning}20` }}>
+                                                        <FaClipboardList style={{ color: colors.warning }} className="fs-4" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="mb-0 fw-bold text-warning">
+                                                            {mtoOrders.filter(order => order.status === 'In Progress').length}
+                                                        </h3>
+                                                        <small className="text-muted fw-medium">MTO In Progress</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-lg-4 col-md-6">
+                                        <div className="card border-0 shadow-sm h-100" style={{ background: `linear-gradient(135deg, ${colors.info}15, ${colors.info}05)` }}>
+                                            <div className="card-body text-center p-4">
+                                                <div className="d-flex align-items-center justify-content-center mb-3">
+                                                    <div className="rounded-circle p-3 me-3" style={{ backgroundColor: `${colors.info}20` }}>
+                                                        <FaCheckCircle style={{ color: colors.info }} className="fs-4" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="mb-0 fw-bold" style={{ color: colors.info }}>
+                                                            {mtoOrders.filter(order => {
+                                                                const orderDate = new Date(order.lastUpdatedAt);
+                                                                const now = new Date();
+                                                                return order.status === 'Completed' && 
+                                                                       orderDate.getMonth() === now.getMonth() &&
+                                                                       orderDate.getFullYear() === now.getFullYear();
+                                                            }).length}
+                                                        </h3>
+                                                        <small className="text-muted fw-medium">Completed This Month</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Search and Filter Controls */}
+                            <div className="col-12 mb-4">
+                                <div className="card border-0 shadow-sm">
+                                    <div className="card-body">
+                                        <div className="row g-3 align-items-end">
+                                            <div className="col-md-4">
+                                                <label className="form-label fw-medium">
+                                                    <FaSearch className="me-2" />
+                                                    Search
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Search by product name or order number..."
+                                                    value={workProgressSearch}
+                                                    onChange={(e) => setWorkProgressSearch(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label fw-medium">
+                                                    <FaFilter className="me-2" />
+                                                    Category
+                                                </label>
+                                                <select
+                                                    className="form-select"
+                                                    value={workProgressFilter}
+                                                    onChange={(e) => setWorkProgressFilter(e.target.value)}
+                                                >
+                                                    <option value="all">All Products</option>
+                                                    <option value="alkansya">Alkansya</option>
+                                                    <option value="mto">Made-to-Order</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label fw-medium">Status</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={workProgressStatusFilter}
+                                                    onChange={(e) => setWorkProgressStatusFilter(e.target.value)}
+                                                >
+                                                    <option value="all">All Status</option>
+                                                    <option value="not_started">Not Started</option>
+                                                    <option value="in_progress">In Progress</option>
+                                                    <option value="completed">Completed</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-md-2">
+                                                <button
+                                                    className="btn btn-outline-secondary w-100"
+                                                    onClick={() => {
+                                                        setWorkProgressSearch('');
+                                                        setWorkProgressFilter('all');
+                                                        setWorkProgressStatusFilter('all');
+                                                    }}
+                                                >
+                                                    <FaSync className="me-2" />
+                                                    Reset
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 1: All Products */}
                             <div className="col-12 mb-4">
                                 <div className="card border-0 shadow-sm">
                                     <div className="card-header bg-white border-0">
-                                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                            <div>
-                                                <h4 className="mb-0 fw-bold" style={{ color: '#6B4423' }}>
-                                                    <FaTasks className="me-2" />
-                                                    Work Progress Report
-                                                </h4>
-                                                <small className="text-muted">Generated: {new Date().toLocaleString()}</small>
-                                            </div>
-                                            <div className="d-flex gap-2 flex-wrap">
-                                                {/* CSV Buttons */}
-                                                <div className="btn-group" role="group">
-                                                    <button
-                                                        className="btn btn-outline-info"
-                                                        onClick={() => previewReport('workprogress')}
-                                                        style={{ 
-                                                            borderRadius: '8px 0 0 8px', 
-                                                            borderWidth: '2px',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#17a2b8';
-                                                            e.currentTarget.style.color = 'white';
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                                            e.currentTarget.style.color = '#17a2b8';
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                        }}
-                                                    >
-                                                        <FaEye className="me-2" />
-                                                        Preview CSV
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-info"
-                                                        onClick={() => downloadReport('workprogress')}
-                                                        style={{ 
-                                                            borderRadius: '0 8px 8px 0',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#138496';
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#17a2b8';
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                        }}
-                                                    >
-                                                        <FaDownload className="me-2" />
-                                                        Download CSV
-                                                    </button>
+                                        <h5 className="mb-0 fw-bold">
+                                            <FaBoxes className="me-2" style={{ color: colors.primary }} />
+                                            Section 1: All Products
+                                        </h5>
+                                    </div>
+                                    <div className="card-body">
+                                        {(() => {
+                                            // Filter products
+                                            let filteredProducts = allProducts;
+                                            
+                                            // Apply category filter
+                                            if (workProgressFilter === 'alkansya') {
+                                                filteredProducts = filteredProducts.filter(p => p.category === 'Alkansya');
+                                            } else if (workProgressFilter === 'mto') {
+                                                filteredProducts = filteredProducts.filter(p => p.category === 'Made-to-Order');
+                                            }
+                                            
+                                            // Apply status filter
+                                            if (workProgressStatusFilter !== 'all') {
+                                                filteredProducts = filteredProducts.filter(p => {
+                                                    const statusLower = p.status?.toLowerCase().replace(' ', '_');
+                                                    return statusLower === workProgressStatusFilter;
+                                                });
+                                            }
+                                            
+                                            // Apply search filter
+                                            if (workProgressSearch) {
+                                                const searchLower = workProgressSearch.toLowerCase();
+                                                filteredProducts = filteredProducts.filter(p => {
+                                                    const name = (p.name || p.product_name || '').toLowerCase();
+                                                    const code = (p.product_code || '').toLowerCase();
+                                                    return name.includes(searchLower) || code.includes(searchLower);
+                                                });
+                                            }
+                                            
+                                            // Enhance products with today's Alkansya output
+                                            filteredProducts = filteredProducts.map(product => {
+                                                if (product.category === 'Alkansya') {
+                                                    const today = new Date().toISOString().split('T')[0];
+                                                    const todayOutput = alkansyaDailyOutput.find(item => {
+                                                        const itemDate = new Date(item.date).toISOString().split('T')[0];
+                                                        return itemDate === today;
+                                                    });
+                                                    if (todayOutput) {
+                                                        product.completedToday = todayOutput.quantity_produced || 0;
+                                                        product.lastUpdatedBy = todayOutput.produced_by || 'N/A';
+                                                        product.lastUpdatedAt = todayOutput.date || today;
+                                                        product.status = 'In Progress';
+                                                        product.progress = 100; // Alkansya daily output is always completed
+                                                    }
+                                                }
+                                                return product;
+                                            });
+                                            
+                                            return (
+                                                <div className="table-responsive">
+                                                    <table className="table table-hover align-middle">
+                                                        <thead className="table-light">
+                                                            <tr>
+                                                                <th>Product Name</th>
+                                                                <th>Product Code</th>
+                                                                <th>Category</th>
+                                                                <th>Total Completed Today</th>
+                                                                <th>Total Completed for Order</th>
+                                                                <th>Status</th>
+                                                                <th>Progress</th>
+                                                                <th>Last Updated By</th>
+                                                                <th>Last Updated</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {filteredProducts.length > 0 ? (
+                                                                filteredProducts.map((product, idx) => (
+                                                                    <tr key={product.id || idx}>
+                                                                        <td className="fw-medium">{product.name || product.product_name || 'N/A'}</td>
+                                                                        <td><code>{product.product_code || `PROD-${product.id || idx}`}</code></td>
+                                                                        <td>
+                                                                            <span className={`badge ${
+                                                                                product.category === 'Alkansya' ? 'bg-success' :
+                                                                                product.category === 'Made-to-Order' ? 'bg-warning' :
+                                                                                'bg-secondary'
+                                                                            }`}>
+                                                                                {product.category || 'Other'}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            {product.category === 'Alkansya' ? (
+                                                                                <span className="badge bg-info">{product.completedToday || 0}</span>
+                                                                            ) : (
+                                                                                <span className="text-muted">-</span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            {product.category === 'Made-to-Order' ? (
+                                                                                <span className="badge bg-info">
+                                                                                    {mtoOrders
+                                                                                        .filter(order => order.productId === product.id)
+                                                                                        .reduce((sum, order) => sum + order.completedQuantity, 0)}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-muted">-</span>
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            <span className={`badge ${
+                                                                                product.status === 'Completed' ? 'bg-success' :
+                                                                                product.status === 'In Progress' ? 'bg-warning' :
+                                                                                'bg-secondary'
+                                                                            }`}>
+                                                                                {product.status || 'Not Started'}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <div className="d-flex align-items-center">
+                                                                                <div className="progress flex-grow-1 me-2" style={{ height: '20px', minWidth: '100px' }}>
+                                                                                    <div
+                                                                                        className={`progress-bar ${
+                                                                                            product.progress === 100 ? 'bg-success' :
+                                                                                            product.progress > 0 ? 'bg-warning' :
+                                                                                            'bg-secondary'
+                                                                                        }`}
+                                                                                        style={{ width: `${product.progress || 0}%` }}
+                                                                                    >
+                                                                                        {product.progress || 0}%
+                                                                                    </div>
+                                                                                </div>
+                                                                                <small className="text-muted">{product.progress || 0}%</small>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="small">{product.lastUpdatedBy || 'N/A'}</td>
+                                                                        <td className="small">
+                                                                            {product.lastUpdatedAt ? new Date(product.lastUpdatedAt).toLocaleString() : 'N/A'}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr>
+                                                                    <td colSpan="9" className="text-center text-muted py-4">
+                                                                        No products found matching the filters.
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                                {/* PDF Buttons */}
-                                                <div className="btn-group" role="group">
-                                                    <button
-                                                        className="btn btn-outline-danger"
-                                                        onClick={() => previewPdfReport('workprogress')}
-                                                        style={{ 
-                                                            borderRadius: '8px 0 0 8px', 
-                                                            borderWidth: '2px',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#dc3545';
-                                                            e.currentTarget.style.color = 'white';
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                                            e.currentTarget.style.color = '#dc3545';
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                        }}
-                                                    >
-                                                        <FaEye className="me-2" />
-                                                        Preview PDF
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-danger"
-                                                        onClick={() => downloadPdfReport('workprogress')}
-                                                        style={{ 
-                                                            borderRadius: '0 8px 8px 0',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#c82333';
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#dc3545';
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                        }}
-                                                    >
-                                                        <FaDownload className="me-2" />
-                                                        Download PDF
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Alkansya Recent Output */}
-                            {productionOverview?.alkansya?.recent_output && productionOverview.alkansya.recent_output.length > 0 && (
-                                <div className="col-12 mb-4">
-                                    <div className="card border-0 shadow-sm">
-                                        <div className="card-header bg-white border-0">
-                                            <h5 className="mb-0 fw-bold">Alkansya Recent Output</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="table-responsive">
-                                                <table className="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Date</th>
-                                                            <th>Quantity Produced</th>
-                                                            <th>Produced By</th>
-                                                            <th>Status</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {productionOverview.alkansya.recent_output.map((output, idx) => (
-                                                            <tr key={idx}>
-                                                                <td>{output.date}</td>
-                                                                <td><span className="badge bg-success">{output.quantity} units</span></td>
-                                                                <td>{output.produced_by || 'N/A'}</td>
-                                                                <td><span className="badge bg-success">Completed</span></td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                            {/* SECTION 2: Alkansya Daily Production */}
+                            <div className="col-12 mb-4">
+                                <div className="card border-0 shadow-sm">
+                                    <div className="card-header bg-white border-0">
+                                        <h5 className="mb-0 fw-bold">
+                                            <FaBoxes className="me-2" style={{ color: colors.success }} />
+                                            Section 2: Alkansya Daily Production
+                                        </h5>
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Made-to-Order Status */}
-                            {productionOverview?.made_to_order && (
-                                <div className="col-12 mb-4">
-                                    <div className="card border-0 shadow-sm">
-                                        <div className="card-header bg-white border-0">
-                                            <h5 className="mb-0 fw-bold">Made-to-Order Status</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="row mb-4">
-                                                <div className="col-md-3">
-                                                    <div className="text-center p-4 border rounded" style={{ background: 'linear-gradient(135deg, #6B442315, #8B5A2B15)' }}>
-                                                        <h3 className="fw-bold mb-2" style={{ color: '#6B4423' }}>
-                                                            {productionOverview.made_to_order.total_products_ordered || 0}
-                                                        </h3>
-                                                        <small className="text-muted">Total Orders</small>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="text-center p-4 border rounded" style={{ background: 'linear-gradient(135deg, #FFA50015, #FFD70015)' }}>
-                                                        <h3 className="fw-bold mb-2 text-warning">
-                                                            {productionOverview.made_to_order.in_progress || 0}
-                                                        </h3>
-                                                        <small className="text-muted">In Progress</small>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="text-center p-4 border rounded" style={{ background: 'linear-gradient(135deg, #28a74515, #20c99715)' }}>
-                                                        <h3 className="fw-bold mb-2 text-success">
-                                                            {productionOverview.made_to_order.completed || 0}
-                                                        </h3>
-                                                        <small className="text-muted">Completed</small>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="text-center p-4 border rounded" style={{ background: 'linear-gradient(135deg, #6c757d15, #49505715)' }}>
-                                                        <h3 className="fw-bold mb-2 text-secondary">
-                                                            {productionOverview.made_to_order.pending || 0}
-                                                        </h3>
-                                                        <small className="text-muted">Pending</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Progress Chart */}
-                                            <div className="mt-4">
-                                                <h6 className="mb-3">Order Status Distribution</h6>
-                                                <ResponsiveContainer width="100%" height={250}>
-                                                    <PieChart>
-                                                        <Pie
-                                                            data={[
-                                                                { name: 'Completed', value: productionOverview.made_to_order.completed || 0, color: '#28a745' },
-                                                                { name: 'In Progress', value: productionOverview.made_to_order.in_progress || 0, color: '#ffc107' },
-                                                                { name: 'Pending', value: productionOverview.made_to_order.pending || 0, color: '#6c757d' }
-                                                            ]}
-                                                            cx="50%"
-                                                            cy="50%"
-                                                            labelLine={false}
-                                                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                                            outerRadius={80}
-                                                            fill="#8884d8"
-                                                            dataKey="value"
-                                                        >
-                                                            {[
-                                                                { name: 'Completed', value: productionOverview.made_to_order.completed || 0, color: '#28a745' },
-                                                                { name: 'In Progress', value: productionOverview.made_to_order.in_progress || 0, color: '#ffc107' },
-                                                                { name: 'Pending', value: productionOverview.made_to_order.pending || 0, color: '#6c757d' }
-                                                            ].map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip />
-                                                        <Legend />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Made-to-Order Order Details */}
-                            {madeToOrderProductionData?.items && madeToOrderProductionData.items.length > 0 && (
-                                <div className="col-12 mb-4">
-                                    <div className="card border-0 shadow-sm">
-                                        <div className="card-header bg-white border-0">
-                                            <h5 className="mb-0 fw-bold">Order Details (Recent 20 Orders)</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="table-responsive">
-                                                <table className="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Order ID</th>
-                                                            <th>Product</th>
-                                                            <th>Status</th>
-                                                            <th>Quantity</th>
-                                                            <th>Progress</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {madeToOrderProductionData.items.slice(0, 20).map((item, idx) => (
-                                                            <tr key={idx}>
-                                                                <td>{item.order_id || `ORD-${idx + 1}`}</td>
-                                                                <td>{item.product_name || 'N/A'}</td>
+                                    <div className="card-body">
+                                        <div className="table-responsive">
+                                            <table className="table table-hover align-middle">
+                                                <thead className="table-light">
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Today's Output</th>
+                                                        <th>Updated By</th>
+                                                        <th>Update Timestamp</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {alkansyaDailyOutput.length > 0 ? (
+                                                        alkansyaDailyOutput.slice(0, 30).map((output, idx) => (
+                                                            <tr key={output.id || idx}>
+                                                                <td className="fw-medium">
+                                                                    {new Date(output.date).toLocaleDateString('en-US', {
+                                                                        year: 'numeric',
+                                                                        month: 'long',
+                                                                        day: 'numeric'
+                                                                    })}
+                                                                </td>
                                                                 <td>
-                                                                    <span className={`badge ${
-                                                                        item.status === 'Completed' ? 'bg-success' :
-                                                                        item.status === 'In Progress' ? 'bg-warning' :
-                                                                        'bg-secondary'
-                                                                    }`}>
-                                                                        {item.status || 'N/A'}
+                                                                    <span className="badge bg-success fs-6">
+                                                                        {output.quantity_produced || 0} units
                                                                     </span>
                                                                 </td>
-                                                                <td>{item.quantity || 0}</td>
-                                                                <td>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <div className="progress flex-grow-1 me-2" style={{ height: '20px' }}>
-                                                                            <div 
-                                                                                className="progress-bar bg-success" 
-                                                                                style={{ width: `${item.progress || 0}%` }}
-                                                                            >
-                                                                                {item.progress || 0}%
-                                                                            </div>
-                                                                        </div>
-                                                                        <span className="small">{item.progress || 0}%</span>
-                                                                    </div>
+                                                                <td>{output.produced_by || 'N/A'}</td>
+                                                                <td className="small">
+                                                                    {output.updated_at ? new Date(output.updated_at).toLocaleString() :
+                                                                     output.created_at ? new Date(output.created_at).toLocaleString() :
+                                                                     new Date(output.date).toLocaleString()}
                                                                 </td>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="4" className="text-center text-muted py-4">
+                                                                No Alkansya daily output data available.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
-                            )}
-                        </>
-                    ) : (
-                        <div className="col-12">
-                            <div className="text-center py-5">
-                                <FaTasks className="text-muted mb-3" style={{ fontSize: '3rem' }} />
-                                <h5 className="text-muted">No Work Progress Data Available</h5>
-                                <p className="text-muted">Work progress data will appear here once production activities are recorded</p>
                             </div>
-                        </div>
+
+                            {/* SECTION 3: Made-to-Order Production */}
+                            <div className="col-12 mb-4">
+                                <div className="card border-0 shadow-sm">
+                                    <div className="card-header bg-white border-0">
+                                        <h5 className="mb-0 fw-bold">
+                                            <FaClipboardList className="me-2" style={{ color: colors.warning }} />
+                                            Section 3: Made-to-Order (MTO) Production
+                                        </h5>
+                                    </div>
+                                    <div className="card-body">
+                                        {(() => {
+                                            // Filter MTO orders
+                                            let filteredMTO = mtoOrders;
+                                            
+                                            // Apply search filter
+                                            if (workProgressSearch) {
+                                                const searchLower = workProgressSearch.toLowerCase();
+                                                filteredMTO = filteredMTO.filter(order => {
+                                                    const orderNum = (order.orderNumber || '').toLowerCase();
+                                                    const productName = (order.productName || '').toLowerCase();
+                                                    return orderNum.includes(searchLower) || productName.includes(searchLower);
+                                                });
+                                            }
+                                            
+                                            // Apply status filter
+                                            if (workProgressStatusFilter !== 'all') {
+                                                filteredMTO = filteredMTO.filter(order => {
+                                                    const statusLower = order.status?.toLowerCase().replace(' ', '_');
+                                                    return statusLower === workProgressStatusFilter;
+                                                });
+                                            }
+                                            
+                                            return (
+                                                <>
+                                                    <div className="table-responsive">
+                                                        <table className="table table-hover align-middle">
+                                                            <thead className="table-light">
+                                                                <tr>
+                                                                    <th>Order Number</th>
+                                                                    <th>Product Name</th>
+                                                                    <th>Required Quantity</th>
+                                                                    <th>Completed Quantity</th>
+                                                                    <th>Percentage Completed</th>
+                                                                    <th>Deadline / Due Date</th>
+                                                                    <th>Status</th>
+                                                                    <th>Last Updated</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {filteredMTO.length > 0 ? (
+                                                                    filteredMTO.map((order, idx) => (
+                                                                        <tr key={order.orderId || idx}>
+                                                                            <td className="fw-medium">
+                                                                                <code>{order.orderNumber}</code>
+                                                                            </td>
+                                                                            <td>{order.productName}</td>
+                                                                            <td>
+                                                                                <span className="badge bg-secondary">{order.requiredQuantity}</span>
+                                                                            </td>
+                                                                            <td>
+                                                                                <span className="badge bg-info">{order.completedQuantity}</span>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div className="d-flex align-items-center">
+                                                                                    <div className="progress flex-grow-1 me-2" style={{ height: '20px', minWidth: '100px' }}>
+                                                                                        <div
+                                                                                            className={`progress-bar ${
+                                                                                                order.progress === 100 ? 'bg-success' :
+                                                                                                order.progress > 0 ? 'bg-warning' :
+                                                                                                'bg-secondary'
+                                                                                            }`}
+                                                                                            style={{ width: `${order.progress || 0}%` }}
+                                                                                        >
+                                                                                            {order.progress || 0}%
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <small className="text-muted">{order.progress || 0}%</small>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                {order.deadline ? (
+                                                                                    <span className={`badge ${
+                                                                                        new Date(order.deadline) < new Date() ? 'bg-danger' : 'bg-info'
+                                                                                    }`}>
+                                                                                        {new Date(order.deadline).toLocaleDateString()}
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="text-muted">N/A</span>
+                                                                                )}
+                                                                            </td>
+                                                                            <td>
+                                                                                <span className={`badge ${
+                                                                                    order.status === 'Completed' ? 'bg-success' :
+                                                                                    order.status === 'In Progress' ? 'bg-warning' :
+                                                                                    order.status === 'Not Started' ? 'bg-secondary' :
+                                                                                    'bg-danger'
+                                                                                }`}>
+                                                                                    {order.status}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="small">
+                                                                                {order.lastUpdatedAt ? new Date(order.lastUpdatedAt).toLocaleString() : 'N/A'}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))
+                                                                ) : (
+                                                                    <tr>
+                                                                        <td colSpan="8" className="text-center text-muted py-4">
+                                                                            No Made-to-Order production data available.
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    
+                                                    {/* Production Stages Display */}
+                                                    {filteredMTO.length > 0 && (
+                                                        <div className="mt-4">
+                                                            <h6 className="mb-3 fw-bold">Production Stages</h6>
+                                                            <div className="row g-3">
+                                                                {filteredMTO.slice(0, 5).map((order, idx) => (
+                                                                    <div key={idx} className="col-md-6 col-lg-4">
+                                                                        <div className="card border">
+                                                                            <div className="card-body p-3">
+                                                                                <h6 className="card-title small mb-2">
+                                                                                    <code>{order.orderNumber}</code> - {order.productName}
+                                                                                </h6>
+                                                                                <div className="progress mb-2" style={{ height: '8px' }}>
+                                                                                    <div
+                                                                                        className={`progress-bar ${
+                                                                                            order.progress === 100 ? 'bg-success' :
+                                                                                            order.progress > 0 ? 'bg-warning' :
+                                                                                            'bg-secondary'
+                                                                                        }`}
+                                                                                        style={{ width: `${order.progress || 0}%` }}
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="d-flex justify-content-between small">
+                                                                                    <span className="text-muted">Progress:</span>
+                                                                                    <span className="fw-medium">{order.progress || 0}%</span>
+                                                                                </div>
+                                                                                <div className="d-flex justify-content-between small mt-1">
+                                                                                    <span className="text-muted">Status:</span>
+                                                                                    <span className={`badge badge-sm ${
+                                                                                        order.status === 'Completed' ? 'bg-success' :
+                                                                                        order.status === 'In Progress' ? 'bg-warning' :
+                                                                                        'bg-secondary'
+                                                                                    }`}>
+                                                                                        {order.status}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
             )}

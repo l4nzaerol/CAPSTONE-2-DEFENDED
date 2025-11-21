@@ -77,16 +77,16 @@ const Header = ({ role, username, searchTerm, setSearchTerm }) => {
             // Fetch cart count on mount
             fetchCartCount();
 
-            // Listen for cart item added events
-            const handleCartItemAdded = () => {
-                // Simply increment the cart count instead of fetching all cart data
-                setCartCount(prev => prev + 1);
+            // Listen for cart updated events - fetch actual count for accuracy
+            const handleCartUpdated = () => {
+                // Immediately fetch the updated cart count
+                fetchCartCount();
             };
 
-            window.addEventListener('cartItemAdded', handleCartItemAdded);
+            window.addEventListener('cartUpdated', handleCartUpdated);
             
             return () => {
-                window.removeEventListener('cartItemAdded', handleCartItemAdded);
+                window.removeEventListener('cartUpdated', handleCartUpdated);
             };
         }
     }, [role]);

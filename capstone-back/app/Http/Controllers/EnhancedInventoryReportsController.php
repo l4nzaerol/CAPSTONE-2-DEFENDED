@@ -2253,9 +2253,15 @@ class EnhancedInventoryReportsController extends Controller
                 // Check if we have a stored forecast for this material
                 $storedForecast = $storedForecasts->get($material->material_id);
                 
+                // Get daily_usage from stock_levels table for consistency across all reports
+                $stockLevel = StockLevel::where('material_id', $material->material_id)->first();
+                $dailyUsageFromStockLevels = $stockLevel ? $stockLevel->daily_usage : 0;
+                
                 if ($storedForecast) {
-                    // Use stored forecast data from database columns
-                    $dailyMaterialUsage = $storedForecast->daily_usage ?? ($storedForecast->forecasted_usage / $forecastDays);
+                    // Use daily_usage from stock_levels as primary source, fallback to stored forecast
+                    $dailyMaterialUsage = $dailyUsageFromStockLevels > 0 
+                        ? $dailyUsageFromStockLevels 
+                        : ($storedForecast->daily_usage ?? ($storedForecast->forecasted_usage / $forecastDays));
                     $forecastedUsage = $storedForecast->forecasted_usage;
                     $currentStock = $storedForecast->current_stock ?? 0;
                     $daysUntilStockout = $storedForecast->days_until_stockout ?? 999;
@@ -2299,39 +2305,48 @@ class EnhancedInventoryReportsController extends Controller
                     // Calculate expected daily usage from BOM (baseline)
                     $expectedDailyUsage = $avgDailyOutput * $qtyPerUnit;
                 
-                    // If we have historical transaction data, use it for more accurate prediction
-                    // But validate it against expected usage to avoid inflated values
-                    if (!empty($historicalMaterialUsage)) {
-                        $avgDailyMaterialUsage = array_sum($historicalMaterialUsage) / count($historicalMaterialUsage);
-                        
-                        // Calculate moving averages for trend analysis
-                        $movingAvg7 = count($historicalMaterialUsage) >= 7 
-                            ? array_sum(array_slice($historicalMaterialUsage, -7)) / 7 
-                            : $avgDailyMaterialUsage;
-                        $movingAvg14 = count($historicalMaterialUsage) >= 14 
-                            ? array_sum(array_slice($historicalMaterialUsage, -14)) / 14 
-                            : $avgDailyMaterialUsage;
-                        
-                        // Use weighted average (recent data has more weight)
-                        $calculatedFromTransactions = ($movingAvg7 * 0.6) + ($movingAvg14 * 0.4);
-                        
-                        // Validate: If calculated usage is more than 2x expected, use expected instead
-                        // This prevents inflated values from duplicate transactions or data errors
-                        if ($calculatedFromTransactions > 0 && $expectedDailyUsage > 0) {
-                            $ratio = $calculatedFromTransactions / $expectedDailyUsage;
-                            if ($ratio > 2.0 || $ratio < 0.5) {
-                                // Historical data seems incorrect, use BOM-based calculation
-                                $dailyMaterialUsage = $expectedDailyUsage;
+                    // Get daily_usage from stock_levels table for consistency across all reports
+                    $stockLevel = StockLevel::where('material_id', $material->material_id)->first();
+                    $dailyUsageFromStockLevels = $stockLevel ? $stockLevel->daily_usage : 0;
+                    
+                    // Use daily_usage from stock_levels as the primary source for consistency
+                    if ($dailyUsageFromStockLevels > 0) {
+                        $dailyMaterialUsage = $dailyUsageFromStockLevels;
+                    } else {
+                        // Fallback: If we have historical transaction data, use it for more accurate prediction
+                        // But validate it against expected usage to avoid inflated values
+                        if (!empty($historicalMaterialUsage)) {
+                            $avgDailyMaterialUsage = array_sum($historicalMaterialUsage) / count($historicalMaterialUsage);
+                            
+                            // Calculate moving averages for trend analysis
+                            $movingAvg7 = count($historicalMaterialUsage) >= 7 
+                                ? array_sum(array_slice($historicalMaterialUsage, -7)) / 7 
+                                : $avgDailyMaterialUsage;
+                            $movingAvg14 = count($historicalMaterialUsage) >= 14 
+                                ? array_sum(array_slice($historicalMaterialUsage, -14)) / 14 
+                                : $avgDailyMaterialUsage;
+                            
+                            // Use weighted average (recent data has more weight)
+                            $calculatedFromTransactions = ($movingAvg7 * 0.6) + ($movingAvg14 * 0.4);
+                            
+                            // Validate: If calculated usage is more than 2x expected, use expected instead
+                            // This prevents inflated values from duplicate transactions or data errors
+                            if ($calculatedFromTransactions > 0 && $expectedDailyUsage > 0) {
+                                $ratio = $calculatedFromTransactions / $expectedDailyUsage;
+                                if ($ratio > 2.0 || $ratio < 0.5) {
+                                    // Historical data seems incorrect, use BOM-based calculation
+                                    $dailyMaterialUsage = $expectedDailyUsage;
+                                } else {
+                                    // Historical data is reasonable, use it
+                                    $dailyMaterialUsage = $calculatedFromTransactions;
+                                }
                             } else {
-                                // Historical data is reasonable, use it
-                                $dailyMaterialUsage = $calculatedFromTransactions;
+                                $dailyMaterialUsage = $expectedDailyUsage;
                             }
                         } else {
+                            // Fallback: Calculate from BOM and average daily output
                             $dailyMaterialUsage = $expectedDailyUsage;
                         }
-                    } else {
-                        // Fallback: Calculate from BOM and average daily output
-                        $dailyMaterialUsage = $expectedDailyUsage;
                     }
                     
                     $forecastedUsage = $dailyMaterialUsage * $forecastDays;
@@ -2407,6 +2422,7 @@ class EnhancedInventoryReportsController extends Controller
                     'current_stock' => round($currentStock, 2), // CURRENT STOCK column
                     'available_quantity' => round($availableQty, 2),
                     'daily_material_usage' => round($dailyMaterialUsage, 2), // DAILY USAGE column
+                    'daily_usage' => round($dailyMaterialUsage, 2), // Alias for consistency with stock_levels
                     'forecasted_usage' => round($forecastedUsage, 2), // FORECASTED USAGE column
                     'days_until_stockout' => $daysUntilStockout, // DAYS LEFT column
                     'status' => $status, // STATUS column
@@ -2704,6 +2720,7 @@ class EnhancedInventoryReportsController extends Controller
                         'max_level' => $maxLevel,
                         'avg_daily_quantity' => $avgDailyQuantity,
                         'daily_material_usage' => round($dailyMaterialUsage, 2),
+                        'daily_usage' => round($dailyMaterialUsage, 2), // Alias for consistency with stock_levels
                         'forecasted_usage' => round($forecastedUsage, 2),
                         'projected_stock' => round($projectedStock, 2),
                         'days_until_stockout' => $daysUntilStockout,
@@ -3142,10 +3159,14 @@ class EnhancedInventoryReportsController extends Controller
                 // Get current stock from inventory records
                 $currentStock = $material->inventory->sum('current_stock') ?? $material->current_stock ?? 0;
                 
+                // Get daily_usage from stock_levels table for consistency across all reports
+                $stockLevel = StockLevel::where('material_id', $material->material_id)->first();
+                $dailyUsageFromStockLevels = $stockLevel ? $stockLevel->daily_usage : 0;
+                
                 // Get consumption from Alkansya and Made-to-Order (base prediction)
                 $alkansyaUsage = $alkansyaDailyConsumption[$material->material_id] ?? 0;
                 $madeToOrderUsage = $madeToOrderDailyConsumption[$material->material_id] ?? 0;
-                $basePredictedDailyUsage = max($alkansyaUsage + $madeToOrderUsage, 0);
+                $basePredictedDailyUsage = $dailyUsageFromStockLevels > 0 ? $dailyUsageFromStockLevels : max($alkansyaUsage + $madeToOrderUsage, 0);
                 
                 // PREDICTIVE ANALYTICS: Calculate historical usage patterns
                 $materialTransactions = $historicalTransactions->get($material->material_id, collect());
@@ -3207,52 +3228,58 @@ class EnhancedInventoryReportsController extends Controller
                     }
                 }
                 
-                // PREDICTIVE ANALYTICS: Combine predictions with weighted average
-                // Weight: 40% historical (if available), 30% moving average 7-day, 20% moving average 14-day, 10% base prediction
-                $predictedDailyUsage = 0;
-                if ($historicalDailyUsage > 0 || $movingAverage7 > 0 || $movingAverage14 > 0) {
-                    $weights = [];
-                    $values = [];
-                    
-                    if ($movingAverage7 > 0) {
-                        $weights[] = 0.35;
-                        $values[] = $movingAverage7;
-                    }
-                    if ($movingAverage14 > 0) {
-                        $weights[] = 0.25;
-                        $values[] = $movingAverage14;
-                    }
-                    if ($historicalDailyUsage > 0) {
-                        $weights[] = 0.30;
-                        $values[] = $historicalDailyUsage;
-                    }
-                    if ($basePredictedDailyUsage > 0) {
-                        $weights[] = 0.10;
-                        $values[] = $basePredictedDailyUsage;
-                    }
-                    
-                    // Normalize weights
-                    $totalWeight = array_sum($weights);
-                    if ($totalWeight > 0) {
-                        $weights = array_map(function($w) use ($totalWeight) {
-                            return $w / $totalWeight;
-                        }, $weights);
+                // Use daily_usage from stock_levels as the primary source for consistency
+                // This ensures all reports (stock levels, replenishment, forecasting) use the same daily usage value
+                if ($dailyUsageFromStockLevels > 0) {
+                    $predictedDailyUsage = $dailyUsageFromStockLevels;
+                } else {
+                    // PREDICTIVE ANALYTICS: Combine predictions with weighted average (fallback if stock_levels not available)
+                    // Weight: 40% historical (if available), 30% moving average 7-day, 20% moving average 14-day, 10% base prediction
+                    $predictedDailyUsage = 0;
+                    if ($historicalDailyUsage > 0 || $movingAverage7 > 0 || $movingAverage14 > 0) {
+                        $weights = [];
+                        $values = [];
                         
-                        // Calculate weighted average
-                        for ($i = 0; $i < count($values); $i++) {
-                            $predictedDailyUsage += $values[$i] * $weights[$i];
+                        if ($movingAverage7 > 0) {
+                            $weights[] = 0.35;
+                            $values[] = $movingAverage7;
+                        }
+                        if ($movingAverage14 > 0) {
+                            $weights[] = 0.25;
+                            $values[] = $movingAverage14;
+                        }
+                        if ($historicalDailyUsage > 0) {
+                            $weights[] = 0.30;
+                            $values[] = $historicalDailyUsage;
+                        }
+                        if ($basePredictedDailyUsage > 0) {
+                            $weights[] = 0.10;
+                            $values[] = $basePredictedDailyUsage;
+                        }
+                        
+                        // Normalize weights
+                        $totalWeight = array_sum($weights);
+                        if ($totalWeight > 0) {
+                            $weights = array_map(function($w) use ($totalWeight) {
+                                return $w / $totalWeight;
+                            }, $weights);
+                            
+                            // Calculate weighted average
+                            for ($i = 0; $i < count($values); $i++) {
+                                $predictedDailyUsage += $values[$i] * $weights[$i];
+                            }
+                        } else {
+                            $predictedDailyUsage = $basePredictedDailyUsage;
+                        }
+                        
+                        // Apply trend adjustment (if trend is significant)
+                        if (abs($trend) > 0.01) {
+                            $predictedDailyUsage = max(0, $predictedDailyUsage + ($trend * 0.5)); // Apply 50% of trend
                         }
                     } else {
+                        // Fallback to base prediction if no historical data
                         $predictedDailyUsage = $basePredictedDailyUsage;
                     }
-                    
-                    // Apply trend adjustment (if trend is significant)
-                    if (abs($trend) > 0.01) {
-                        $predictedDailyUsage = max(0, $predictedDailyUsage + ($trend * 0.5)); // Apply 50% of trend
-                    }
-                } else {
-                    // Fallback to base prediction if no historical data
-                    $predictedDailyUsage = $basePredictedDailyUsage;
                 }
                 
                 // Calculate forecasted consumption with confidence intervals
@@ -3428,6 +3455,7 @@ class EnhancedInventoryReportsController extends Controller
                     'unit_cost' => $material->standard_cost ?? 0,
                     'total_value' => round($currentStock * ($material->standard_cost ?? 0), 2),
                     'predicted_daily_usage' => round($predictedDailyUsage, 2),
+                    'daily_usage' => round($predictedDailyUsage, 2), // Alias for consistency with stock_levels
                     'forecasted_consumption' => round($forecastedConsumption, 2),
                     'projected_stock' => round($projectedStock, 2),
                     'projected_stock_upper' => round($projectedStockUpper, 2),
@@ -5515,7 +5543,7 @@ class EnhancedInventoryReportsController extends Controller
                         'reorder_level' => $reorderLevel,
                         'critical_stock' => $criticalStock,
                         'max_level' => $maxLevel,
-                        'avg_daily_consumption' => $avgDailyConsumption,
+                        'daily_usage' => $avgDailyConsumption,
                         'days_until_stockout' => $daysUntilStockout,
                         'unit_cost' => $unitCost,
                         'total_value' => $totalValue,
@@ -5596,7 +5624,7 @@ class EnhancedInventoryReportsController extends Controller
                     'reorder_level' => $level->reorder_level,
                     'critical_stock' => $level->critical_stock,
                     'max_level' => $level->max_level,
-                    'avg_daily_consumption' => $level->avg_daily_consumption,
+                    'daily_usage' => $level->daily_usage,
                     'days_until_stockout' => $level->days_until_stockout,
                     'unit' => $level->unit_of_measure,
                     'unit_cost' => $level->unit_cost,

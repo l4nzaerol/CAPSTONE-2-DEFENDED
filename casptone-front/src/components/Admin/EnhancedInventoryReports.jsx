@@ -479,20 +479,6 @@ const EnhancedInventoryReports = () => {
         fetchAllReports();
     }, [fetchAllReports]);
     
-    // Real-time tracking: Auto-refresh stock levels every 30 seconds when on stock tab
-    useEffect(() => {
-        if (activeTab === 'stock') {
-            const interval = setInterval(() => {
-                // Only refresh if not currently loading
-                if (!tabLoadingStates.stock && !loading) {
-                    setRefreshKey(prev => prev + 1);
-                }
-            }, 30000); // Refresh every 30 seconds
-            
-            return () => clearInterval(interval);
-        }
-    }, [activeTab, tabLoadingStates.stock, loading, refreshKey]);
-
     // Reload stock data when filter changes (only if already on stock tab)
     useEffect(() => {
         if (activeTab === 'stock' && !tabLoadingStates.stock) {
@@ -1326,7 +1312,8 @@ const EnhancedInventoryReports = () => {
                             status_label: item.status_label || item.stock_status || 'In Stock',
                             is_alkansya_material: item.is_alkansya_material || false,
                             is_made_to_order_material: item.is_made_to_order_material || false,
-                            avg_daily_consumption: Number(item.avg_daily_consumption || 0),
+                            avg_daily_consumption: Number(item.daily_usage || item.avg_daily_consumption || 0),
+                            daily_usage: Number(item.daily_usage || item.avg_daily_consumption || 0),
                             days_until_stockout: item.days_until_stockout !== null && item.days_until_stockout !== undefined ? Number(item.days_until_stockout) : 999,
                             needs_reorder: item.needs_reorder || false
                         }));
@@ -1991,72 +1978,6 @@ const EnhancedInventoryReports = () => {
                                     </div>
                                 </div>
 
-                                {/* Comprehensive Inventory Report - Separate Row */}
-                                <div className="mb-4">
-                                    <div className="row g-3">
-                                        <div className="col-md-4">
-                                            <div className="card border-0 shadow-sm h-100" style={{ 
-                                                background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.02))',
-                                                borderRadius: '12px',
-                                                border: '1px solid rgba(40, 167, 69, 0.1)'
-                                            }}>
-                                                <div className="card-body p-3">
-                                                    <div className="d-flex align-items-center mb-3">
-                                                        <div className="rounded-circle p-2 me-2" style={{ 
-                                                            background: 'linear-gradient(135deg, #28a745, #1e7e34)',
-                                                            width: '32px',
-                                                            height: '32px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}>
-                                                            <FaClipboardList className="text-white" style={{ fontSize: '14px' }} />
-                                                        </div>
-                                                        <h6 className="mb-0 fw-bold" style={{ color: '#28a745', fontSize: '0.85rem' }}>
-                                                            Comprehensive Inventory Report
-                                                        </h6>
-                                                    </div>
-                                                    <div className="btn-group w-100" role="group">
-                                                        <button 
-                                                            className="btn btn-outline-success"
-                                                            onClick={() => previewReport('full')}
-                                                            style={{ borderRadius: '8px 0 0 8px', transition: 'all 0.3s', borderWidth: '2px', flex: 1 }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#28a745';
-                                                                e.currentTarget.style.color = 'white';
-                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                                                e.currentTarget.style.color = '#28a745';
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                            }}
-                                                        >
-                                                            <i className="fas fa-eye me-2"></i>
-                                                            Preview
-                                                        </button>
-                                                        <button 
-                                                            className="btn btn-success"
-                                                            onClick={() => downloadReport('full')}
-                                                            style={{ borderRadius: '0 8px 8px 0', transition: 'all 0.3s', flex: 1 }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#1e7e34';
-                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#28a745';
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                            }}
-                                                        >
-                                                            <i className="fas fa-file-csv me-2"></i>
-                                                            CSV
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* PDF Reports Section */}
                                 <div>
@@ -2264,72 +2185,6 @@ const EnhancedInventoryReports = () => {
                                     </div>
                                 </div>
 
-                                {/* Comprehensive Inventory Report PDF - Separate Row */}
-                                <div>
-                                    <div className="row g-3">
-                                        <div className="col-md-4">
-                                            <div className="card border-0 shadow-sm h-100" style={{ 
-                                                background: 'linear-gradient(135deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.02))',
-                                                borderRadius: '12px',
-                                                border: '1px solid rgba(220, 53, 69, 0.1)'
-                                            }}>
-                                                <div className="card-body p-3">
-                                                    <div className="d-flex align-items-center mb-3">
-                                                        <div className="rounded-circle p-2 me-2" style={{ 
-                                                            background: 'linear-gradient(135deg, #dc3545, #c82333)',
-                                                            width: '32px',
-                                                            height: '32px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center'
-                                                        }}>
-                                                            <FaClipboardList className="text-white" style={{ fontSize: '14px' }} />
-                                                        </div>
-                                                        <h6 className="mb-0 fw-bold" style={{ color: '#dc3545', fontSize: '0.85rem' }}>
-                                                            Comprehensive Inventory Report
-                                                        </h6>
-                                                    </div>
-                                                    <div className="btn-group w-100" role="group">
-                                                        <button 
-                                                            className="btn btn-outline-danger"
-                                                            onClick={() => previewPdfReport('full')}
-                                                            style={{ borderRadius: '8px 0 0 8px', transition: 'all 0.3s', borderWidth: '2px', flex: 1 }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#dc3545';
-                                                                e.currentTarget.style.color = 'white';
-                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                                                e.currentTarget.style.color = '#dc3545';
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                            }}
-                                                        >
-                                                            <i className="fas fa-eye me-2"></i>
-                                                            Preview
-                                                        </button>
-                                                        <button 
-                                                            className="btn btn-danger"
-                                                            onClick={() => downloadPdfReport('full')}
-                                                            style={{ borderRadius: '0 8px 8px 0', transition: 'all 0.3s', flex: 1 }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#c82333';
-                                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#dc3545';
-                                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                            }}
-                                                        >
-                                                            <i className="fas fa-file-pdf me-2"></i>
-                                                            PDF
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -2524,12 +2379,6 @@ const EnhancedInventoryReports = () => {
                                         <div className="spinner-border spinner-border-sm ms-2" role="status">
                                             <span className="visually-hidden">Loading...</span>
                                         </div>
-                                    )}
-                                    {!tabLoadingStates.stock && activeTab === 'stock' && (
-                                        <span className="badge bg-success ms-2" title="Real-time tracking active - Auto-refreshes every 30 seconds">
-                                            <i className="fas fa-circle text-white" style={{ fontSize: '6px', animation: 'pulse 2s infinite' }}></i>
-                                            {' '}Live
-                                        </span>
                                     )}
                                 </h5>
                                 </div>
@@ -2765,7 +2614,7 @@ const EnhancedInventoryReports = () => {
                                                             </td>
                                                         <td className="text-end" style={{ padding: '1rem' }}>
                                                                 <span className="text-info">
-                                                                    {Number(item.avg_daily_consumption || 0).toFixed(2)}
+                                                                    {Number(item.daily_usage || item.avg_daily_consumption || 0).toFixed(2)}
                                                                 </span>
                                                         </td>
                                                         <td style={{ padding: '1rem' }}>
@@ -3302,7 +3151,7 @@ const EnhancedInventoryReports = () => {
                                                                                                 </td>
                                                                                                 <td style={{ padding: '15px', textAlign: 'center' }}>
                                                                                                     <span style={{ fontWeight: '600', fontSize: '0.95rem', color: '#495057' }}>
-                                                                                                        {material.daily_material_usage ? Number(material.daily_material_usage).toFixed(2) : '-'} {material.unit || 'pcs/day'}
+                                                                                                        {(material.daily_usage || material.daily_material_usage) ? Number(material.daily_usage || material.daily_material_usage).toFixed(2) : '-'} {material.unit || 'pcs/day'}
                                                                                                     </span>
                                                                                                 </td>
                                                                                                 <td style={{ padding: '15px', textAlign: 'center' }}>
@@ -3732,7 +3581,7 @@ const EnhancedInventoryReports = () => {
                                                                                                 </td>
                                                                                                 <td style={{ padding: '15px', textAlign: 'center' }}>
                                                                                                     <span style={{ fontWeight: '600', fontSize: '0.95rem', color: '#495057' }}>
-                                                                                                        {material.daily_material_usage ? Number(material.daily_material_usage).toFixed(2) : '-'} {material.unit || 'pcs/day'}
+                                                                                                        {(material.daily_usage || material.daily_material_usage) ? Number(material.daily_usage || material.daily_material_usage).toFixed(2) : '-'} {material.unit || 'pcs/day'}
                                                                                                     </span>
                                                                                                 </td>
                                                                                                 <td style={{ padding: '15px', textAlign: 'center' }}>
@@ -4149,7 +3998,7 @@ const EnhancedInventoryReports = () => {
                                                                             .map((item, index) => {
                                                                                 // Calculate projected stock based on selected windowDays for status calculation
                                                                                 const currentStock = item.current_stock || 0;
-                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                 const projectedStock = currentStock - projectedUsage;
                                                                                 
@@ -4191,11 +4040,11 @@ const EnhancedInventoryReports = () => {
                                                                                     <tr key={index}>
                                                                                         <td style={{ padding: '12px' }}>{item.material_name}</td>
                                                                                         <td className="text-end" style={{ padding: '12px' }}>{item.current_stock?.toFixed(2) || '0.00'}</td>
-                                                                                        <td className="text-end" style={{ padding: '12px' }}>{item.predicted_daily_usage?.toFixed(2) || '0.00'}</td>
+                                                                                        <td className="text-end" style={{ padding: '12px' }}>{(item.daily_usage || item.predicted_daily_usage || 0).toFixed(2)}</td>
                                                                                         <td className="text-end" style={{ padding: '12px' }}>
                                                                                             {(() => {
                                                                                                 // Calculate projected usage based on selected windowDays
-                                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                                 return projectedUsage.toFixed(2);
                                                                                             })()}
@@ -4204,7 +4053,7 @@ const EnhancedInventoryReports = () => {
                                                                                             {(() => {
                                                                                                 // Calculate projected stock based on selected windowDays
                                                                                                 const currentStock = item.current_stock || 0;
-                                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                                 const projectedStock = currentStock - projectedUsage;
                                                                                                 return projectedStock.toFixed(2);
@@ -4323,7 +4172,7 @@ const EnhancedInventoryReports = () => {
                                                                             .map((item, index) => {
                                                                                 // Calculate projected stock based on selected windowDays for status calculation
                                                                                 const currentStock = item.current_stock || 0;
-                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                 const projectedStock = currentStock - projectedUsage;
                                                                                 
@@ -4365,11 +4214,11 @@ const EnhancedInventoryReports = () => {
                                                                                     <tr key={index}>
                                                                                         <td style={{ padding: '12px' }}>{item.material_name}</td>
                                                                                         <td className="text-end" style={{ padding: '12px' }}>{item.current_stock?.toFixed(2) || '0.00'}</td>
-                                                                                        <td className="text-end" style={{ padding: '12px' }}>{item.predicted_daily_usage?.toFixed(2) || '0.00'}</td>
+                                                                                        <td className="text-end" style={{ padding: '12px' }}>{(item.daily_usage || item.predicted_daily_usage || 0).toFixed(2)}</td>
                                                                                         <td className="text-end" style={{ padding: '12px' }}>
                                                                                             {(() => {
                                                                                                 // Calculate projected usage based on selected windowDays
-                                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                                 return projectedUsage.toFixed(2);
                                                                                             })()}
@@ -4378,7 +4227,7 @@ const EnhancedInventoryReports = () => {
                                                                                             {(() => {
                                                                                                 // Calculate projected stock based on selected windowDays
                                                                                                 const currentStock = item.current_stock || 0;
-                                                                                                const dailyUsage = item.predicted_daily_usage || 0;
+                                                                                                const dailyUsage = item.daily_usage || item.predicted_daily_usage || 0;
                                                                                                 const projectedUsage = dailyUsage * windowDays;
                                                                                                 const projectedStock = currentStock - projectedUsage;
                                                                                                 return projectedStock.toFixed(2);
