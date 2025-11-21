@@ -402,6 +402,12 @@ const CartTable = () => {
     0
   );
 
+  // Check if any selected item is made-to-order
+  const hasMadeToOrder = selectedItemsList.some(item => {
+    const categoryName = item.product?.category_name || '';
+    return categoryName === 'Made to Order' || categoryName === 'made_to_order';
+  });
+
   // Calculate shipping fee for selected items
   const shippingInfo = calculateTotalShippingFee(
     selectedItemsList,
@@ -410,7 +416,9 @@ const CartTable = () => {
     quantities
   );
   
-  const totalWithShipping = selectedItemsPrice + shippingInfo.shippingFee;
+  // For made-to-order products, shipping fee is not calculated upfront
+  const shippingFee = hasMadeToOrder ? 0 : shippingInfo.shippingFee;
+  const totalWithShipping = selectedItemsPrice + shippingFee;
 
   // Helper function to get image URL
   const getImageUrl = (item) => {
@@ -651,17 +659,44 @@ const CartTable = () => {
             {selectedProvince && (
               <div className="summary-row">
                 <span>Shipping:</span>
-                <strong style={{ color: shippingInfo.isFreeShipping ? '#28a745' : 'inherit' }}>
-                  {shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`}
+                <strong style={{ 
+                  color: hasMadeToOrder ? '#0066cc' : (shippingInfo.isFreeShipping ? '#28a745' : 'inherit'),
+                  fontSize: hasMadeToOrder ? '0.9rem' : 'inherit',
+                  fontStyle: hasMadeToOrder ? 'italic' : 'normal'
+                }}>
+                  {hasMadeToOrder ? 'Depends on location' : (shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`)}
                 </strong>
               </div>
             )}
+            {hasMadeToOrder && (
+              <div className="summary-row" style={{ 
+                fontSize: '0.85rem', 
+                color: '#0066cc', 
+                fontStyle: 'italic',
+                marginTop: '4px'
+              }}>
+                <span style={{ display: 'block', lineHeight: '1.4' }}>
+                  ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
+                </span>
+              </div>
+            )}
             <div className="summary-row total-row">
-              <span>Total Amount:</span>
+              <span>Total Amount{hasMadeToOrder ? ' (excl. shipping)' : ''}:</span>
               <strong className="total-amount">
                 ₱{selectedProvince ? totalWithShipping.toLocaleString() : selectedItemsPrice.toLocaleString()}
               </strong>
             </div>
+            {hasMadeToOrder && (
+              <div style={{ 
+                fontSize: '0.8rem', 
+                color: '#666', 
+                fontStyle: 'italic',
+                marginTop: '4px',
+                textAlign: 'right'
+              }}>
+                *Shipping fee will be calculated based on your delivery address
+              </div>
+            )}
           </div>
           
           <button 
@@ -1094,7 +1129,16 @@ const CartTable = () => {
                     <div className="total-row">
                       <span>Shipping Fee:</span>
                       <span>
-                        {shippingInfo.isFreeShipping ? (
+                        {hasMadeToOrder ? (
+                          <span style={{ 
+                            color: '#0066cc', 
+                            fontWeight: 500,
+                            fontSize: '0.85rem',
+                            fontStyle: 'italic'
+                          }}>
+                            Depends on location
+                          </span>
+                        ) : shippingInfo.isFreeShipping ? (
                           <span style={{ color: '#28a745', fontWeight: 600 }}>
                             FREE
                           </span>
@@ -1105,15 +1149,38 @@ const CartTable = () => {
                         )}
                       </span>
                     </div>
-                    {shippingInfo.isFreeShipping && (
+                    {hasMadeToOrder && (
+                      <div className="total-row" style={{ 
+                        fontSize: '0.85rem', 
+                        color: '#0066cc', 
+                        fontStyle: 'italic',
+                        marginTop: '4px'
+                      }}>
+                        <span style={{ display: 'block', lineHeight: '1.4' }}>
+                          ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
+                        </span>
+                      </div>
+                    )}
+                    {!hasMadeToOrder && shippingInfo.isFreeShipping && (
                       <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
                         <span>🎉 Free shipping for 3+ alkansya!</span>
                       </div>
                     )}
                     <div className="total-row final-total">
-                      <span>Total Amount:</span>
+                      <span>Total Amount{hasMadeToOrder ? ' (excl. shipping)' : ''}:</span>
                       <span className="final-amount">₱{totalWithShipping.toLocaleString()}</span>
                     </div>
+                    {hasMadeToOrder && (
+                      <div style={{ 
+                        fontSize: '0.8rem', 
+                        color: '#666', 
+                        fontStyle: 'italic',
+                        marginTop: '4px',
+                        textAlign: 'right'
+                      }}>
+                        *Shipping fee will be calculated based on your delivery address
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

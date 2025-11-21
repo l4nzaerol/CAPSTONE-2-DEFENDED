@@ -591,7 +591,9 @@ export default function ProductionTrackingSystem() {
     }
   };
   
-  const completeProcessUpdate = async (productionId, processId, processName, newStatus, delayInfo, remarks = null) => {
+  const completeProcessUpdate = async (productionId, processId, processName, newStatus, delayInfo, remarks = null, options = {}) => {
+    const { skipToast = false, skipDataFetch = false } = options;
+    
     try {
       console.log(`Updating process ${processId} of production ${productionId} to status: ${newStatus}`);
       
@@ -614,22 +616,26 @@ export default function ProductionTrackingSystem() {
       
       console.log('Process update response:', res.data);
       
-      // Show success toast notification immediately
-      if (newStatus === 'completed') {
-        toast.success(`✅ "${processName}" completed successfully!`, {
-          duration: 3000,
-          position: 'top-right'
-        });
-      } else {
-        toast.info(`🔄 "${processName}" marked as pending`, {
-          duration: 3000,
-          position: 'top-right'
-        });
+      // Show success toast notification immediately (unless skipped)
+      if (!skipToast) {
+        if (newStatus === 'completed') {
+          toast.success(`✅ "${processName}" completed successfully!`, {
+            duration: 3000,
+            position: 'top-right'
+          });
+        } else {
+          toast.info(`🔄 "${processName}" marked as pending`, {
+            duration: 3000,
+            position: 'top-right'
+          });
+        }
       }
       
-      // Refresh productions to get updated data
-      await fetchProductions();
-      await fetchAnalytics();
+      // Refresh productions to get updated data (unless skipped - caller will handle it)
+      if (!skipDataFetch) {
+        await fetchProductions();
+        await fetchAnalytics();
+      }
       setError('');
       
     } catch (err) {
@@ -669,28 +675,38 @@ export default function ProductionTrackingSystem() {
         actualCompletionDate: delayModalData.actualCompletionDate
       } : null;
       
+      // Store data before API call for immediate UI updates
+      const production = productions.find(p => p.id === remarksModalData.productionId);
+      const orderNumber = production?.order_id ? ` - Order #${production.order_id}` : '';
+      const processName = remarksModalData.processName;
+      
+      // Make API call (skip toast and data fetch - we handle them here for faster UI)
       await completeProcessUpdate(
         remarksModalData.productionId,
         remarksModalData.processId,
         remarksModalData.processName,
         'completed',
         delayInfo,
-        remarksModalData.remarks
+        remarksModalData.remarks,
+        { skipToast: true, skipDataFetch: true }
       );
       
       console.log('✅ Process completed with remarks');
       
-      // Get order number for display before closing modal
-      const production = productions.find(p => p.id === remarksModalData.productionId);
-      const orderNumber = production?.order_id ? ` - Order #${production.order_id}` : '';
-      
-      // Store process name for toast before clearing state
-      const processName = remarksModalData.processName;
-      
-      // Close the modal
+      // Immediately close modal and reset state for fast UI response
       setShowRemarksModal(false);
+      setIsSubmittingRemarks(false);
       
-      // Show success toast with process name and order number
+      // Reset modal data immediately
+      setRemarksModalData({
+        productionId: null,
+        processId: null,
+        processName: '',
+        remarks: '',
+        isDelayed: false
+      });
+      
+      // Show success toast immediately
       toast.success(`✅ ${processName} Completed${orderNumber}`, {
         duration: 2000,
         position: 'top-right',
@@ -701,21 +717,14 @@ export default function ProductionTrackingSystem() {
         }
       });
       
-      // Reset modal data
-      setRemarksModalData({
-        productionId: null,
-        processId: null,
-        processName: '',
-        remarks: '',
-        isDelayed: false
+      // Refresh data in background (non-blocking) - fetch in parallel for faster updates
+      Promise.all([
+        fetchProductions(),
+        fetchAnalytics()
+      ]).catch(err => {
+        console.error('Background data refresh error:', err);
+        // Silently handle background refresh errors - user already sees success
       });
-      
-      // Reset loading state
-      setIsSubmittingRemarks(false);
-      
-      // Refresh data
-      await fetchProductions();
-      await fetchAnalytics();
       
     } catch (err) {
       console.error('❌ Error in remarks modal submit:', err);

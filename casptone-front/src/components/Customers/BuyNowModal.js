@@ -191,6 +191,12 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
     }
   };
 
+  // Check if product is made-to-order
+  const isMadeToOrder = product && (
+    product.category_name === 'Made to Order' || 
+    product.category_name === 'made_to_order'
+  );
+  
   // Calculate shipping fee
   const shippingInfo = getShippingFee(
     product,
@@ -200,7 +206,8 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
   );
   
   const subtotal = product ? (product.price * quantity) : 0;
-  const shippingFee = formData.selectedProvince ? shippingInfo.shippingFee : 0;
+  // For made-to-order products, shipping fee is not calculated upfront
+  const shippingFee = isMadeToOrder ? 0 : (formData.selectedProvince ? shippingInfo.shippingFee : 0);
   const totalPrice = subtotal + shippingFee;
 
   if (!show || !product) {
@@ -410,7 +417,16 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
                   <div className="total-row">
                     <span>Shipping Fee:</span>
                     <span>
-                      {shippingInfo.isFreeShipping ? (
+                      {isMadeToOrder ? (
+                        <span style={{ 
+                          color: '#0066cc', 
+                          fontWeight: 500,
+                          fontSize: '0.85rem',
+                          fontStyle: 'italic'
+                        }}>
+                          Depends on location
+                        </span>
+                      ) : shippingInfo.isFreeShipping ? (
                         <span style={{ color: '#28a745', fontWeight: 600 }}>
                           FREE
                         </span>
@@ -421,15 +437,38 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
                       )}
                     </span>
                   </div>
-                  {shippingInfo.isFreeShipping && (
+                  {isMadeToOrder && (
+                    <div className="total-row" style={{ 
+                      fontSize: '0.85rem', 
+                      color: '#0066cc', 
+                      fontStyle: 'italic',
+                      marginTop: '4px'
+                    }}>
+                      <span style={{ display: 'block', lineHeight: '1.4' }}>
+                        ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
+                      </span>
+                    </div>
+                  )}
+                  {!isMadeToOrder && shippingInfo.isFreeShipping && (
                     <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
                       <span>🎉 Free shipping for 3+ alkansya!</span>
                     </div>
                   )}
                   <div className="total-row final-total">
-                    <span>Total:</span>
+                    <span>Total{isMadeToOrder ? ' (excl. shipping)' : ''}:</span>
                     <span className="final-amount">{formatPrice(totalPrice)}</span>
                   </div>
+                  {isMadeToOrder && (
+                    <div style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#666', 
+                      fontStyle: 'italic',
+                      marginTop: '4px',
+                      textAlign: 'right'
+                    }}>
+                      *Shipping fee will be calculated based on your delivery address
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
