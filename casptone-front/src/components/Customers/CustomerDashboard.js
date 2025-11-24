@@ -11,24 +11,27 @@ const CustomerDashboard = ({ searchTerm = "" }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchProducts = useCallback(async () => {
+    const fetchProducts = useCallback(async (forceRefresh = false) => {
         setLoading(true);
         try {
-            // Check if we have cached products (valid for 5 minutes)
-            const cachedProducts = localStorage.getItem('cached_products');
-            const cacheTimestamp = localStorage.getItem('products_cache_timestamp');
-            const now = Date.now();
-            const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < 300000; // 5 minutes
-            
-            if (cachedProducts && cacheValid) {
-                const parsedProducts = JSON.parse(cachedProducts);
-                setProducts(parsedProducts);
-                setLoading(false);
-                return;
+            // Check if we should use cache (unless force refresh is requested)
+            if (!forceRefresh) {
+                const cachedProducts = localStorage.getItem('cached_products');
+                const cacheTimestamp = localStorage.getItem('products_cache_timestamp');
+                const now = Date.now();
+                // Reduced cache time to 1 minute for faster updates
+                const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < 60000; // 1 minute
+                
+                if (cachedProducts && cacheValid) {
+                    const parsedProducts = JSON.parse(cachedProducts);
+                    setProducts(parsedProducts);
+                    setLoading(false);
+                    return;
+                }
             }
     
             const response = await axios.get("http://localhost:8000/api/products", {
-                timeout: 10000, // 10 second timeout
+                timeout: 20000, // 20 second timeout
             });
     
             console.log("Fetched products:", response.data);
@@ -36,23 +39,29 @@ const CustomerDashboard = ({ searchTerm = "" }) => {
             setProducts(response.data);
             
             // Cache the products for faster future loads
+            const now = Date.now();
             localStorage.setItem('cached_products', JSON.stringify(response.data));
             localStorage.setItem('products_cache_timestamp', now.toString());
             
         } catch (error) {
-            console.error("Error fetching products:", error.response || error);
-            
-            // Show specific error messages
-            if (error.response?.status === 500) {
-                console.error("Server error - backend issue");
-            } else if (!error.response) {
-                console.error("Network error - check if backend is running");
+            // Only log error if it's not a timeout (to reduce console noise)
+            if (error.code !== 'ECONNABORTED') {
+                console.error("Error fetching products:", error.response || error);
+                
+                // Show specific error messages
+                if (error.response?.status === 500) {
+                    console.error("Server error - backend issue");
+                } else if (!error.response) {
+                    console.error("Network error - check if backend is running");
+                }
+            } else {
+                console.warn("Request timeout - using cached data if available");
             }
             
             // Try to use cached data if available, even if expired
             const cachedProducts = localStorage.getItem('cached_products');
             if (cachedProducts) {
-                console.log("Using expired cache as fallback");
+                console.log("Using cached products as fallback");
                 setProducts(JSON.parse(cachedProducts));
             } else {
                 // If no cache and error, set empty array to show "no products" message
@@ -73,7 +82,42 @@ const CustomerDashboard = ({ searchTerm = "" }) => {
 
     useEffect(() => {
         fetchProducts();
-    }, []); // Remove fetchProducts dependency to prevent infinite loop
+
+        // Listen for storage events to refresh products when cache is invalidated
+        const handleStorageChange = (e) => {
+            if (e.key === 'products_cache_invalidated') {
+                console.log("Products cache invalidated, refreshing...");
+                fetchProducts(true); // Force refresh
+                localStorage.removeItem('products_cache_invalidated');
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Also listen for custom events (for same-tab updates)
+        const handleProductsUpdated = () => {
+            console.log("Products updated event received, refreshing...");
+            fetchProducts(true); // Force refresh
+        };
+
+        window.addEventListener('productsUpdated', handleProductsUpdated);
+
+        // Periodic refresh check (every 30 seconds) to catch updates from other tabs
+        const refreshInterval = setInterval(() => {
+            const cacheInvalidated = localStorage.getItem('products_cache_invalidated');
+            if (cacheInvalidated) {
+                console.log("Cache invalidated flag detected, refreshing products...");
+                fetchProducts(true);
+                localStorage.removeItem('products_cache_invalidated');
+            }
+        }, 30000); // Check every 30 seconds
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('productsUpdated', handleProductsUpdated);
+            clearInterval(refreshInterval);
+        };
+    }, [fetchProducts]);
 
 
     return (

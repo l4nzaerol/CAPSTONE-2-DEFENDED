@@ -21,6 +21,15 @@ const ProductionReports = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     const [productionFilter, setProductionFilter] = useState('all'); // all, alkansya, made_to_order
     
+    // Enhanced filter states for reports
+    const [reportDateRange, setReportDateRange] = useState('days'); // 'days', 'weeks', 'months', 'year', 'custom'
+    const [reportDateValue, setReportDateValue] = useState(30); // Number of days/weeks/months
+    const [reportStartDate, setReportStartDate] = useState('');
+    const [reportEndDate, setReportEndDate] = useState('');
+    const [reportCategoryFilter, setReportCategoryFilter] = useState('all'); // 'all', 'alkansya', 'made_to_order'
+    const [reportStatusFilter, setReportStatusFilter] = useState('all'); // 'all', 'in_progress', 'completed', 'pending'
+    const [reportProductFilter, setReportProductFilter] = useState('all'); // Product-specific filter
+    
     // Enhanced data states
     const [dashboardData, setDashboardData] = useState(null);
     const [productionOverview, setProductionOverview] = useState(null);
@@ -148,24 +157,66 @@ const ProductionReports = () => {
         toast.success("Production reports refreshed successfully!");
     };
 
+    // Calculate date range based on filter selection
+    const getDateRange = () => {
+        const today = new Date();
+        let startDate, endDate;
+
+        if (reportDateRange === 'custom' && reportStartDate && reportEndDate) {
+            startDate = new Date(reportStartDate);
+            endDate = new Date(reportEndDate);
+        } else {
+            endDate = new Date(today);
+            
+            switch (reportDateRange) {
+                case 'days':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - reportDateValue);
+                    break;
+                case 'weeks':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - (reportDateValue * 7));
+                    break;
+                case 'months':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - reportDateValue);
+                    break;
+                case 'year':
+                    startDate = new Date(today);
+                    startDate.setFullYear(today.getFullYear() - 1);
+                    break;
+                default:
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 30);
+            }
+        }
+
+        return {
+            start_date: startDate.toISOString().split('T')[0],
+            end_date: endDate.toISOString().split('T')[0]
+        };
+    };
+
+
     // Preview Report Function
     const previewReport = (reportType) => {
         try {
+            const dateRange = getDateRange();
             let data = null;
             let title = '';
 
             switch(reportType) {
                 case 'performance':
-                    title = 'Production Performance Report';
-                    data = generatePerformanceReportData(productionOverview);
+                    title = `Production Performance Report (${dateRange.start_date} to ${dateRange.end_date})`;
+                    data = generatePerformanceReportData(productionOverview, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 case 'workprogress':
-                    title = 'Work Progress Report';
-                    data = generateWorkProgressReportData(productionOverview, alkansyaProductionData, madeToOrderProductionData);
+                    title = `Work Progress Report (${dateRange.start_date} to ${dateRange.end_date})`;
+                    data = generateWorkProgressReportData(productionOverview, alkansyaProductionData, madeToOrderProductionData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 case 'comprehensive':
-                    title = 'Comprehensive Production Report';
-                    data = generateComprehensiveReportData(productionOverview, productionOutputData, alkansyaProductionData, madeToOrderProductionData);
+                    title = `Comprehensive Production Report (${dateRange.start_date} to ${dateRange.end_date})`;
+                    data = generateComprehensiveReportData(productionOverview, productionOutputData, alkansyaProductionData, madeToOrderProductionData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 default:
                     return;
@@ -183,21 +234,22 @@ const ProductionReports = () => {
     // Download Report Function
     const downloadReport = (reportType) => {
         try {
+            const dateRange = getDateRange();
             let content = '';
             let filename = '';
 
             switch(reportType) {
                 case 'performance':
-                    filename = `Production_Performance_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generatePerformanceReportCSV(productionOverview, productPerformanceData);
+                    filename = `Production_Performance_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generatePerformanceReportCSV(productionOverview, productPerformanceData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 case 'workprogress':
-                    filename = `Work_Progress_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateWorkProgressReportCSV(productionOverview, alkansyaProductionData, madeToOrderProductionData);
+                    filename = `Work_Progress_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateWorkProgressReportCSV(productionOverview, alkansyaProductionData, madeToOrderProductionData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 case 'comprehensive':
-                    filename = `Comprehensive_Production_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateComprehensiveReportCSV(productionOverview, productionOutputData, alkansyaProductionData, madeToOrderProductionData);
+                    filename = `Comprehensive_Production_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateComprehensiveReportCSV(productionOverview, productionOutputData, alkansyaProductionData, madeToOrderProductionData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 default:
                     return;
@@ -225,17 +277,21 @@ const ProductionReports = () => {
     const previewPdfReport = async (reportType) => {
         try {
             const token = localStorage.getItem('token');
-            const url = `http://localhost:8000/api/reports/production.pdf?start_date=&end_date=`;
+            const dateRange = getDateRange();
+            let url = '';
             let title = '';
 
             switch(reportType) {
                 case 'performance':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=performance&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Production Performance Report - PDF Preview';
                     break;
                 case 'workprogress':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=workprogress&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Work Progress Report - PDF Preview';
                     break;
                 case 'comprehensive':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=comprehensive&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Comprehensive Production Report - PDF Preview';
                     break;
                 default:
@@ -269,7 +325,22 @@ const ProductionReports = () => {
     const downloadPdfReport = async (reportType) => {
         try {
             const token = localStorage.getItem('token');
-            const url = `http://localhost:8000/api/reports/production.pdf?start_date=&end_date=`;
+            const dateRange = getDateRange();
+            let url = '';
+
+            switch(reportType) {
+                case 'performance':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=performance&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
+                    break;
+                case 'workprogress':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=workprogress&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
+                    break;
+                case 'comprehensive':
+                    url = `http://localhost:8000/api/reports/production.pdf?report_type=comprehensive&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
+                    break;
+                default:
+                    return;
+            }
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -287,7 +358,7 @@ const ProductionReports = () => {
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = `production_${reportType}_report_${new Date().toISOString().split('T')[0]}.pdf`;
+            link.download = `production_${reportType}_report_${dateRange.start_date}_to_${dateRange.end_date}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -301,87 +372,155 @@ const ProductionReports = () => {
     };
 
     // Generate Performance Report CSV
-    const generatePerformanceReportCSV = (data, productPerformanceData = null) => {
+    const generatePerformanceReportCSV = (data, productPerformanceData = null, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         if (!data) return '';
         
-        let content = 'Production Performance Report\n';
-        content += `Generated: ${new Date().toLocaleString()}\n\n`;
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
-        // Overall Metrics
+        let content = 'Production Performance Report\n';
+        content += `Generated: ${new Date().toLocaleString()}\n`;
+        content += `Date Range: ${dateRangeStr}\n`;
+        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
+        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        
+        // Apply category filter to product performance data
+        let filteredProducts = productPerformanceData?.products || [];
+        if (categoryFilter !== 'all' && productPerformanceData?.products) {
+            filteredProducts = productPerformanceData.products.filter(product => {
+                if (categoryFilter === 'alkansya') {
+                    return product.category === 'Alkansya' || product.category === 'Stocked Products';
+                }
+                if (categoryFilter === 'made_to_order') {
+                    return product.category === 'Made to Order' || product.category === 'made_to_order';
+                }
+                return false;
+            });
+        }
+        
+        // Overall Metrics - apply category filter
         content += '=== OVERALL METRICS ===\n';
-        content += `Total Units Produced,${data.overall?.total_units_produced || 0}\n`;
-        content += `Production Efficiency,${data.overall?.production_efficiency || 0}%\n`;
-        content += `Average Daily Output,${data.overall?.average_daily_output || 0}\n`;
-        content += `Total Production Days,${data.overall?.total_production_days || 0}\n\n`;
+        if (categoryFilter === 'alkansya') {
+            content += `Total Units Produced,${data.alkansya?.total_units_produced || 0}\n`;
+            content += `Production Efficiency,${data.alkansya?.efficiency || data.overall?.production_efficiency || 0}%\n`;
+            content += `Average Daily Output,${data.alkansya?.average_daily_output || 0}\n`;
+            content += `Production Days,${data.alkansya?.total_days || 0}\n\n`;
+        } else if (categoryFilter === 'made_to_order') {
+            content += `Total Products Ordered,${data.made_to_order?.total_products_ordered || 0}\n`;
+            content += `Production Efficiency,${data.made_to_order?.efficiency || data.overall?.production_efficiency || 0}%\n`;
+            content += `Products In Progress,${data.made_to_order?.in_progress || 0}\n`;
+            content += `Products Completed,${data.made_to_order?.completed || 0}\n\n`;
+        } else {
+            content += `Total Units Produced,${data.overall?.total_units_produced || 0}\n`;
+            content += `Production Efficiency,${data.overall?.production_efficiency || 0}%\n`;
+            content += `Average Daily Output,${data.overall?.average_daily_output || 0}\n`;
+            content += `Total Production Days,${data.overall?.total_production_days || 0}\n\n`;
+        }
         
         // Product-Level Performance Data
-        if (productPerformanceData && productPerformanceData.products && productPerformanceData.products.length > 0) {
+        if (filteredProducts.length > 0) {
             content += '=== PRODUCT-LEVEL PERFORMANCE ===\n';
-            content += 'Product Name,Category,Total Produced,Days with Production,Avg Daily Output,Max Daily,Min Daily,Efficiency %,First Production,Last Production,Trend\n';
-            productPerformanceData.products.forEach(product => {
-                content += `${product.product_name},${product.category},${product.total_quantity_produced || 0},${product.days_with_production || product.orders_count || 0},${product.average_daily_output?.toFixed(2) || product.average_production_time_days || '-'},${product.max_daily_output || '-'},${product.min_daily_output || '-'},${product.efficiency_percentage?.toFixed(1) || product.completion_rate?.toFixed(1) || 0},${product.first_production_date || product.first_order_date || '-'},${product.last_production_date || product.last_order_date || '-'},${product.production_trend || '-'}\n`;
+            content += 'Product Name,Category,Total Produced,Days with Production,Avg Daily Output,Max Daily,Min Daily,Efficiency %,First Production,Last Production,Trend,Date Range\n';
+            filteredProducts.forEach(product => {
+                content += `${product.product_name},${product.category},${product.total_quantity_produced || 0},${product.days_with_production || product.orders_count || 0},${product.average_daily_output?.toFixed(2) || product.average_production_time_days || '-'},${product.max_daily_output || '-'},${product.min_daily_output || '-'},${product.efficiency_percentage?.toFixed(1) || product.completion_rate?.toFixed(1) || 0},${product.first_production_date || product.first_order_date || '-'},${product.last_production_date || product.last_order_date || '-'},${product.production_trend || '-'},"${dateRangeStr}"\n`;
             });
             content += '\n';
             
             if (productPerformanceData.summary) {
                 content += '=== SUMMARY ===\n';
-                content += `Total Products,${productPerformanceData.summary.total_products}\n`;
-                content += `Alkansya Products,${productPerformanceData.summary.alkansya_products}\n`;
-                content += `Made-to-Order Products,${productPerformanceData.summary.made_to_order_products}\n`;
-                content += `Average Efficiency,${productPerformanceData.summary.average_efficiency?.toFixed(1)}%\n\n`;
+                content += `Total Products,${filteredProducts.length}\n`;
+                content += `Alkansya Products,${filteredProducts.filter(p => p.category === 'Alkansya' || p.category === 'Stocked Products').length}\n`;
+                content += `Made-to-Order Products,${filteredProducts.filter(p => p.category === 'Made to Order' || p.category === 'made_to_order').length}\n`;
+                content += `Average Efficiency,${productPerformanceData.summary.average_efficiency?.toFixed(1) || 0}%\n\n`;
             }
         }
         
-        // Alkansya Metrics
-        content += '=== ALKANSYA PRODUCTION ===\n';
-        content += `Total Units Produced,${data.alkansya?.total_units_produced || 0}\n`;
-        content += `Average Daily Output,${data.alkansya?.average_daily_output || 0}\n`;
-        content += `Max Daily Output,${data.alkansya?.max_daily_output || 0}\n`;
-        content += `Min Daily Output,${data.alkansya?.min_daily_output || 0}\n`;
-        content += `Production Days,${data.alkansya?.total_days || 0}\n`;
-        content += `Production Trend,${data.alkansya?.production_trend || 'stable'}\n\n`;
+        // Alkansya Metrics (only if category filter allows)
+        if (categoryFilter === 'all' || categoryFilter === 'alkansya') {
+            content += '=== ALKANSYA PRODUCTION ===\n';
+            content += `Total Units Produced,${data.alkansya?.total_units_produced || 0}\n`;
+            content += `Average Daily Output,${data.alkansya?.average_daily_output || 0}\n`;
+            content += `Max Daily Output,${data.alkansya?.max_daily_output || 0}\n`;
+            content += `Min Daily Output,${data.alkansya?.min_daily_output || 0}\n`;
+            content += `Production Days,${data.alkansya?.total_days || 0}\n`;
+            content += `Production Trend,${data.alkansya?.production_trend || 'stable'}\n\n`;
+        }
         
-        // Made-to-Order Metrics
-        content += '=== MADE-TO-ORDER PRODUCTION ===\n';
-        content += `Total Products Ordered,${data.made_to_order?.total_products_ordered || 0}\n`;
-        content += `Products In Progress,${data.made_to_order?.in_progress || 0}\n`;
-        content += `Products Completed,${data.made_to_order?.completed || 0}\n`;
-        content += `Completion Rate,${data.made_to_order?.completion_rate || 0}%\n\n`;
+        // Made-to-Order Metrics (only if category filter allows)
+        if (categoryFilter === 'all' || categoryFilter === 'made_to_order') {
+            content += '=== MADE-TO-ORDER PRODUCTION ===\n';
+            content += `Total Products Ordered,${data.made_to_order?.total_products_ordered || 0}\n`;
+            content += `Products In Progress,${data.made_to_order?.in_progress || 0}\n`;
+            content += `Products Completed,${data.made_to_order?.completed || 0}\n`;
+            content += `Completion Rate,${data.made_to_order?.completion_rate || 0}%\n\n`;
+        }
         
         // Efficiency Metrics
         content += '=== EFFICIENCY METRICS ===\n';
         content += `Overall Efficiency,${data.overall?.production_efficiency || 0}%\n`;
-        content += `Alkansya Efficiency,${data.alkansya?.efficiency || 0}%\n`;
-        content += `Made-to-Order Efficiency,${data.made_to_order?.efficiency || 0}%\n\n`;
+        if (categoryFilter === 'all' || categoryFilter === 'alkansya') {
+            content += `Alkansya Efficiency,${data.alkansya?.efficiency || 0}%\n`;
+        }
+        if (categoryFilter === 'all' || categoryFilter === 'made_to_order') {
+            content += `Made-to-Order Efficiency,${data.made_to_order?.efficiency || 0}%\n`;
+        }
+        content += '\n';
         
         return content;
     };
 
     // Generate Work Progress Report CSV
-    const generateWorkProgressReportCSV = (overview, alkansya, madeToOrder) => {
+    const generateWorkProgressReportCSV = (overview, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
         let content = 'Work Progress Report\n';
-        content += `Generated: ${new Date().toLocaleString()}\n\n`;
+        content += `Generated: ${new Date().toLocaleString()}\n`;
+        content += `Date Range: ${dateRangeStr}\n`;
+        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
+        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        
+        // Apply category filter to data
+        let filteredAlkansya = overview?.alkansya?.recent_output || [];
+        let filteredMadeToOrder = madeToOrder?.items || [];
+        
+        if (categoryFilter === 'alkansya') {
+            filteredMadeToOrder = [];
+        } else if (categoryFilter === 'made_to_order') {
+            filteredAlkansya = [];
+        }
+        
+        // Apply status filter for made-to-order
+        if (statusFilter !== 'all' && filteredMadeToOrder.length > 0) {
+            filteredMadeToOrder = filteredMadeToOrder.filter(item => {
+                const status = item.status?.toLowerCase() || '';
+                if (statusFilter === 'in_progress') return status === 'in progress' || status === 'in_progress';
+                if (statusFilter === 'completed') return status === 'completed';
+                if (statusFilter === 'pending') return status === 'pending';
+                return true;
+            });
+        }
         
         content += '=== ALKANSYA RECENT OUTPUT ===\n';
         content += 'Date,Quantity,Produced By\n';
-        if (overview?.alkansya?.recent_output) {
-            overview.alkansya.recent_output.forEach(output => {
+        if (filteredAlkansya.length > 0) {
+            filteredAlkansya.forEach(output => {
                 content += `${output.date},${output.quantity},${output.produced_by}\n`;
             });
+        } else {
+            content += 'No data available\n';
         }
         content += '\n';
         
         content += '=== MADE-TO-ORDER STATUS ===\n';
-        content += `Total Orders,${overview?.made_to_order?.total_products_ordered || 0}\n`;
-        content += `In Progress,${overview?.made_to_order?.in_progress || 0}\n`;
-        content += `Completed,${overview?.made_to_order?.completed || 0}\n`;
-        content += `Pending,${overview?.made_to_order?.pending || 0}\n\n`;
+        content += `Total Orders,${filteredMadeToOrder.length}\n`;
+        content += `In Progress,${filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'in progress' || (item.status?.toLowerCase() || '') === 'in_progress').length}\n`;
+        content += `Completed,${filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'completed').length}\n`;
+        content += `Pending,${filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'pending').length}\n\n`;
         
-        if (madeToOrder?.items) {
+        if (filteredMadeToOrder.length > 0) {
             content += '=== ORDER DETAILS ===\n';
-            content += 'Order ID,Product,Status,Quantity,Progress\n';
-            madeToOrder.items.slice(0, 20).forEach(item => {
-                content += `${item.order_id || 'N/A'},${item.product_name || 'N/A'},${item.status || 'N/A'},${item.quantity || 0},${item.progress || 0}%\n`;
+            content += 'Order ID,Product,Status,Quantity,Progress,Date Range\n';
+            filteredMadeToOrder.slice(0, 20).forEach(item => {
+                content += `${item.order_id || 'N/A'},${item.product_name || 'N/A'},${item.status || 'N/A'},${item.quantity || 0},${item.progress || 0}%,"${dateRangeStr}"\n`;
             });
         }
         
@@ -389,42 +528,89 @@ const ProductionReports = () => {
     };
 
     // Generate Comprehensive Report CSV
-    const generateComprehensiveReportCSV = (overview, output, alkansya, madeToOrder) => {
+    const generateComprehensiveReportCSV = (overview, output, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : `Last ${windowDays} days`;
+        
         let content = 'COMPREHENSIVE PRODUCTION REPORT\n';
         content += `Generated: ${new Date().toLocaleString()}\n`;
-        content += `Report Period: Last ${windowDays} days\n\n`;
+        content += `Report Period: ${dateRangeStr}\n`;
+        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
+        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        
+        // Apply filters
+        let filteredMadeToOrder = madeToOrder?.items || [];
+        if (categoryFilter === 'alkansya') {
+            filteredMadeToOrder = [];
+        } else if (categoryFilter === 'made_to_order') {
+            // Keep only made-to-order items
+        }
+        
+        if (statusFilter !== 'all' && filteredMadeToOrder.length > 0) {
+            filteredMadeToOrder = filteredMadeToOrder.filter(item => {
+                const status = item.status?.toLowerCase() || '';
+                if (statusFilter === 'in_progress') return status === 'in progress' || status === 'in_progress';
+                if (statusFilter === 'completed') return status === 'completed';
+                if (statusFilter === 'pending') return status === 'pending';
+                return true;
+            });
+        }
         
         // Section 1: Overview
         content += '=== PRODUCTION OVERVIEW ===\n';
         if (overview) {
-            content += generatePerformanceReportCSV(overview);
-            content += '\n';
+            // Apply category filter to overview metrics
+            if (categoryFilter === 'alkansya') {
+                content += `Total Units Produced,${overview.alkansya?.total_units_produced || 0}\n`;
+                content += `Production Efficiency,${overview.alkansya?.efficiency || overview.overall?.production_efficiency || 0}%\n`;
+                content += `Average Daily Output,${overview.alkansya?.average_daily_output || 0}\n`;
+                content += `Production Days,${overview.alkansya?.total_days || 0}\n\n`;
+            } else if (categoryFilter === 'made_to_order') {
+                content += `Total Products Ordered,${overview.made_to_order?.total_products_ordered || 0}\n`;
+                content += `Production Efficiency,${overview.made_to_order?.efficiency || overview.overall?.production_efficiency || 0}%\n`;
+                content += `Products In Progress,${overview.made_to_order?.in_progress || 0}\n`;
+                content += `Products Completed,${overview.made_to_order?.completed || 0}\n\n`;
+            } else {
+                content += `Total Units Produced,${overview.overall?.total_units_produced || 0}\n`;
+                content += `Production Efficiency,${overview.overall?.production_efficiency || 0}%\n`;
+                content += `Average Daily Output,${overview.overall?.average_daily_output || 0}\n`;
+                content += `Total Production Days,${overview.overall?.total_production_days || 0}\n\n`;
+            }
         }
         
         // Section 2: Output Data
         content += '=== PRODUCTION OUTPUT ===\n';
         if (output?.metrics) {
             content += `Total Units Produced,${output.metrics.total_units_produced || 0}\n`;
-            content += `Alkansya Units,${output.metrics.alkansya_units || 0}\n`;
-            content += `Made-to-Order Units,${output.metrics.made_to_order_units || 0}\n\n`;
+            if (categoryFilter === 'all' || categoryFilter === 'alkansya') {
+                content += `Alkansya Units,${output.metrics.alkansya_units || 0}\n`;
+            }
+            if (categoryFilter === 'all' || categoryFilter === 'made_to_order') {
+                content += `Made-to-Order Units,${output.metrics.made_to_order_units || 0}\n`;
+            }
+            content += '\n';
         }
         
-        // Section 3: Recent Alkansya Output
-        if (overview?.alkansya?.recent_output && overview.alkansya.recent_output.length > 0) {
+        // Section 3: Recent Alkansya Output (only if category filter allows)
+        let filteredAlkansyaOutput = overview?.alkansya?.recent_output || [];
+        if (categoryFilter === 'made_to_order') {
+            filteredAlkansyaOutput = [];
+        }
+        
+        if (filteredAlkansyaOutput.length > 0) {
             content += '=== RECENT PRODUCTION OUTPUT ===\n';
             content += 'Date,Quantity,Produced By\n';
-            overview.alkansya.recent_output.forEach(output => {
+            filteredAlkansyaOutput.forEach(output => {
                 content += `${output.date},${output.quantity},${output.produced_by}\n`;
             });
             content += '\n';
         }
         
-        // Section 4: Made-to-Order Progress
-        if (madeToOrder?.items) {
+        // Section 4: Made-to-Order Progress (only if category filter allows)
+        if ((categoryFilter === 'all' || categoryFilter === 'made_to_order') && filteredMadeToOrder.length > 0) {
             content += '=== MADE-TO-ORDER PROGRESS ===\n';
-            content += 'Order ID,Product Name,Status,Quantity,Progress,Start Date\n';
-            madeToOrder.items.forEach(item => {
-                content += `${item.order_id || 'N/A'},${item.product_name || 'N/A'},${item.status || 'N/A'},${item.quantity || 0},${item.progress || 0}%,${item.start_date || 'N/A'}\n`;
+            content += 'Order ID,Product Name,Status,Quantity,Progress,Start Date,Date Range\n';
+            filteredMadeToOrder.forEach(item => {
+                content += `${item.order_id || 'N/A'},${item.product_name || 'N/A'},${item.status || 'N/A'},${item.quantity || 0},${item.progress || 0}%,${item.start_date || 'N/A'},"${dateRangeStr}"\n`;
             });
         }
         
@@ -432,21 +618,60 @@ const ProductionReports = () => {
     };
 
     // Generate Performance Report Data for Preview
-    const generatePerformanceReportData = (data) => {
+    const generatePerformanceReportData = (data, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         if (!data) return { sections: [] };
         
-        return {
-            sections: [
-                {
-                    title: 'Overall Metrics',
-                    data: [
-                        { label: 'Total Units Produced', value: data.overall?.total_units_produced || 0 },
-                        { label: 'Production Efficiency', value: `${data.overall?.production_efficiency || 0}%` },
-                        { label: 'Average Daily Output', value: data.overall?.average_daily_output || 0 },
-                        { label: 'Total Production Days', value: data.overall?.total_production_days || 0 }
-                    ]
-                },
-                {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
+        const sections = [
+            {
+                title: 'Report Filters',
+                data: [
+                    { label: 'Date Range', value: dateRangeStr },
+                    { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
+                    { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                ]
+            }
+        ];
+        
+        // Overall Metrics - apply category filter
+        if (categoryFilter === 'alkansya') {
+            sections.push({
+                title: 'Alkansya Production Metrics',
+                data: [
+                    { label: 'Total Units Produced', value: data.alkansya?.total_units_produced || 0 },
+                    { label: 'Production Efficiency', value: `${data.alkansya?.efficiency || data.overall?.production_efficiency || 0}%` },
+                    { label: 'Average Daily Output', value: data.alkansya?.average_daily_output || 0 },
+                    { label: 'Max Daily Output', value: data.alkansya?.max_daily_output || 0 },
+                    { label: 'Min Daily Output', value: data.alkansya?.min_daily_output || 0 },
+                    { label: 'Production Days', value: data.alkansya?.total_days || 0 },
+                    { label: 'Production Trend', value: data.alkansya?.production_trend || 'stable' }
+                ]
+            });
+        } else if (categoryFilter === 'made_to_order') {
+            sections.push({
+                title: 'Made-to-Order Production Metrics',
+                data: [
+                    { label: 'Total Products Ordered', value: data.made_to_order?.total_products_ordered || 0 },
+                    { label: 'Production Efficiency', value: `${data.made_to_order?.efficiency || data.overall?.production_efficiency || 0}%` },
+                    { label: 'Products In Progress', value: data.made_to_order?.in_progress || 0 },
+                    { label: 'Products Completed', value: data.made_to_order?.completed || 0 },
+                    { label: 'Completion Rate', value: `${data.made_to_order?.completion_rate || 0}%` }
+                ]
+            });
+        } else {
+            sections.push({
+                title: 'Overall Metrics',
+                data: [
+                    { label: 'Total Units Produced', value: data.overall?.total_units_produced || 0 },
+                    { label: 'Production Efficiency', value: `${data.overall?.production_efficiency || 0}%` },
+                    { label: 'Average Daily Output', value: data.overall?.average_daily_output || 0 },
+                    { label: 'Total Production Days', value: data.overall?.total_production_days || 0 }
+                ]
+            });
+            
+            if (categoryFilter === 'all') {
+                sections.push({
                     title: 'Alkansya Production',
                     data: [
                         { label: 'Total Units Produced', value: data.alkansya?.total_units_produced || 0 },
@@ -456,8 +681,9 @@ const ProductionReports = () => {
                         { label: 'Production Days', value: data.alkansya?.total_days || 0 },
                         { label: 'Production Trend', value: data.alkansya?.production_trend || 'stable' }
                     ]
-                },
-                {
+                });
+                
+                sections.push({
                     title: 'Made-to-Order Production',
                     data: [
                         { label: 'Total Products Ordered', value: data.made_to_order?.total_products_ordered || 0 },
@@ -465,62 +691,121 @@ const ProductionReports = () => {
                         { label: 'Products Completed', value: data.made_to_order?.completed || 0 },
                         { label: 'Completion Rate', value: `${data.made_to_order?.completion_rate || 0}%` }
                     ]
-                },
-                {
-                    title: 'Efficiency Metrics',
-                    data: [
-                        { label: 'Overall Efficiency', value: `${data.overall?.production_efficiency || 0}%` },
-                        { label: 'Alkansya Efficiency', value: `${data.alkansya?.efficiency || 0}%` },
-                        { label: 'Made-to-Order Efficiency', value: `${data.made_to_order?.efficiency || 0}%` }
-                    ]
-                }
+                });
+            }
+        }
+        
+        sections.push({
+            title: 'Efficiency Metrics',
+            data: [
+                { label: 'Overall Efficiency', value: `${data.overall?.production_efficiency || 0}%` },
+                ...(categoryFilter === 'all' || categoryFilter === 'alkansya' ? [{ label: 'Alkansya Efficiency', value: `${data.alkansya?.efficiency || 0}%` }] : []),
+                ...(categoryFilter === 'all' || categoryFilter === 'made_to_order' ? [{ label: 'Made-to-Order Efficiency', value: `${data.made_to_order?.efficiency || 0}%` }] : [])
             ]
-        };
+        });
+        
+        return { sections };
     };
 
     // Generate Work Progress Report Data for Preview
-    const generateWorkProgressReportData = (overview, alkansya, madeToOrder) => {
+    const generateWorkProgressReportData = (overview, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
+        // Apply filters
+        let filteredAlkansya = overview?.alkansya?.recent_output || [];
+        let filteredMadeToOrder = madeToOrder?.items || [];
+        
+        if (categoryFilter === 'alkansya') {
+            filteredMadeToOrder = [];
+        } else if (categoryFilter === 'made_to_order') {
+            filteredAlkansya = [];
+        }
+        
+        if (statusFilter !== 'all' && filteredMadeToOrder.length > 0) {
+            filteredMadeToOrder = filteredMadeToOrder.filter(item => {
+                const status = item.status?.toLowerCase() || '';
+                if (statusFilter === 'in_progress') return status === 'in progress' || status === 'in_progress';
+                if (statusFilter === 'completed') return status === 'completed';
+                if (statusFilter === 'pending') return status === 'pending';
+                return true;
+            });
+        }
+        
         return {
             sections: [
+                {
+                    title: 'Report Filters',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
+                        { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                    ]
+                },
                 {
                     title: 'Alkansya Recent Output',
                     type: 'table',
                     headers: ['Date', 'Quantity', 'Produced By'],
-                    data: overview?.alkansya?.recent_output?.map(output => [
+                    data: filteredAlkansya.map(output => [
                         output.date,
                         output.quantity,
                         output.produced_by
-                    ]) || []
+                    ])
                 },
                 {
                     title: 'Made-to-Order Status',
                     data: [
-                        { label: 'Total Orders', value: overview?.made_to_order?.total_products_ordered || 0 },
-                        { label: 'In Progress', value: overview?.made_to_order?.in_progress || 0 },
-                        { label: 'Completed', value: overview?.made_to_order?.completed || 0 },
-                        { label: 'Pending', value: overview?.made_to_order?.pending || 0 }
+                        { label: 'Total Orders', value: filteredMadeToOrder.length },
+                        { label: 'In Progress', value: filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'in progress' || (item.status?.toLowerCase() || '') === 'in_progress').length },
+                        { label: 'Completed', value: filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'completed').length },
+                        { label: 'Pending', value: filteredMadeToOrder.filter(item => (item.status?.toLowerCase() || '') === 'pending').length }
                     ]
                 },
                 {
                     title: 'Order Details',
                     type: 'table',
                     headers: ['Order ID', 'Product', 'Status', 'Quantity', 'Progress'],
-                    data: madeToOrder?.items?.slice(0, 20).map(item => [
+                    data: filteredMadeToOrder.slice(0, 20).map(item => [
                         item.order_id || 'N/A',
                         item.product_name || 'N/A',
                         item.status || 'N/A',
                         item.quantity || 0,
                         `${item.progress || 0}%`
-                    ]) || []
+                    ])
                 }
             ]
         };
     };
 
     // Generate Comprehensive Report Data for Preview
-    const generateComprehensiveReportData = (overview, output, alkansya, madeToOrder) => {
+    const generateComprehensiveReportData = (overview, output, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
+        // Apply filters
+        let filteredMadeToOrder = madeToOrder?.items || [];
+        if (categoryFilter === 'alkansya') {
+            filteredMadeToOrder = [];
+        }
+        
+        if (statusFilter !== 'all' && filteredMadeToOrder.length > 0) {
+            filteredMadeToOrder = filteredMadeToOrder.filter(item => {
+                const status = item.status?.toLowerCase() || '';
+                if (statusFilter === 'in_progress') return status === 'in progress' || status === 'in_progress';
+                if (statusFilter === 'completed') return status === 'completed';
+                if (statusFilter === 'pending') return status === 'pending';
+                return true;
+            });
+        }
+        
         return {
             sections: [
+                {
+                    title: 'Report Filters',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
+                        { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                    ]
+                },
                 {
                     title: 'Production Overview',
                     data: [
@@ -552,14 +837,14 @@ const ProductionReports = () => {
                     title: 'Made-to-Order Progress',
                     type: 'table',
                     headers: ['Order ID', 'Product Name', 'Status', 'Quantity', 'Progress', 'Start Date'],
-                    data: madeToOrder?.items?.map(item => [
+                    data: filteredMadeToOrder.map(item => [
                         item.order_id || 'N/A',
                         item.product_name || 'N/A',
                         item.status || 'N/A',
                         item.quantity || 0,
                         `${item.progress || 0}%`,
                         item.start_date || 'N/A'
-                    ]) || []
+                    ])
                 }
             ]
         };
@@ -1192,6 +1477,136 @@ const ProductionReports = () => {
                                         </div>
                                         <p className="text-muted mb-4">Generate detailed reports for production performance, work progress, and efficiency metrics</p>
                                         
+                                        {/* Unified Report Filters - Applies to both CSV and PDF */}
+                                        <div className="mb-4">
+                                            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', background: 'linear-gradient(135deg, #f8f9fa, #ffffff)' }}>
+                                                <div className="card-header bg-white border-0 pb-2" style={{ borderRadius: '12px 12px 0 0' }}>
+                                                    <div className="d-flex align-items-center">
+                                                        <i className="fas fa-filter text-primary me-2"></i>
+                                                        <h6 className="mb-0 fw-bold" style={{ color: '#495057', fontSize: '0.95rem' }}>
+                                                            Report Filters
+                                                        </h6>
+                                                        <small className="text-muted ms-2">(Applies to all reports)</small>
+                                                    </div>
+                                                </div>
+                                                <div className="card-body p-3">
+                                                    <div className="row g-3 align-items-end">
+                                                        <div className="col-md-2">
+                                                            <label className="form-label small fw-bold text-muted mb-1">
+                                                                <i className="fas fa-calendar-alt me-1"></i>Date Range
+                                                            </label>
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportDateRange}
+                                                                onChange={(e) => {
+                                                                    setReportDateRange(e.target.value);
+                                                                    if (e.target.value !== 'custom') {
+                                                                        setReportStartDate('');
+                                                                        setReportEndDate('');
+                                                                    }
+                                                                }}
+                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                            >
+                                                                <option value="days">Days</option>
+                                                                <option value="weeks">Weeks</option>
+                                                                <option value="months">Months</option>
+                                                                <option value="year">Year</option>
+                                                                <option value="custom">Custom Range</option>
+                                                            </select>
+                                                        </div>
+                                                        {reportDateRange !== 'custom' && reportDateRange !== 'year' && (
+                                                            <div className="col-md-2">
+                                                                <label className="form-label small fw-bold text-muted mb-1">
+                                                                    <i className="fas fa-hashtag me-1"></i>Period
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control form-control-sm"
+                                                                    value={reportDateValue}
+                                                                    onChange={(e) => setReportDateValue(parseInt(e.target.value) || 1)}
+                                                                    min="1"
+                                                                    style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {reportDateRange === 'custom' && (
+                                                            <>
+                                                                <div className="col-md-2">
+                                                                    <label className="form-label small fw-bold text-muted mb-1">
+                                                                        <i className="fas fa-calendar-check me-1"></i>Start Date
+                                                                    </label>
+                                                                    <input
+                                                                        type="date"
+                                                                        className="form-control form-control-sm"
+                                                                        value={reportStartDate}
+                                                                        onChange={(e) => setReportStartDate(e.target.value)}
+                                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                    />
+                                                                </div>
+                                                                <div className="col-md-2">
+                                                                    <label className="form-label small fw-bold text-muted mb-1">
+                                                                        <i className="fas fa-calendar-times me-1"></i>End Date
+                                                                    </label>
+                                                                    <input
+                                                                        type="date"
+                                                                        className="form-control form-control-sm"
+                                                                        value={reportEndDate}
+                                                                        onChange={(e) => setReportEndDate(e.target.value)}
+                                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        <div className="col-md-2">
+                                                            <label className="form-label small fw-bold text-muted mb-1">
+                                                                <i className="fas fa-tags me-1"></i>Category
+                                                            </label>
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportCategoryFilter}
+                                                                onChange={(e) => setReportCategoryFilter(e.target.value)}
+                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                            >
+                                                                <option value="all">All Categories</option>
+                                                                <option value="alkansya">Alkansya</option>
+                                                                <option value="made_to_order">Made to Order</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label small fw-bold text-muted mb-1">
+                                                                <i className="fas fa-info-circle me-1"></i>Status
+                                                            </label>
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportStatusFilter}
+                                                                onChange={(e) => setReportStatusFilter(e.target.value)}
+                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                            >
+                                                                <option value="all">All Status</option>
+                                                                <option value="in_progress">In Progress</option>
+                                                                <option value="completed">Completed</option>
+                                                                <option value="pending">Pending</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <button
+                                                                className="btn btn-sm btn-primary w-100"
+                                                                onClick={() => {
+                                                                    const dateRange = getDateRange();
+                                                                    console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
+                                                                    toast.success('Filters applied to all reports!');
+                                                                }}
+                                                                style={{ borderRadius: '8px', fontWeight: '600' }}
+                                                            >
+                                                                <i className="fas fa-check me-1"></i>
+                                                                Apply Filters
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
                                         {/* CSV Reports Section */}
                                         <div className="mb-4">
                                             <div className="d-flex align-items-center mb-3">
@@ -1206,6 +1621,7 @@ const ProductionReports = () => {
                                                     CSV Reports
                                                 </h6>
                                             </div>
+                                            
                                             <div className="row g-3">
                                                 {/* Production Performance Report */}
                                                 <div className="col-md-4">
@@ -1412,6 +1828,7 @@ const ProductionReports = () => {
                                                     PDF Reports
                                                 </h6>
                                             </div>
+                                            
                                             <div className="row g-3">
                                                 {/* Production Performance Report PDF */}
                                                 <div className="col-md-4">

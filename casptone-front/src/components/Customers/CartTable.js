@@ -80,19 +80,11 @@ const CartTable = () => {
     
     const productName = (item.product?.name || item.name || '').toLowerCase();
     const categoryName = item.product?.category_name || '';
-    const isMadeToOrderDiningTable = 
-      (categoryName === 'Made to Order' || categoryName === 'made_to_order') &&
-      productName.includes('dining table');
+    const isMadeToOrder = categoryName === 'Made to Order' || categoryName === 'made_to_order';
     const isWoodenChair = productName.includes('wooden chair');
     
-    // Prevent quantity changes for made-to-order Dining Table
-    if (isMadeToOrderDiningTable) {
-      toast.error("Dining Table (Made to Order) quantity is fixed to 1 and cannot be changed.");
-      return;
-    }
-    
-    // Enforce max quantity for Wooden Chair
-    if (isWoodenChair && newQuantity > 4) {
+    // Enforce max quantity for Wooden Chair (only if not made-to-order)
+    if (isWoodenChair && !isMadeToOrder && newQuantity > 4) {
       toast.error("Wooden Chair maximum quantity is 4");
       return;
     }
@@ -664,7 +656,7 @@ const CartTable = () => {
                   fontSize: hasMadeToOrder ? '0.9rem' : 'inherit',
                   fontStyle: hasMadeToOrder ? 'italic' : 'normal'
                 }}>
-                  {hasMadeToOrder ? 'Depends on location' : (shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`)}
+                  {hasMadeToOrder ? 'To be finalized' : (shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`)}
                 </strong>
               </div>
             )}
@@ -676,7 +668,7 @@ const CartTable = () => {
                 marginTop: '4px'
               }}>
                 <span style={{ display: 'block', lineHeight: '1.4' }}>
-                  ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
+                  ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
                 </span>
               </div>
             )}

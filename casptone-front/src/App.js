@@ -10,6 +10,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import Cart from "./components/Customers/Cart";
+import Wishlist from "./components/Customers/Wishlist";
 import ProductPage from "./components/Admin/ProductPage"; 
 import ProductionPage from "./components/Admin/ProductionPage"; 
 import InventoryPage from "./components/Admin/InventoryPage"; 
@@ -47,6 +48,7 @@ function App() {
 
                 {/* Protected Routes */}
                 <Route path="/cart" element={isAuthenticated() ? <Cart /> : <Navigate to="/" />} />
+                <Route path="/wishlist" element={isAuthenticated() ? <Wishlist /> : <Navigate to="/" />} />
                 <Route path="/my-orders" element={isAuthenticated() ? <MyOrders /> : <Navigate to="/" />} />
                 <Route path="/profile" element={isAuthenticated() ? <UserProfile /> : <Navigate to="/" />} />
                 <Route path="/dashboard" element={isAuthenticated() ? <Dashboard /> : <Navigate to="/" />} />

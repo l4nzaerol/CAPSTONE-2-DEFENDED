@@ -203,7 +203,7 @@ const OrdersTable = () => {
             <ul>
               {orderItems.map((item) => (
                 <li key={item.id}>
-                  {item.product?.name} - {item.quantity}x ₱{item.product?.price?.toLocaleString()}
+                  {item.product?.name} - {item.quantity}x ₱{((item.price || item.product?.price || 0) * item.quantity).toLocaleString()}
                 </li>
               ))}
             </ul>

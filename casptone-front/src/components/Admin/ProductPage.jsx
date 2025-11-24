@@ -286,7 +286,15 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
   const fetchProductBOM = useCallback(async (productId) => {
     try {
       const bomData = await apiCall(`/products/${productId}/bom`);
-      return bomData;
+      // Ensure the BOM data has the correct structure
+      if (Array.isArray(bomData)) {
+        return bomData.map(item => ({
+          material_id: item.material_id,
+          quantity_per_product: item.quantity_per_product || item.qty_per_unit || 0,
+          unit_of_measure: item.unit_of_measure || 'pcs'
+        }));
+      }
+      return bomData || [];
     } catch (error) {
       console.error("Failed to fetch BOM:", error);
       return [];
@@ -409,6 +417,7 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
     const loadProductData = async () => {
       if (product) {
         const bomData = await fetchProductBOM(product.id);
+        console.log('Loaded BOM data for product:', product.id, bomData);
         setFormData({
           product_name: product.product_name || product.name || "",
           product_code: product.product_code || "",
@@ -634,16 +643,19 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
                 <label className="form-label">Selling Price</label>
                 <input
                   type="number"
-                  className={`form-control ${errors.price ? "is-invalid" : ""} ${formData.bom.length === 0 ? 'bg-light' : ''}`}
+                  className={`form-control ${errors.price ? "is-invalid" : ""} ${(formData.bom.length === 0 && formData.category_name !== "Made to Order" && formData.category_name !== "made_to_order") ? 'bg-light' : ''}`}
                   value={formData.price}
                   onChange={(e) => handleChange("price", Math.max(0, parseFloat(e.target.value) || 0))}
                   min="0"
                   step="0.01"
-                  readOnly={formData.bom.length === 0}
-                  placeholder={formData.bom.length === 0 ? "Add BOM materials to calculate price" : ""}
+                  readOnly={(formData.bom.length === 0 && formData.category_name !== "Made to Order" && formData.category_name !== "made_to_order")}
+                  placeholder={(formData.bom.length === 0 && formData.category_name !== "Made to Order" && formData.category_name !== "made_to_order") ? "Add BOM materials to calculate price" : ""}
                 />
-                {formData.bom.length === 0 && (
+                {(formData.bom.length === 0 && formData.category_name !== "Made to Order" && formData.category_name !== "made_to_order") && (
                   <small className="form-text text-muted">Price will be calculated automatically when BOM is added</small>
+                )}
+                {(formData.category_name === "Made to Order" || formData.category_name === "made_to_order") && (
+                  <small className="form-text text-muted">You can manually set the selling price for made-to-order products</small>
                 )}
                 {errors.price && <div className="invalid-feedback">{errors.price}</div>}
               </div>
@@ -1159,8 +1171,9 @@ const ProductPage = () => {
       return;
     }
 
-    const currentStatus = product.is_available !== false ? 'available' : 'not available';
-    const newStatus = product.is_available !== false ? 'not available' : 'available';
+    // Check the actual is_available_for_order field - must be explicitly true
+    const currentStatus = product.is_available_for_order === true ? 'available' : 'not available';
+    const newStatus = product.is_available_for_order === true ? 'not available' : 'available';
     
     const confirmMessage = `Are you sure you want to change the availability of "${product.product_name || product.name}" from ${currentStatus} to ${newStatus} for Made to Order?\n\nThis will affect whether customers can add this product to their cart.`;
     
@@ -1183,6 +1196,10 @@ const ProductPage = () => {
         }
       });
       
+      // Invalidate cache and trigger refresh in customer-facing pages
+      localStorage.setItem('products_cache_invalidated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('productsUpdated'));
+      
       await fetchProducts();
     } catch (error) {
       console.error("Toggle availability error:", error);
@@ -1201,7 +1218,13 @@ const ProductPage = () => {
 
   const getProductAvailability = (product) => {
     if (product.category_name === "Made to Order" || product.category_name === "made_to_order") {
-      return { available: true, text: "Available for Made to Order", variant: "success" };
+      // Check the actual is_available_for_order field - must be explicitly true
+      const isAvailable = product.is_available_for_order === true;
+      return { 
+        available: isAvailable, 
+        text: isAvailable ? "Available for Made to Order" : "Not Available for Order", 
+        variant: isAvailable ? "success" : "danger" 
+      };
     } else {
       const stock = product.stock || 0;
       if (stock > 10) {
@@ -1439,11 +1462,11 @@ const ProductPage = () => {
                               <div className="d-flex gap-2">
                                 {(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') && (
                                   <button
-                                    className={`btn btn-sm ${product.is_available ? 'btn-outline-success' : 'btn-outline-danger'} action-button`}
+                                    className={`btn btn-sm ${product.is_available_for_order === true ? 'btn-outline-success' : 'btn-outline-danger'} action-button`}
                                     onClick={() => handleToggleAvailability(product)}
-                                    title={product.is_available ? 'Mark as Not Available' : 'Mark as Available'}
+                                    title={product.is_available_for_order === true ? 'Mark as Not Available' : 'Mark as Available'}
                                   >
-                                    <i className={`fas ${product.is_available ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
+                                    <i className={`fas ${product.is_available_for_order === true ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
                                   </button>
                                 )}
                                 <button
@@ -1535,11 +1558,11 @@ const ProductPage = () => {
                                   <div className="d-flex gap-1">
                                     {(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') && (
                                       <button
-                                        className={`btn btn-sm ${product.is_available ? 'btn-outline-success' : 'btn-outline-danger'} action-button`}
+                                        className={`btn btn-sm ${product.is_available_for_order === true ? 'btn-outline-success' : 'btn-outline-danger'} action-button`}
                                         onClick={() => handleToggleAvailability(product)}
-                                        title={product.is_available ? 'Mark as Not Available' : 'Mark as Available'}
+                                        title={product.is_available_for_order === true ? 'Mark as Not Available' : 'Mark as Available'}
                                       >
-                                        <i className={`fas ${product.is_available ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
+                                        <i className={`fas ${product.is_available_for_order === true ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
                                       </button>
                                     )}
                                     <button

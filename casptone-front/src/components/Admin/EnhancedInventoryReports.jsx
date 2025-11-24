@@ -21,6 +21,15 @@ const EnhancedInventoryReports = () => {
     const [stockFilter, setStockFilter] = useState('all'); // Filter for stock tab: 'all', 'alkansya', 'made_to_order'
     const [refreshKey, setRefreshKey] = useState(0);
     
+    // Enhanced filter states for reports
+    const [reportDateRange, setReportDateRange] = useState('days'); // 'days', 'weeks', 'months', 'year', 'custom'
+    const [reportDateValue, setReportDateValue] = useState(30); // Number of days/weeks/months
+    const [reportStartDate, setReportStartDate] = useState('');
+    const [reportEndDate, setReportEndDate] = useState('');
+    const [reportCategoryFilter, setReportCategoryFilter] = useState('all'); // 'all', 'alkansya', 'made_to_order', 'raw', 'packaging'
+    const [reportStatusFilter, setReportStatusFilter] = useState('all'); // 'all', 'in_stock', 'low_stock', 'out_of_stock', 'overstocked'
+    const [reportMaterialFilter, setReportMaterialFilter] = useState('all'); // Material-specific filter
+    
     // Enhanced data states
     const [dashboardData, setDashboardData] = useState(null);
     const [inventoryReport, setInventoryReport] = useState(null);
@@ -492,6 +501,47 @@ const EnhancedInventoryReports = () => {
         toast.success("Reports refreshed successfully!");
     };
 
+    // Calculate date range based on filter selection
+    const getDateRange = () => {
+        const today = new Date();
+        let startDate, endDate;
+
+        if (reportDateRange === 'custom' && reportStartDate && reportEndDate) {
+            startDate = new Date(reportStartDate);
+            endDate = new Date(reportEndDate);
+        } else {
+            endDate = new Date(today);
+            
+            switch (reportDateRange) {
+                case 'days':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - reportDateValue);
+                    break;
+                case 'weeks':
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - (reportDateValue * 7));
+                    break;
+                case 'months':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - reportDateValue);
+                    break;
+                case 'year':
+                    startDate = new Date(today);
+                    startDate.setFullYear(today.getFullYear() - 1);
+                    break;
+                default:
+                    startDate = new Date(today);
+                    startDate.setDate(today.getDate() - 30);
+            }
+        }
+
+        return {
+            start_date: startDate.toISOString().split('T')[0],
+            end_date: endDate.toISOString().split('T')[0]
+        };
+    };
+
+
     // Preview Report Function
     const previewReport = async (reportType) => {
         try {
@@ -514,47 +564,46 @@ const EnhancedInventoryReports = () => {
             let data = null;
             let title = '';
 
+            const dateRange = getDateRange();
+            
             switch(reportType) {
                 case 'stock':
-                    title = 'Stock Levels Report';
                     const stockData = filteredInventoryData || inventoryReport;
-                    console.log('Preview Report - Stock data:', stockData);
                     if (!stockData) {
                         toast.warning('Stock data not loaded. Please wait for data to load.');
                         return;
                     }
-                    data = generateStockReportData(stockData);
+                    const filteredStockData = applyFiltersToData(stockData);
+                    data = generateStockReportData(filteredStockData, dateRange);
+                    title = `Stock Levels Report (${dateRange.start_date} to ${dateRange.end_date})`;
                     break;
                 case 'usage':
-                    title = 'Material Usage Trends Report';
                     const usageData = filteredInventoryData || inventoryReport;
-                    console.log('Preview Report - Usage data:', usageData);
-                    console.log('Preview Report - Usage data items:', usageData?.items);
                     if (!usageData) {
                         toast.warning('Usage data not loaded. Please wait for data to load.');
                         return;
                     }
-                    data = generateUsageReportData(usageData, alkansyaForecast, madeToOrderForecast);
+                    const filteredUsageData = applyFiltersToData(usageData);
+                    data = generateUsageReportData(filteredUsageData, alkansyaForecast, madeToOrderForecast, dateRange);
+                    title = `Material Usage Trends Report (${dateRange.start_date} to ${dateRange.end_date})`;
                     break;
                 case 'replenishment':
-                    title = 'Replenishment Schedule Report';
-                    console.log('Preview Report - Replenishment data:', enhancedReplenishment);
-                    console.log('Preview Report - Alkansya schedule:', enhancedReplenishment?.alkansya_replenishment?.schedule);
-                    console.log('Preview Report - Made-to-Order schedule:', enhancedReplenishment?.made_to_order_replenishment?.schedule);
                     if (!enhancedReplenishment) {
                         toast.warning('Replenishment data not loaded. Please wait for data to load.');
                         return;
                     }
-                    data = generateReplenishmentReportData(enhancedReplenishment);
+                    data = generateReplenishmentReportData(enhancedReplenishment, dateRange, reportCategoryFilter);
+                    title = `Replenishment Schedule Report (${dateRange.start_date} to ${dateRange.end_date})`;
                     break;
                 case 'full':
-                    title = 'Complete Inventory Report';
                     const fullInventoryData = filteredInventoryData || inventoryReport;
                     if (!fullInventoryData) {
                         toast.warning('Inventory data not loaded. Please wait for data to load.');
                         return;
                     }
-                    data = generateFullReportData(fullInventoryData, enhancedReplenishment);
+                    const filteredFullData = applyFiltersToData(fullInventoryData);
+                    data = generateFullReportData(filteredFullData, enhancedReplenishment, dateRange);
+                    title = `Complete Inventory Report (${dateRange.start_date} to ${dateRange.end_date})`;
                     break;
                 default:
                     return;
@@ -582,26 +631,32 @@ const EnhancedInventoryReports = () => {
     // Download Report Function
     const downloadReport = (reportType) => {
         try {
-            let data = [];
+            const dateRange = getDateRange();
             let filename = '';
             let content = '';
 
             switch(reportType) {
                 case 'stock':
-                    filename = `Stock_Levels_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateStockReportCSV(filteredInventoryData || inventoryReport);
+                    const stockData = filteredInventoryData || inventoryReport;
+                    const filteredStockData = applyFiltersToData(stockData);
+                    filename = `Stock_Levels_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateStockReportCSV(filteredStockData, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 case 'usage':
-                    filename = `Material_Usage_Trends_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateUsageReportCSV(filteredInventoryData, alkansyaForecast, madeToOrderForecast);
+                    const usageData = filteredInventoryData || inventoryReport;
+                    const filteredUsageData = applyFiltersToData(usageData);
+                    filename = `Material_Usage_Trends_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateUsageReportCSV(filteredUsageData, alkansyaForecast, madeToOrderForecast, dateRange, reportCategoryFilter);
                     break;
                 case 'replenishment':
-                    filename = `Replenishment_Schedule_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateReplenishmentReportCSV(enhancedReplenishment);
+                    filename = `Replenishment_Schedule_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateReplenishmentReportCSV(enhancedReplenishment, dateRange, reportCategoryFilter);
                     break;
                 case 'full':
-                    filename = `Complete_Inventory_Report_${new Date().toISOString().split('T')[0]}.csv`;
-                    content = generateFullReportCSV(filteredInventoryData || inventoryReport, enhancedReplenishment);
+                    const fullInventoryData = filteredInventoryData || inventoryReport;
+                    const filteredFullData = applyFiltersToData(fullInventoryData);
+                    filename = `Complete_Inventory_Report_${dateRange.start_date}_to_${dateRange.end_date}.csv`;
+                    content = generateFullReportCSV(filteredFullData, enhancedReplenishment, dateRange, reportCategoryFilter, reportStatusFilter);
                     break;
                 default:
                     return;
@@ -629,24 +684,25 @@ const EnhancedInventoryReports = () => {
     const previewPdfReport = async (reportType) => {
         try {
             const token = localStorage.getItem('token');
+            const dateRange = getDateRange();
             let url = '';
             let title = '';
 
             switch(reportType) {
                 case 'stock':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=stock';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=stock&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Stock Levels Report - PDF Preview';
                     break;
                 case 'usage':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&days=90';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
                     title = 'Material Usage Trends Report - PDF Preview';
                     break;
                 case 'replenishment':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=replenishment';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=replenishment&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
                     title = 'Replenishment Schedule Report - PDF Preview';
                     break;
                 case 'full':
-                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=full`;
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=full&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Complete Inventory Report - PDF Preview';
                     break;
                 default:
@@ -680,21 +736,22 @@ const EnhancedInventoryReports = () => {
     const downloadPdfReport = async (reportType) => {
         try {
             const token = localStorage.getItem('token');
+            const dateRange = getDateRange();
             let url = '';
 
             switch(reportType) {
                 case 'stock':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=stock';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=stock&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     break;
                 case 'usage':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&days=90';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
                     break;
                 case 'replenishment':
-                    url = 'http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=replenishment';
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=replenishment&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
                     break;
                 case 'full':
                     // Use enhanced inventory reports endpoint for complete report
-                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=full`;
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=full&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     break;
                 default:
                     return;
@@ -750,24 +807,111 @@ const EnhancedInventoryReports = () => {
         return 'In Stock';
     };
 
-    const generateStockReportCSV = (data) => {
-        if (!data || !data.items) return '';
+    // Apply filters to inventory data
+    const applyFiltersToData = (data) => {
+        if (!data || !data.items) {
+            return data || { items: [], summary: { total_items: 0, items_needing_reorder: 0, critical_items: 0, low_stock_items: 0 } };
+        }
         
-        const headers = 'Material Name,SKU,Available Quantity,Safety Stock,Reorder Point,Max Level,Days Until Stockout,Status,Category,Unit Cost\n';
-        const rows = data.items.map(item => {
+        let filteredItems = [...data.items];
+        
+        // Apply category filter
+        if (reportCategoryFilter !== 'all') {
+            filteredItems = filteredItems.filter(item => {
+                if (reportCategoryFilter === 'alkansya') return item.is_alkansya_material === true;
+                if (reportCategoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
+                if (reportCategoryFilter === 'raw') return item.category === 'raw';
+                if (reportCategoryFilter === 'packaging') return item.category === 'packaging';
+                return false;
+            });
+        }
+        
+        // Apply status filter
+        if (reportStatusFilter !== 'all') {
+            filteredItems = filteredItems.filter(item => {
+                const status = calculateStockStatus(item);
+                if (reportStatusFilter === 'in_stock') return status === 'In Stock';
+                if (reportStatusFilter === 'low_stock') return status === 'Low Stock';
+                if (reportStatusFilter === 'out_of_stock') return status === 'Out of Stock';
+                if (reportStatusFilter === 'overstocked') return status === 'Overstocked';
+                return false;
+            });
+        }
+        
+        // Recalculate summary based on filtered items
+        const lowStockItems = filteredItems.filter(item => {
             const status = calculateStockStatus(item);
-            return `"${item.name}",${item.material_code},${item.current_stock || item.available_quantity || 0},${item.safety_stock || item.critical_stock || 0},${item.reorder_point || item.reorder_level || 0},${item.max_level || 0},${item.days_until_stockout || 'N/A'},"${status}",${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},₱${item.unit_cost || 0}`
+            return status === 'Low Stock' || status === 'Critical' || status === 'Out of Stock';
+        }).length;
+        
+        const criticalItems = filteredItems.filter(item => {
+            const status = calculateStockStatus(item);
+            return status === 'Critical' || status === 'Out of Stock';
+        }).length;
+        
+        const overstockedItems = filteredItems.filter(item => {
+            const status = calculateStockStatus(item);
+            return status === 'Overstocked';
+        }).length;
+        
+        return {
+            ...data,
+            items: filteredItems,
+            summary: {
+                ...data.summary,
+                total_items: filteredItems.length,
+                items_needing_reorder: lowStockItems,
+                low_stock_items: lowStockItems,
+                critical_items: criticalItems,
+                overstocked_items: overstockedItems
+            }
+        };
+    };
+
+    const generateStockReportCSV = (data, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        // Apply filters using the same function
+        const filteredData = applyFiltersToData(data);
+        
+        if (!filteredData || !filteredData.items || filteredData.items.length === 0) {
+            const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+            return `Material Name,SKU,Available Quantity,Safety Stock,Reorder Point,Max Level,Days Until Stockout,Status,Category,Unit Cost,Date Range\nNo materials found matching the selected filters.\nDate Range: ${dateRangeStr}\nCategory Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\nStatus Filter: ${statusFilter === 'all' ? 'All' : statusFilter}`;
+        }
+        
+        const headers = 'Material Name,SKU,Available Quantity,Safety Stock,Reorder Point,Max Level,Days Until Stockout,Status,Category,Unit Cost,Date Range\n';
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        const rows = filteredData.items.map(item => {
+            const status = calculateStockStatus(item);
+            return `"${item.name || item.material_name || 'N/A'}",${item.material_code || 'N/A'},${item.current_stock || item.available_quantity || 0},${item.safety_stock || item.critical_stock || 0},${item.reorder_point || item.reorder_level || 0},${item.max_level || 0},${item.days_until_stockout || 'N/A'},"${status}",${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},₱${item.unit_cost || 0},"${dateRangeStr}"`
         }).join('\n');
         
         return headers + rows;
     };
 
     // Generate Usage Trends Report CSV
-    const generateUsageReportCSV = (inventoryData, alkansyaForecast, madeToOrderForecast) => {
-        let content = 'Material Name,Category,Average Daily Consumption,Current Stock,Max Level,Days Until Stockout,Projected Usage (30 days),Projected Stock (30 days),Current Status,Projected Status (30 days),Total Consumption,Days With Consumption\n';
+    const generateUsageReportCSV = (inventoryData, alkansyaForecast, madeToOrderForecast, dateRange = null, categoryFilter = 'all') => {
+        // Apply filters - only category filter for usage reports
+        let filteredData = { ...inventoryData };
+        if (categoryFilter !== 'all' && inventoryData?.items) {
+            filteredData.items = inventoryData.items.filter(item => {
+                if (categoryFilter === 'alkansya') return item.is_alkansya_material === true;
+                if (categoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
+                if (categoryFilter === 'raw') return item.category === 'raw';
+                if (categoryFilter === 'packaging') return item.category === 'packaging';
+                return false;
+            });
+        }
         
-        if (inventoryData && inventoryData.items) {
-            inventoryData.items.forEach(item => {
+        const filteredItems = filteredData?.items || [];
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
+        if (filteredItems.length === 0) {
+            return `Material Name,Category,Average Daily Consumption,Current Stock,Max Level,Days Until Stockout,Projected Usage (30 days),Projected Stock (30 days),Current Status,Projected Status (30 days),Total Consumption,Days With Consumption,Date Range\nNo materials found matching the selected filters.\nDate Range: ${dateRangeStr}\nCategory Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}`;
+        }
+        
+        let content = 'Material Name,Category,Average Daily Consumption,Current Stock,Max Level,Days Until Stockout,Projected Usage (30 days),Projected Stock (30 days),Current Status,Projected Status (30 days),Total Consumption,Days With Consumption,Date Range\n';
+        
+        if (filteredItems.length > 0) {
+            filteredItems.forEach(item => {
                 const currentStatus = calculateStockStatus(item);
                 
                 // Calculate projected stock after 30 days
@@ -792,7 +936,7 @@ const EnhancedInventoryReports = () => {
                     projectedStatus = 'Overstocked';
                 }
                 
-                content += `"${item.name}",${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},${Number(avgDailyConsumption || 0).toFixed(2)},${Number(currentStock || 0).toFixed(2)},${Number(maxLevel || 0).toFixed(2)},${item.days_until_stockout || 'N/A'},${Number(projectedUsage30Days || 0).toFixed(2)},${Number(projectedStock30Days || 0).toFixed(2)},${currentStatus},${projectedStatus},${item.total_consumption || 0},${item.days_with_consumption || 0}\n`;
+                content += `"${item.name || item.material_name || 'N/A'}",${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},${Number(avgDailyConsumption || 0).toFixed(2)},${Number(currentStock || 0).toFixed(2)},${Number(maxLevel || 0).toFixed(2)},${item.days_until_stockout || 'N/A'},${Number(projectedUsage30Days || 0).toFixed(2)},${Number(projectedStock30Days || 0).toFixed(2)},${currentStatus},${projectedStatus},${item.total_consumption || 0},${item.days_with_consumption || 0},"${dateRangeStr}"\n`;
             });
         }
         
@@ -800,8 +944,9 @@ const EnhancedInventoryReports = () => {
     };
 
     // Generate Replenishment Report CSV
-    const generateReplenishmentReportCSV = (replenishmentData) => {
-        let content = 'Material Name,Category,Current Stock,Reorder Point,Max Level,Recommended Quantity,Days Until Reorder,Priority,Status,Unit Cost,Estimated Cost\n';
+    const generateReplenishmentReportCSV = (replenishmentData, dateRange = null, categoryFilter = 'all') => {
+        let content = 'Material Name,Category,Current Stock,Reorder Point,Max Level,Recommended Quantity,Days Until Reorder,Priority,Status,Unit Cost,Estimated Cost,Date Range\n';
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
         const processItem = (item, category) => {
             // Use projected stock for status calculation if available
@@ -825,19 +970,24 @@ const EnhancedInventoryReports = () => {
             const recommendedQty = item.recommended_quantity || 0;
             const estimatedCost = recommendedQty * unitCost;
             
-            content += `"${item.material_name || 'N/A'}",${category},${item.current_stock || 0},${item.reorder_point || 0},${item.max_level || 0},${recommendedQty},${daysUntilReorder},"${item.priority || 'Normal'}","${status}",${unitCost.toFixed(2)},${estimatedCost.toFixed(2)}\n`;
+            content += `"${item.material_name || 'N/A'}",${category},${item.current_stock || 0},${item.reorder_point || 0},${item.max_level || 0},${recommendedQty},${daysUntilReorder},"${item.priority || 'Normal'}","${status}",${unitCost.toFixed(2)},${estimatedCost.toFixed(2)},"${dateRangeStr}"\n`;
         };
         
+        // Apply category filter
         if (replenishmentData && replenishmentData.alkansya_replenishment && replenishmentData.alkansya_replenishment.schedule) {
-            replenishmentData.alkansya_replenishment.schedule.forEach(item => {
-                processItem(item, 'Alkansya');
-            });
+            if (categoryFilter === 'all' || categoryFilter === 'alkansya') {
+                replenishmentData.alkansya_replenishment.schedule.forEach(item => {
+                    processItem(item, 'Alkansya');
+                });
+            }
         }
         
         if (replenishmentData && replenishmentData.made_to_order_replenishment && replenishmentData.made_to_order_replenishment.schedule) {
-            replenishmentData.made_to_order_replenishment.schedule.forEach(item => {
-                processItem(item, 'Made to Order');
-            });
+            if (categoryFilter === 'all' || categoryFilter === 'made_to_order') {
+                replenishmentData.made_to_order_replenishment.schedule.forEach(item => {
+                    processItem(item, 'Made to Order');
+                });
+            }
         }
         
         // Also include comprehensive replenishment items if available
@@ -871,40 +1021,57 @@ const EnhancedInventoryReports = () => {
     };
 
     // Generate Full Report CSV
-    const generateFullReportCSV = (inventoryData, replenishmentData) => {
+    const generateFullReportCSV = (inventoryData, replenishmentData, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
+        // Apply filters using the same function
+        const filteredData = applyFiltersToData(inventoryData);
+        const filteredItems = filteredData?.items || [];
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
         let content = 'INVENTORY REPORT SUMMARY\n';
         content += `Generated: ${new Date().toLocaleString()}\n`;
-        content += `Total Materials: ${inventoryData?.summary?.total_items || 0}\n`;
-        content += `Materials Needing Reorder: ${inventoryData?.summary?.items_needing_reorder || 0}\n`;
-        content += `Critical Items: ${inventoryData?.summary?.critical_items || 0}\n`;
-        content += `Overstocked Items: ${inventoryData?.items?.filter(item => {
-            const status = calculateStockStatus(item);
-            return status === 'Overstocked';
-        }).length || 0}\n\n`;
+        content += `Date Range: ${dateRangeStr}\n`;
+        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
+        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n`;
+        content += `Total Materials: ${filteredItems.length}\n`;
+        content += `Materials Needing Reorder: ${filteredData.summary?.items_needing_reorder || 0}\n`;
+        content += `Critical Items: ${filteredData.summary?.critical_items || 0}\n`;
+        content += `Overstocked Items: ${filteredData.summary?.overstocked_items || 0}\n\n`;
         
         content += '\nMATERIAL DETAILS\n';
-        content += 'Material Name,SKU,Category,Available Qty,Safety Stock,Reorder Point,Max Level,Days Left,Status,Unit Cost,Total Value\n';
+        content += 'Material Name,SKU,Category,Available Qty,Safety Stock,Reorder Point,Max Level,Days Left,Status,Unit Cost,Total Value,Date Range\n';
         
-        if (inventoryData && inventoryData.items) {
-            inventoryData.items.forEach(item => {
+        if (filteredItems.length > 0) {
+            filteredItems.forEach(item => {
                 const status = calculateStockStatus(item);
-                content += `"${item.name}",${item.material_code},${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},${item.current_stock || item.available_quantity || 0},${item.safety_stock || item.critical_stock || 0},${item.reorder_point || item.reorder_level || 0},${item.max_level || 0},${item.days_until_stockout || 'N/A'},"${status}",₱${item.unit_cost || 0},₱${((item.current_stock || item.available_quantity || 0) * (item.unit_cost || 0)).toFixed(2)}\n`;
+                content += `"${item.name || item.material_name || 'N/A'}",${item.material_code || 'N/A'},${item.is_alkansya_material ? 'Alkansya' : item.is_made_to_order_material ? 'Made to Order' : 'Other'},${item.current_stock || item.available_quantity || 0},${item.safety_stock || item.critical_stock || 0},${item.reorder_point || item.reorder_level || 0},${item.max_level || 0},${item.days_until_stockout || 'N/A'},"${status}",₱${item.unit_cost || 0},₱${((item.current_stock || item.available_quantity || 0) * (item.unit_cost || 0)).toFixed(2)},"${dateRangeStr}"\n`;
             });
+        } else {
+            content += `No materials found matching the selected filters.\n`;
         }
         
         return content;
     };
 
     // Generate Stock Levels Report Data for Preview
-    const generateStockReportData = (data) => {
+    const generateStockReportData = (data, dateRange = null) => {
         if (!data || !data.items) return { sections: [] };
+        
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
         return {
             sections: [
                 {
+                    title: 'Report Information',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter },
+                        { label: 'Status Filter', value: reportStatusFilter === 'all' ? 'All' : reportStatusFilter }
+                    ]
+                },
+                {
                     title: 'Stock Summary',
                     data: [
-                        { label: 'Total Materials', value: data.summary?.total_items || 0 },
+                        { label: 'Total Materials', value: data.summary?.total_items || data.items.length || 0 },
                         { label: 'Materials Needing Reorder', value: data.summary?.items_needing_reorder || 0 },
                         { label: 'Critical Items', value: data.summary?.critical_items || 0 },
                         { label: 'Low Stock Items', value: data.summary?.low_stock_items || 0 },
@@ -938,17 +1105,34 @@ const EnhancedInventoryReports = () => {
     };
 
     // Generate Usage Trends Report Data for Preview
-    const generateUsageReportData = (inventoryData, alkansyaForecast, madeToOrderForecast) => {
-        console.log('generateUsageReportData - inventoryData:', inventoryData);
+    const generateUsageReportData = (inventoryData, alkansyaForecast, madeToOrderForecast, dateRange = null) => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
-        // Use inventoryData items to calculate usage data
-        const usageData = inventoryData?.items || [];
-        console.log('generateUsageReportData - usageData length:', usageData.length);
+        // Apply category filter to usage data
+        let filteredData = { ...inventoryData };
+        if (reportCategoryFilter !== 'all' && inventoryData?.items) {
+            filteredData.items = inventoryData.items.filter(item => {
+                if (reportCategoryFilter === 'alkansya') return item.is_alkansya_material === true;
+                if (reportCategoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
+                if (reportCategoryFilter === 'raw') return item.category === 'raw';
+                if (reportCategoryFilter === 'packaging') return item.category === 'packaging';
+                return false;
+            });
+        }
+        
+        // Use filtered inventoryData items to calculate usage data
+        const usageData = filteredData?.items || [];
         
         if (usageData.length === 0) {
-            console.warn('generateUsageReportData - No items found in inventoryData');
             return {
                 sections: [
+                    {
+                        title: 'Report Information',
+                        data: [
+                            { label: 'Date Range', value: dateRangeStr },
+                            { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter }
+                        ]
+                    },
                     {
                         title: 'Usage Summary',
                         data: [
@@ -968,7 +1152,7 @@ const EnhancedInventoryReports = () => {
             };
         }
         
-        // Calculate summary from items
+        // Calculate summary from filtered items
         const totalConsumption = usageData.reduce((sum, item) => sum + (item.avg_daily_consumption || 0), 0);
         const alkansyaConsumption = usageData
             .filter(item => item.is_alkansya_material)
@@ -977,51 +1161,86 @@ const EnhancedInventoryReports = () => {
             .filter(item => item.is_made_to_order_material)
             .reduce((sum, item) => sum + (item.avg_daily_consumption || 0), 0);
         
-        // Sort materials by average daily consumption
-        const topMaterials = [...usageData]
-            .filter(item => (item.avg_daily_consumption || 0) > 0)
-            .sort((a, b) => (b.avg_daily_consumption || 0) - (a.avg_daily_consumption || 0))
-            .slice(0, 20); // Top 20 materials
+        // Count materials with consumption data
+        const materialsWithConsumption = usageData.filter(item => (item.avg_daily_consumption || 0) > 0).length;
         
-        console.log('generateUsageReportData - topMaterials length:', topMaterials.length);
+        // Sort all materials: those with consumption first (sorted by consumption), then others
+        const sortedMaterials = [...usageData].sort((a, b) => {
+            const aConsumption = a.avg_daily_consumption || 0;
+            const bConsumption = b.avg_daily_consumption || 0;
+            
+            // If both have consumption, sort by consumption descending
+            if (aConsumption > 0 && bConsumption > 0) {
+                return bConsumption - aConsumption;
+            }
+            // If only one has consumption, prioritize it
+            if (aConsumption > 0) return -1;
+            if (bConsumption > 0) return 1;
+            // If neither has consumption, sort by name
+            const aName = (a.name || a.material_name || '').toLowerCase();
+            const bName = (b.name || b.material_name || '').toLowerCase();
+            return aName.localeCompare(bName);
+        });
         
         return {
             sections: [
+                {
+                    title: 'Report Information',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter },
+                        { label: 'Total Materials', value: usageData.length }
+                    ]
+                },
                 {
                     title: 'Usage Summary',
                     data: [
                         { label: 'Total Consumption', value: totalConsumption.toFixed(2) },
                         { label: 'Alkansya Consumption', value: alkansyaConsumption.toFixed(2) },
                         { label: 'Made-to-Order Consumption', value: madeToOrderConsumption.toFixed(2) },
-                        { label: 'Materials Consumed', value: topMaterials.length }
+                        { label: 'Materials with Consumption Data', value: materialsWithConsumption }
                     ]
                 },
                 {
                     title: 'Top Materials by Usage',
                     type: 'table',
                     headers: ['Material Name', 'Category', 'Avg Daily Usage', 'Current Stock', 'Days Until Stockout', 'Projected Usage', 'Status'],
-                    data: topMaterials.map(material => [
-                        material.name || material.material_name || 'N/A',
-                        material.is_alkansya_material ? 'Alkansya' : material.is_made_to_order_material ? 'Made to Order' : 'Other',
-                        (material.avg_daily_consumption || 0).toFixed(2),
-                        material.current_stock || 0,
-                        material.days_until_stockout || 'N/A',
-                        `${((material.avg_daily_consumption || 0) * 30).toFixed(2)} (30-day projection)`,
-                        material.stock_status || 'N/A'
-                    ])
+                    data: sortedMaterials.map(material => {
+                        const avgDailyUsage = material.avg_daily_consumption || 0;
+                        const currentStock = material.current_stock || material.available_quantity || 0;
+                        const daysUntilStockout = material.days_until_stockout;
+                        const projectedUsage = avgDailyUsage > 0 ? `${(avgDailyUsage * 30).toFixed(2)} (30-day projection)` : 'N/A';
+                        const status = material.stock_status || calculateStockStatus(material);
+                        
+                        return [
+                            material.name || material.material_name || 'N/A',
+                            material.is_alkansya_material ? 'Alkansya' : material.is_made_to_order_material ? 'Made to Order' : 'Other',
+                            avgDailyUsage.toFixed(2),
+                            currentStock,
+                            daysUntilStockout !== null && daysUntilStockout !== undefined ? daysUntilStockout : 'N/A',
+                            projectedUsage,
+                            status
+                        ];
+                    })
                 }
             ]
         };
     };
 
     // Generate Replenishment Report Data for Preview
-    const generateReplenishmentReportData = (data) => {
-        console.log('generateReplenishmentReportData - data:', data);
+    const generateReplenishmentReportData = (data, dateRange = null, categoryFilter = 'all') => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
         if (!data) {
-            console.warn('generateReplenishmentReportData - No data provided');
             return { 
                 sections: [
+                    {
+                        title: 'Report Information',
+                        data: [
+                            { label: 'Date Range', value: dateRangeStr },
+                            { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                        ]
+                    },
                     {
                         title: 'Replenishment Summary',
                         data: [
@@ -1042,18 +1261,28 @@ const EnhancedInventoryReports = () => {
         }
         
         // Extract schedules from alkansya and made-to-order replenishment
-        const alkansyaSchedule = data?.alkansya_replenishment?.schedule || [];
-        const madeToOrderSchedule = data?.made_to_order_replenishment?.schedule || [];
-        console.log('generateReplenishmentReportData - alkansyaSchedule length:', alkansyaSchedule.length);
-        console.log('generateReplenishmentReportData - madeToOrderSchedule length:', madeToOrderSchedule.length);
+        let alkansyaSchedule = data?.alkansya_replenishment?.schedule || [];
+        let madeToOrderSchedule = data?.made_to_order_replenishment?.schedule || [];
+        
+        // Apply category filter
+        if (categoryFilter === 'alkansya') {
+            madeToOrderSchedule = [];
+        } else if (categoryFilter === 'made_to_order') {
+            alkansyaSchedule = [];
+        }
         
         const allItems = [...alkansyaSchedule, ...madeToOrderSchedule];
-        console.log('generateReplenishmentReportData - allItems length:', allItems.length);
         
         if (allItems.length === 0) {
-            console.warn('generateReplenishmentReportData - No items in schedules');
             return {
                 sections: [
+                    {
+                        title: 'Report Information',
+                        data: [
+                            { label: 'Date Range', value: dateRangeStr },
+                            { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                        ]
+                    },
                     {
                         title: 'Replenishment Summary',
                         data: [
@@ -1085,6 +1314,13 @@ const EnhancedInventoryReports = () => {
         
         return {
             sections: [
+                {
+                    title: 'Report Information',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                    ]
+                },
                 {
                     title: 'Replenishment Summary',
                     data: [
@@ -1122,13 +1358,23 @@ const EnhancedInventoryReports = () => {
     };
 
     // Generate Full Report Data for Preview
-    const generateFullReportData = (inventoryData, replenishmentData) => {
+    const generateFullReportData = (inventoryData, replenishmentData, dateRange = null) => {
+        const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
+        
         return {
             sections: [
                 {
+                    title: 'Report Information',
+                    data: [
+                        { label: 'Date Range', value: dateRangeStr },
+                        { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter },
+                        { label: 'Status Filter', value: reportStatusFilter === 'all' ? 'All' : reportStatusFilter }
+                    ]
+                },
+                {
                     title: 'Inventory Overview',
                     data: [
-                        { label: 'Total Materials', value: inventoryData?.summary?.total_items || 0 },
+                        { label: 'Total Materials', value: inventoryData?.summary?.total_items || inventoryData?.items?.length || 0 },
                         { label: 'Materials Needing Reorder', value: inventoryData?.summary?.items_needing_reorder || 0 },
                         { label: 'Critical Items', value: inventoryData?.summary?.critical_items || 0 },
                         { label: 'Low Stock Items', value: inventoryData?.summary?.low_stock_items || 0 }
@@ -1772,6 +2018,139 @@ const EnhancedInventoryReports = () => {
                                 </div>
                                 <p className="text-muted mb-4" style={{ fontSize: '0.9rem' }}>Generate detailed reports for stock levels, material usage trends, and replenishment schedules</p>
                                         
+                                {/* Unified Report Filters - Applies to both CSV and PDF */}
+                                <div className="mb-4">
+                                    <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', background: 'linear-gradient(135deg, #f8f9fa, #ffffff)' }}>
+                                        <div className="card-header bg-white border-0 pb-2" style={{ borderRadius: '12px 12px 0 0' }}>
+                                            <div className="d-flex align-items-center">
+                                                <i className="fas fa-filter text-primary me-2"></i>
+                                                <h6 className="mb-0 fw-bold" style={{ color: '#495057', fontSize: '0.95rem' }}>
+                                                    Report Filters
+                                                </h6>
+                                                <small className="text-muted ms-2">(Applies to all reports)</small>
+                                            </div>
+                                        </div>
+                                        <div className="card-body p-3">
+                                            <div className="row g-3 align-items-end">
+                                                <div className="col-md-2">
+                                                    <label className="form-label small fw-bold text-muted mb-1">
+                                                        <i className="fas fa-calendar-alt me-1"></i>Date Range
+                                                    </label>
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        value={reportDateRange}
+                                                        onChange={(e) => {
+                                                            setReportDateRange(e.target.value);
+                                                            if (e.target.value !== 'custom') {
+                                                                setReportStartDate('');
+                                                                setReportEndDate('');
+                                                            }
+                                                        }}
+                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                    >
+                                                        <option value="days">Days</option>
+                                                        <option value="weeks">Weeks</option>
+                                                        <option value="months">Months</option>
+                                                        <option value="year">Year</option>
+                                                        <option value="custom">Custom Range</option>
+                                                    </select>
+                                                </div>
+                                                {reportDateRange !== 'custom' && reportDateRange !== 'year' && (
+                                                    <div className="col-md-2">
+                                                        <label className="form-label small fw-bold text-muted mb-1">
+                                                            <i className="fas fa-hashtag me-1"></i>Period
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control form-control-sm"
+                                                            value={reportDateValue}
+                                                            onChange={(e) => setReportDateValue(parseInt(e.target.value) || 1)}
+                                                            min="1"
+                                                            style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                        />
+                                                    </div>
+                                                )}
+                                                {reportDateRange === 'custom' && (
+                                                    <>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label small fw-bold text-muted mb-1">
+                                                                <i className="fas fa-calendar-check me-1"></i>Start Date
+                                                            </label>
+                                                            <input
+                                                                type="date"
+                                                                className="form-control form-control-sm"
+                                                                value={reportStartDate}
+                                                                onChange={(e) => setReportStartDate(e.target.value)}
+                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                            />
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label small fw-bold text-muted mb-1">
+                                                                <i className="fas fa-calendar-times me-1"></i>End Date
+                                                            </label>
+                                                            <input
+                                                                type="date"
+                                                                className="form-control form-control-sm"
+                                                                value={reportEndDate}
+                                                                onChange={(e) => setReportEndDate(e.target.value)}
+                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+                                                <div className="col-md-2">
+                                                    <label className="form-label small fw-bold text-muted mb-1">
+                                                        <i className="fas fa-tags me-1"></i>Category
+                                                    </label>
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        value={reportCategoryFilter}
+                                                        onChange={(e) => setReportCategoryFilter(e.target.value)}
+                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                    >
+                                                        <option value="all">All Categories</option>
+                                                        <option value="alkansya">Alkansya</option>
+                                                        <option value="made_to_order">Made to Order</option>
+                                                        <option value="raw">Raw Materials</option>
+                                                        <option value="packaging">Packaging</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-md-2">
+                                                    <label className="form-label small fw-bold text-muted mb-1">
+                                                        <i className="fas fa-info-circle me-1"></i>Status
+                                                    </label>
+                                                    <select
+                                                        className="form-select form-select-sm"
+                                                        value={reportStatusFilter}
+                                                        onChange={(e) => setReportStatusFilter(e.target.value)}
+                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                    >
+                                                        <option value="all">All Status</option>
+                                                        <option value="in_stock">In Stock</option>
+                                                        <option value="low_stock">Low Stock</option>
+                                                        <option value="out_of_stock">Out of Stock</option>
+                                                        <option value="overstocked">Overstocked</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-md-2">
+                                                    <button
+                                                        className="btn btn-sm btn-primary w-100"
+                                                        onClick={() => {
+                                                            const dateRange = getDateRange();
+                                                            console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
+                                                            toast.success('Filters applied to all reports!');
+                                                        }}
+                                                        style={{ borderRadius: '8px', fontWeight: '600' }}
+                                                    >
+                                                        <i className="fas fa-check me-1"></i>
+                                                        Apply Filters
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                        
                                 {/* CSV Reports Section */}
                                 <div className="mb-4">
                                     <div className="d-flex align-items-center mb-3">
@@ -1786,6 +2165,7 @@ const EnhancedInventoryReports = () => {
                                             CSV Reports
                                         </h6>
                                     </div>
+                                    
                                     <div className="row g-3">
                                         {/* Stock Levels Report */}
                                         <div className="col-md-4">
@@ -1993,6 +2373,7 @@ const EnhancedInventoryReports = () => {
                                             PDF Reports
                                         </h6>
                                     </div>
+                                    
                                     <div className="row g-3">
                                         {/* Stock Levels Report PDF */}
                                         <div className="col-md-4">

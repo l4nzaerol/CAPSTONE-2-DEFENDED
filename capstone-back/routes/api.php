@@ -202,8 +202,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/cart/{id}', [CartController::class, 'update']);
     Route::delete('/cart/{id}', [CartController::class, 'removeFromCart']);
 
+    // Wishlist Routes
+    Route::get('/wishlist', [\App\Http\Controllers\WishlistController::class, 'index']);
+    Route::post('/wishlist', [\App\Http\Controllers\WishlistController::class, 'store']);
+    Route::delete('/wishlist/{id}', [\App\Http\Controllers\WishlistController::class, 'destroy']);
+
     // Order Routes
     Route::post('/checkout', [OrderController::class, 'checkout']);
+    Route::post('/orders', [OrderController::class, 'store']); // Direct buy-now orders
     Route::post('/payments/init', [OrderController::class, 'initPayment']);
     Route::post('/payments/verify', [OrderController::class, 'verifyPayment']);
     Route::post('/payments/confirm', [OrderController::class, 'confirmPayment']);
@@ -243,6 +249,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
     Route::put('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
     Route::delete('/notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy']);
+
+    // Wishlist availability check (can be called periodically)
+    Route::post('/wishlist/check-availability', [\App\Http\Controllers\WishlistController::class, 'checkAndNotifyAvailableProducts']);
 
     // Inventory Routes (Protected - for authenticated users)
     Route::get('/inventory', [InventoryController::class, 'index']);

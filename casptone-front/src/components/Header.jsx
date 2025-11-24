@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ShoppingCart, User } from "lucide-react";
+import { ShoppingCart, User, Heart } from "lucide-react";
 import { LayoutDashboard, Package, ClipboardList, Boxes, Factory, BarChart } from "lucide-react";
 import NotificationBell from "./Customers/NotificationBell";
 
@@ -30,6 +30,7 @@ export const useSidebar = () => {
 const Header = ({ role, username, searchTerm, setSearchTerm }) => {
     const navigate = useNavigate();
     const [cartCount, setCartCount] = useState(0);
+    const [wishlistCount, setWishlistCount] = useState(0);
     const [showSearch, setShowSearch] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -91,6 +92,40 @@ const Header = ({ role, username, searchTerm, setSearchTerm }) => {
         }
     }, [role]);
 
+    useEffect(() => {
+        if (role === "customer") {
+            const fetchWishlistCount = async () => {
+                try {
+                    const token = localStorage.getItem("token");
+                    if (!token) return;
+
+                    const response = await axios.get("http://localhost:8000/api/wishlist", {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setWishlistCount(response.data.wishlist?.length || 0);
+                } catch (err) {
+                    // Silently fail if not authenticated
+                    if (err.response?.status !== 401) {
+                        console.error("Failed to fetch wishlist count:", err);
+                    }
+                }
+            };
+
+            fetchWishlistCount();
+
+            // Listen for wishlist updated events
+            const handleWishlistUpdated = () => {
+                fetchWishlistCount();
+            };
+
+            window.addEventListener('wishlistUpdated', handleWishlistUpdated);
+            
+            return () => {
+                window.removeEventListener('wishlistUpdated', handleWishlistUpdated);
+            };
+        }
+    }, [role]);
+
     const handleLogout = () => {
         localStorage.clear();
         navigate("/");
@@ -133,6 +168,10 @@ const Header = ({ role, username, searchTerm, setSearchTerm }) => {
                         </div>
                         
                         <NotificationBell />
+                        <button style={styles.iconBtn} onClick={() => navigate("/wishlist")} title="Wishlist">
+                            <Heart size={isMobile ? 20 : 24} fill={wishlistCount > 0 ? "#DC2626" : "none"} />
+                            {wishlistCount > 0 && <span style={styles.cartBadge}>{wishlistCount}</span>}
+                        </button>
                         <button style={styles.iconBtn} onClick={() => navigate("/cart")}>
                             <ShoppingCart size={isMobile ? 20 : 24} />
                             {cartCount > 0 && <span style={styles.cartBadge}>{cartCount}</span>}

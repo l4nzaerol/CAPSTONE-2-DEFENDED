@@ -1019,6 +1019,7 @@ const NormalizedInventoryPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productFilter, setProductFilter] = useState("all"); // "all", "made_to_order", "stocked"
   const [materialFilter, setMaterialFilter] = useState("all"); // "all", "alkansya", or product ID
+  const [materialSort, setMaterialSort] = useState("none"); // Sorting option
   const [boms, setBoms] = useState([]); // Store BOM data
 
   // Generate filter options for dropdown
@@ -1104,40 +1105,81 @@ const NormalizedInventoryPage = () => {
       .filter((id, index, self) => self.indexOf(id) === index); // Remove duplicates
   }, [boms, alkansyaProductIds]);
 
-  // Filter materials based on filter selection
+  // Filter and sort materials based on filter and sort selection
   const filteredMaterials = useMemo(() => {
     console.log('Filtering materials:', {
       filterValue: materialFilter,
+      sortValue: materialSort,
       totalMaterials: materials.length,
       alkansyaMaterialIdsCount: alkansyaMaterialIds.length,
       bomEntriesCount: boms.length
     });
     
+    let filtered = [];
+    
+    // Apply filter
     if (materialFilter === "all") {
       // Return all materials when "All Materials" is selected
       console.log('Returning ALL materials:', materials.length);
-      return materials;
+      filtered = materials;
     } else if (materialFilter === "alkansya") {
       // Filter alkansya materials based on BOM entries
-      const filtered = materials.filter(material => 
+      filtered = materials.filter(material => 
         alkansyaMaterialIds.includes(material.material_id)
       );
       console.log('Returning Alkansya materials:', filtered.length);
-      return filtered;
     } else if (materialFilter && !isNaN(materialFilter)) {
       // Filter by product ID (BOM-based filtering)
       const productMaterials = boms
         .filter(bom => bom.product_id === parseInt(materialFilter))
         .map(bom => bom.material_id);
       
-      const filtered = materials.filter(material => 
+      filtered = materials.filter(material => 
         productMaterials.includes(material.material_id)
       );
       console.log('Returning product materials:', filtered.length);
-      return filtered;
+    } else {
+      filtered = materials;
     }
-    return materials;
-  }, [materials, materialFilter, boms, alkansyaMaterialIds]);
+    
+    // Apply sorting
+    if (materialSort !== "none") {
+      filtered = [...filtered].sort((a, b) => {
+        switch (materialSort) {
+          case "quantity_low_high":
+            // Sort by quantity (low → high)
+            const qtyA = parseFloat(a.available_quantity || 0);
+            const qtyB = parseFloat(b.available_quantity || 0);
+            return qtyA - qtyB;
+            
+          case "price_high_low":
+            // Sort by price (high → low)
+            const priceA = parseFloat(a.standard_cost || 0);
+            const priceB = parseFloat(b.standard_cost || 0);
+            return priceB - priceA;
+            
+          case "category_alphabetical":
+            // Sort by category (alphabetical)
+            const catA = (a.category || '').toLowerCase();
+            const catB = (b.category || '').toLowerCase();
+            if (catA < catB) return -1;
+            if (catA > catB) return 1;
+            return 0;
+            
+          case "date_newest_oldest":
+            // Sort by date added (newest → oldest)
+            const dateA = new Date(a.created_at || a.date_added || 0);
+            const dateB = new Date(b.created_at || b.date_added || 0);
+            return dateB - dateA;
+            
+          default:
+            return 0;
+        }
+      });
+    }
+    
+    return filtered;
+  }, [materials, materialFilter, materialSort, boms, alkansyaMaterialIds]);
 
   // API helper function
 
@@ -1548,6 +1590,27 @@ const NormalizedInventoryPage = () => {
                         {option.label}
                       </option>
                     ))}
+                  </select>
+                  <select
+                    className="form-select form-select-sm"
+                    value={materialSort}
+                    onChange={(e) => {
+                      console.log('Sort changed to:', e.target.value);
+                      setMaterialSort(e.target.value);
+                    }}
+                    style={{ 
+                      minWidth: '220px',
+                      borderRadius: '8px',
+                      border: '2px solid #6c757d',
+                      padding: '0.5rem 1rem'
+                    }}
+                    title="Sort materials"
+                  >
+                    <option value="none">Sort by...</option>
+                    <option value="quantity_low_high">Sort by quantity (low → high)</option>
+                    <option value="price_high_low">Sort by price (high → low)</option>
+                    <option value="category_alphabetical">Sort by category (alphabetical)</option>
+                    <option value="date_newest_oldest">Sort by date added (newest → oldest)</option>
                   </select>
                 </div>
               </div>

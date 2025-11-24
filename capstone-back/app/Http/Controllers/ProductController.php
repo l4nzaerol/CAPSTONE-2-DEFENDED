@@ -259,7 +259,13 @@ class ProductController extends Controller
             
             // Calculate availability based on category and stock
             if ($product->category_name === 'Made to Order' || $product->category_name === 'made_to_order') {
-                $isAvailableForOrder = $product->is_available_for_order ?? true; // Default to true if not set
+                // Ensure is_available_for_order is explicitly set as boolean (default to true if null)
+                if ($product->is_available_for_order === null) {
+                    $product->is_available_for_order = true;
+                } else {
+                    $product->is_available_for_order = (bool)$product->is_available_for_order;
+                }
+                $isAvailableForOrder = $product->is_available_for_order;
                 $product->is_available = $isAvailableForOrder;
                 $product->availability_text = $isAvailableForOrder ? 'Available for Order' : 'Not Available';
                 $product->availability_variant = $isAvailableForOrder ? 'success' : 'danger';
@@ -345,12 +351,12 @@ class ProductController extends Controller
             return [
                 'id' => $bomItem->id,
                 'material_id' => $bomItem->material_id,
-                'material_name' => $bomItem->material->material_name ?? 'Unknown Material',
-                'material_code' => $bomItem->material->material_code ?? '',
-                'quantity_per_product' => $bomItem->quantity_per_product,
-                'unit_of_measure' => $bomItem->unit_of_measure,
+                'material_name' => $bomItem->material->material_name ?? $bomItem->material->name ?? 'Unknown Material',
+                'material_code' => $bomItem->material->material_code ?? $bomItem->material->sku ?? '',
+                'quantity_per_product' => $bomItem->quantity_per_product ?? $bomItem->qty_per_unit ?? 0,
+                'unit_of_measure' => $bomItem->unit_of_measure ?? 'pcs',
                 'standard_cost' => $bomItem->material->standard_cost ?? 0,
-                'total_cost' => $bomItem->quantity_per_product * ($bomItem->material->standard_cost ?? 0)
+                'total_cost' => ($bomItem->quantity_per_product ?? $bomItem->qty_per_unit ?? 0) * ($bomItem->material->standard_cost ?? 0)
             ];
         });
         return response()->json($bom);
@@ -434,20 +440,32 @@ class ProductController extends Controller
 
     public function toggleAvailability($id)
     {
-        $product = Product::findOrFail($id);
-        
-        // Only allow toggling for made-to-order products
-        if ($product->category_name !== 'Made to Order' && $product->category_name !== 'made_to_order') {
-            return response()->json(['error' => 'Only made-to-order products can have their availability toggled'], 400);
+        try {
+            $product = Product::findOrFail($id);
+            
+            // Only allow toggling for made-to-order products
+            if ($product->category_name !== 'Made to Order' && $product->category_name !== 'made_to_order') {
+                return response()->json(['error' => 'Only made-to-order products can have their availability toggled'], 400);
+            }
+            
+            $product->is_available_for_order = !$product->is_available_for_order;
+            $product->save();
+            
+            return response()->json([
+                'message' => 'Product availability updated successfully',
+                'is_available_for_order' => $product->is_available_for_order
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to toggle product availability: ' . $e->getMessage(), [
+                'product_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to update product availability. Please try again.',
+                'message' => $e->getMessage()
+            ], 500);
         }
-        
-        $product->is_available_for_order = !$product->is_available_for_order;
-        $product->save();
-        
-        return response()->json([
-            'message' => 'Product availability updated successfully',
-            'is_available_for_order' => $product->is_available_for_order
-        ]);
     }
 
 }

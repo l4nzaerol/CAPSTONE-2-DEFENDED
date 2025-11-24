@@ -167,6 +167,122 @@ class OrderController extends Controller
     }
 
     /**
+     * Store a direct order (buy now) without going through cart
+     */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'payment_method' => 'nullable|in:cod',
+            'shipping_address' => 'nullable|string|max:500',
+            'contact_phone' => 'nullable|string|max:64',
+            'transaction_ref' => 'nullable|string|max:128',
+            'shipping_fee' => 'nullable|numeric|min:0',
+        ]);
+
+        $product = Product::findOrFail($validated['product_id']);
+        
+        // Check stock for non-made-to-order products
+        if (($product->category_name !== 'Made to Order' && $product->category_name !== 'made_to_order') && $product->stock < $validated['quantity']) {
+            return response()->json(['message' => 'Stock unavailable for ' . $product->name], 400);
+        }
+        
+        // For made-to-order products, check if they're available for order
+        if (($product->category_name === 'Made to Order' || $product->category_name === 'made_to_order') && !$product->is_available_for_order) {
+            return response()->json(['message' => 'Product not available for order: ' . $product->name], 400);
+        }
+
+        // Calculate subtotal
+        $itemsSubtotal = $product->price * $validated['quantity'];
+
+        // Pre-check: ensure raw materials are sufficient based on BOM
+        $bom = ProductMaterial::where('product_id', $product->id)->get();
+        $shortages = [];
+        foreach ($bom as $mat) {
+            $requiredQty = $mat->qty_per_unit * $validated['quantity'];
+            $inv = InventoryItem::find($mat->inventory_item_id);
+            if ($inv && ($inv->quantity_on_hand < $requiredQty)) {
+                $shortages[] = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'sku' => $inv->sku,
+                    'material_name' => $inv->name,
+                    'on_hand' => $inv->quantity_on_hand,
+                    'required' => $requiredQty,
+                    'deficit' => max(0, $requiredQty - $inv->quantity_on_hand),
+                ];
+            }
+        }
+        if (!empty($shortages)) {
+            return response()->json([
+                'message' => 'Insufficient raw materials for this order',
+                'shortages' => $shortages
+            ], 422);
+        }
+
+        $paymentMethod = $validated['payment_method'] ?? 'cod';
+        $paymentStatus = 'cod_pending';
+        
+        // For made-to-order products, shipping fee should be 0
+        $isMadeToOrder = $product->category_name === 'Made to Order' || $product->category_name === 'made_to_order';
+        $shippingFee = $isMadeToOrder ? 0 : ($validated['shipping_fee'] ?? 0);
+        $totalPrice = $itemsSubtotal + $shippingFee;
+
+        return DB::transaction(function () use ($user, $product, $validated, $totalPrice, $shippingFee, $paymentMethod, $paymentStatus, $isMadeToOrder) {
+            // Generate unique tracking number
+            $trackingNumber = $this->generateTrackingNumber();
+            
+            // Create order
+            $order = Order::create([
+                'user_id' => $user->id,
+                'tracking_number' => $trackingNumber,
+                'total_price' => $totalPrice,
+                'shipping_fee' => $shippingFee,
+                'status' => 'pending',
+                'checkout_date' => now(),
+                'payment_method' => $paymentMethod,
+                'payment_status' => $paymentStatus,
+                'transaction_ref' => $validated['transaction_ref'] ?? null,
+                'shipping_address' => $validated['shipping_address'] ?? null,
+                'contact_phone' => $validated['contact_phone'] ?? null,
+            ]);
+
+            // Create order item
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'quantity' => $validated['quantity'],
+                'price' => $product->price
+            ]);
+
+            // Handle different product types
+            if ($isMadeToOrder) {
+                // For made-to-order products: don't deduct anything during checkout
+                \Log::info("Made-to-order product {$product->name}: materials will be deducted when order is accepted");
+            } else {
+                // For stocked products: only deduct finished product stock
+                $product->decrement('stock', $validated['quantity']);
+                \Log::info("Stocked product {$product->name}: deducted finished product stock only");
+            }
+
+            // Create tracking
+            $this->createOrderTracking($order->id, $product->id, $product);
+
+            return response()->json([
+                'message' => 'Order placed successfully',
+                'order_id' => $order->id,
+                'order' => $order->load('items.product')
+            ]);
+        });
+    }
+
+    /**
      * Generate unique tracking number for orders
      */
     private function generateTrackingNumber()

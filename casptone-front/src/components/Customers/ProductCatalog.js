@@ -37,7 +37,9 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  
+  // Wishlist states
+  const [wishlist, setWishlist] = useState([]);
+  const [wishlistLoading, setWishlistLoading] = useState(new Set());
 
   // Buy Now modal states
 
@@ -66,6 +68,98 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showFilterDropdown]);
+
+  // Fetch wishlist on component mount
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  const fetchWishlist = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get("http://localhost:8000/api/wishlist", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setWishlist(response.data.wishlist || []);
+    } catch (error) {
+      // Silently fail if user is not authenticated
+      if (error.response?.status !== 401) {
+        console.error("Error fetching wishlist:", error);
+      }
+    }
+  };
+
+  const handleAddToWishlist = async (product) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please login to add products to wishlist");
+      return;
+    }
+
+    setWishlistLoading(prev => new Set(prev).add(product.id));
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/api/wishlist",
+        { product_id: product.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update wishlist state optimistically without refetching
+      setWishlist(prev => [...prev, response.data.wishlist]);
+      
+      toast.success("Product added to wishlist!");
+      
+      // Dispatch event to update header count only
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to add to wishlist";
+      toast.error(message);
+      // Revert optimistic update on error
+      fetchWishlist();
+    } finally {
+      setWishlistLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(product.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleRemoveFromWishlist = async (wishlistId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // Update wishlist state optimistically without refetching
+      setWishlist(prev => prev.filter(item => item.id !== wishlistId));
+      
+      await axios.delete(
+        `http://localhost:8000/api/wishlist/${wishlistId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // No toast for removal - silent update
+      // Dispatch event to update header count only
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+    } catch (error) {
+      toast.error("Failed to remove from wishlist");
+      // Revert optimistic update on error
+      fetchWishlist();
+    }
+  };
+
+  const isInWishlist = (productId) => {
+    return wishlist.some(item => item.product_id === productId);
+  };
+
+  const getWishlistId = (productId) => {
+    const item = wishlist.find(item => item.product_id === productId);
+    return item ? item.id : null;
+  };
 
   // Filter products based on search term and category
   const filteredProducts = useMemo(() => {
@@ -143,23 +237,9 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
     
 
-    // Set initial quantity based on product type
+    // Set initial quantity to 1 for all products
 
-    const productName = (product.name || product.product_name || '').toLowerCase();
-
-    const categoryName = product.category_name || '';
-
-    const isMadeToOrderDiningTable = 
-
-      (categoryName === 'Made to Order' || categoryName === 'made_to_order') &&
-
-      productName.includes('dining table');
-
-    
-
-    // Fixed to 1 for made-to-order Dining Table
-
-    setQuantity(isMadeToOrderDiningTable ? 1 : 1);
+    setQuantity(1);
 
     
 
@@ -255,35 +335,27 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
     
 
-    // Validate quantity limits
+    // Validate quantity limits (only for non-made-to-order products)
 
     const productName = (selectedProduct.name || selectedProduct.product_name || '').toLowerCase();
 
     const categoryName = selectedProduct.category_name || '';
 
-    const isMadeToOrderDiningTable = 
-
-      (categoryName === 'Made to Order' || categoryName === 'made_to_order') &&
-
-      productName.includes('dining table');
+    const isMadeToOrder = categoryName === 'Made to Order' || categoryName === 'made_to_order';
 
     const isWoodenChair = productName.includes('wooden chair');
 
     
 
-    // Enforce quantity limits - always use quantity 1 for Dining Table
+    // No quantity limits for made-to-order products
 
     let finalQuantity = quantity;
 
-    if (isMadeToOrderDiningTable) {
-
-      finalQuantity = 1;
-
-    }
-
     
 
-    if (isWoodenChair && quantity > 4) {
+    // Only enforce limits for Wooden Chair (not made-to-order)
+
+    if (isWoodenChair && !isMadeToOrder && quantity > 4) {
 
       setError("Wooden Chair maximum quantity is 4");
 
@@ -403,7 +475,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
   // Memoized ProductCard component to prevent unnecessary re-renders
 
-  const ProductCard = React.memo(({ product, index, category, onShowModal, onAddToCart, onBuyNow, isLoading }) => {
+  const ProductCard = React.memo(({ product, index, category, onShowModal, onAddToCart, onBuyNow, onAddToWishlist, onRemoveFromWishlist, isInWishlist, wishlistId, isLoading, isWishlistLoading }) => {
 
     // Memoize the button handlers to prevent re-renders
 
@@ -432,6 +504,28 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
       onBuyNow(product, e);
 
     }, [onBuyNow, product]);
+
+    const handleWishlistToggle = useCallback((e) => {
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+      if (isInWishlist) {
+
+        onRemoveFromWishlist(wishlistId);
+
+      } else {
+
+        onAddToWishlist(product);
+
+      }
+
+    }, [isInWishlist, wishlistId, onAddToWishlist, onRemoveFromWishlist, product]);
+
+    
+
+    // Show wishlist heart icon for all products
 
 
 
@@ -463,7 +557,46 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
       <div className="product-image-container">
 
-        
+        {/* Wishlist Heart Icon - Top Left */}
+        <button
+          className={`wishlist-heart-btn ${isInWishlist ? 'in-wishlist' : ''}`}
+          onClick={handleWishlistToggle}
+          disabled={isWishlistLoading}
+          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            zIndex: 10,
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+          }}
+        >
+          <span style={{
+            fontSize: '20px',
+            color: isInWishlist ? '#DC2626' : '#999',
+            transition: 'color 0.3s ease'
+          }}>
+            {isInWishlist ? '♥' : '♡'}
+          </span>
+        </button>
 
         <img
 
@@ -549,11 +682,11 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
           {product.category_name === 'Made to Order' || product.category_name === 'made_to_order' ? (
 
-            <span className={`stock-status ${product.is_available !== false ? 'in-stock' : 'out-of-stock'}`}>
+            <span className={`stock-status ${product.is_available_for_order === true ? 'in-stock' : 'out-of-stock'}`}>
 
-              <i className={`fas ${product.is_available !== false ? 'fa-tools' : 'fa-times-circle'}`}></i>
+              <i className={`fas ${product.is_available_for_order === true ? 'fa-tools' : 'fa-times-circle'}`}></i>
 
-              {product.is_available !== false ? 'Available for Made to Order' : 'Currently Not Available'}
+              {product.is_available_for_order === true ? 'Available for Made to Order' : 'Currently Not Available'}
 
             </span>
 
@@ -583,7 +716,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
             onClick={handleAddToCart}
 
-            disabled={isLoading || (product.category_name === 'Made to Order' || product.category_name === 'made_to_order') ? (product.is_available === false) : (product.stock === 0)}
+            disabled={isLoading || (product.category_name === 'Made to Order' || product.category_name === 'made_to_order') ? (product.is_available_for_order !== true) : (product.stock === 0)}
 
             whileHover={{ scale: 1.02 }}
 
@@ -605,7 +738,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
             onClick={handleBuyNow}
 
-            disabled={(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') ? (product.is_available === false) : (product.stock === 0)}
+            disabled={(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') ? (product.is_available_for_order !== true) : (product.stock === 0)}
 
             whileHover={{ scale: 1.02 }}
 
@@ -618,6 +751,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
             Buy Now
 
           </motion.button>
+
 
         </div>
 
@@ -778,7 +912,12 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
                   onShowModal={handleShowModal}
                   onAddToCart={handleAddToCartDirect}
                   onBuyNow={handleBuyNow}
+                  onAddToWishlist={handleAddToWishlist}
+                  onRemoveFromWishlist={handleRemoveFromWishlist}
+                  isInWishlist={isInWishlist(product.id)}
+                  wishlistId={getWishlistId(product.id)}
                   isLoading={loadingProducts.has(product.id)}
+                  isWishlistLoading={wishlistLoading.has(product.id)}
                   />
                 ))
               )}
@@ -816,7 +955,12 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
                         onShowModal={handleShowModal}
                         onAddToCart={handleAddToCartDirect}
                         onBuyNow={handleBuyNow}
+                        onAddToWishlist={handleAddToWishlist}
+                        onRemoveFromWishlist={handleRemoveFromWishlist}
+                        isInWishlist={isInWishlist(product.id)}
+                        wishlistId={getWishlistId(product.id)}
                         isLoading={loadingProducts.has(product.id)}
+                        isWishlistLoading={wishlistLoading.has(product.id)}
                       />
                     ))}
                   </motion.div>
@@ -845,7 +989,12 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
                         onShowModal={handleShowModal}
                         onAddToCart={handleAddToCartDirect}
                         onBuyNow={handleBuyNow}
+                        onAddToWishlist={handleAddToWishlist}
+                        onRemoveFromWishlist={handleRemoveFromWishlist}
+                        isInWishlist={isInWishlist(product.id)}
+                        wishlistId={getWishlistId(product.id)}
                         isLoading={loadingProducts.has(product.id)}
+                        isWishlistLoading={wishlistLoading.has(product.id)}
                       />
                     ))}
             </motion.div>
@@ -915,7 +1064,64 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
               <div className="product-modal-body">
 
-                <div className="product-modal-image">
+                <div className="product-modal-image" style={{ position: 'relative' }}>
+                  {/* Wishlist Heart Icon - Top Left */}
+                  {(() => {
+                    const token = localStorage.getItem("token");
+                    if (!token) return null;
+                    
+                    const inWishlist = isInWishlist(selectedProduct.id);
+                    const wishId = getWishlistId(selectedProduct.id);
+                    
+                    return (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (inWishlist) {
+                            handleRemoveFromWishlist(wishId);
+                          } else {
+                            handleAddToWishlist(selectedProduct);
+                          }
+                        }}
+                        disabled={wishlistLoading.has(selectedProduct.id)}
+                        title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          zIndex: 10,
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+                        }}
+                      >
+                        <span style={{
+                          fontSize: '20px',
+                          color: inWishlist ? '#DC2626' : '#999',
+                          transition: 'color 0.3s ease'
+                        }}>
+                          {inWishlist ? '♥' : '♡'}
+                        </span>
+                      </button>
+                    );
+                  })()}
 
                   <img
 
@@ -959,11 +1165,132 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                       {selectedProduct.description || 
 
-                      `Premium quality ${selectedProduct.name.toLowerCase()} made with traditional craftsmanship and modern design. Each piece is carefully crafted to bring warmth and elegance to your home.`}
+                      `Premium quality ${(selectedProduct.product_name || selectedProduct.name).toLowerCase()} made with traditional craftsmanship and modern design. Each piece is carefully crafted to bring warmth and elegance to your home.`}
 
                     </p>
 
                   </div>
+
+                  {/* Product Details Section */}
+                  {(() => {
+                    const productName = (selectedProduct.product_name || selectedProduct.name || '').toLowerCase();
+                    const categoryName = selectedProduct.category_name || '';
+                    const isAlkansya = productName.includes('alkansya') || categoryName === 'stocked products';
+                    const isMadeToOrder = categoryName === 'Made to Order' || categoryName === 'made_to_order';
+
+                    if (isAlkansya || isMadeToOrder) {
+                      return (
+                        <div className="modal-product-details">
+                          <h3>Product Information</h3>
+                          <div className="product-details-list">
+                            {/* Dimensions/Sizes */}
+                            {selectedProduct.dimensions ? (
+                              <div className="detail-row">
+                                <span className="detail-label">Dimensions</span>
+                                <span className="detail-value">{selectedProduct.dimensions}</span>
+                              </div>
+                            ) : selectedProduct.sizes ? (
+                              <div className="detail-row">
+                                <span className="detail-label">Available Sizes</span>
+                                <span className="detail-value">{selectedProduct.sizes}</span>
+                              </div>
+                            ) : isAlkansya ? (
+                              <div className="detail-row">
+                                <span className="detail-label">Standard Size</span>
+                                <span className="detail-value">8 x 9 inches</span>
+                              </div>
+                            ) : null}
+
+                            {/* Material */}
+                            {(selectedProduct.material || selectedProduct.wood_type) ? (
+                              <div className="detail-row">
+                                <span className="detail-label">Material</span>
+                                <span className="detail-value">{selectedProduct.material || selectedProduct.wood_type}</span>
+                              </div>
+                            ) : (
+                              <div className="detail-row">
+                                <span className="detail-label">Materials</span>
+                                <span className="detail-value">{isAlkansya ? 'Glass Acrylic, Wood' : 'Select from available wood types'}</span>
+                              </div>
+                            )}
+
+                            {/* Weight (if available) */}
+                            {selectedProduct.weight && (
+                              <div className="detail-row">
+                                <span className="detail-label">Weight</span>
+                                <span className="detail-value">{selectedProduct.weight}</span>
+                              </div>
+                            )}
+
+                            {/* Finish - Only for Made-to-Order */}
+                            {!isAlkansya && (
+                              selectedProduct.finish ? (
+                                <div className="detail-row">
+                                  <span className="detail-label">Finish</span>
+                                  <span className="detail-value">{selectedProduct.finish}</span>
+                                </div>
+                              ) : (
+                                <div className="detail-row">
+                                  <span className="detail-label">Finish Options</span>
+                                  <span className="detail-value">Customizable</span>
+                                </div>
+                              )
+                            )}
+
+                            {/* Availability */}
+                            <div className="detail-row">
+                              <span className="detail-label">Availability</span>
+                              <span className="detail-value">{isAlkansya ? `${selectedProduct.stock || 0} units in stock` : 'Available for custom order'}</span>
+                            </div>
+
+                            {/* Made-to-Order Specific Info */}
+                            {isMadeToOrder && (
+                              <>
+                                <div className="detail-row">
+                                  <span className="detail-label">Customization</span>
+                                  <span className="detail-value">Dimensions, materials, finishes, and design</span>
+                                </div>
+                                <div className="detail-row">
+                                  <span className="detail-label">Production Time</span>
+                                  <span className="detail-value">2-4 weeks from order confirmation</span>
+                                </div>
+                                <div className="detail-row">
+                                  <span className="detail-label">Consultation</span>
+                                  <span className="detail-value">Free design consultation included</span>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Alkansya Specific Info - Weight only if available */}
+                            {isAlkansya && !selectedProduct.weight && (
+                              <div className="detail-row">
+                                <span className="detail-label">Weight</span>
+                                <span className="detail-value">Varies by size (approx. 1-3 kg)</span>
+                              </div>
+                            )}
+
+                            {/* Delivery */}
+                            <div className="detail-row delivery-row">
+                              <span className="detail-label">Delivery Time</span>
+                              <span className={`detail-value ${isAlkansya ? 'delivery-fast' : 'delivery-standard'}`}>
+                                {isAlkansya ? '2-3 days after placing order' : 'Estimated 2 weeks or more after production'}
+                              </span>
+                            </div>
+
+                            {/* Additional Note */}
+                            {!selectedProduct.dimensions && !selectedProduct.sizes && (
+                              <div className="detail-note">
+                                {isAlkansya 
+                                  ? 'Custom sizes available upon request. Contact us for special dimensions and finishes.'
+                                  : 'Contact us to discuss your specific requirements, dimensions, and design preferences.'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
 
 
@@ -987,12 +1314,6 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                     const categoryName = selectedProduct.category_name || '';
 
-                    const isMadeToOrderDiningTable = 
-
-                      (categoryName === 'Made to Order' || categoryName === 'made_to_order') &&
-
-                      productName.includes('dining table');
-
                     const isWoodenChair = productName.includes('wooden chair');
 
                     const isAlkansya = productName.includes('alkansya');
@@ -1001,65 +1322,19 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                     
 
-                    // Only show quantity controls for Wooden Chair and Alkansya
+                    // Show quantity controls for Wooden Chair, Alkansya, and Made-to-Order products
 
-                    const showQuantityControls = isWoodenChair || isAlkansya;
-
-                    
-
-                    // For Dining Table: Don't show quantity controls at all
-
-                    if (isMadeToOrderDiningTable) {
-
-                      return (
-
-                        <div className="mt-3">
-
-                          <div className="quantity-stock-row">
-
-                            <div className="quantity-info-simple">
-
-                              <span className="info-text">Quantity: <strong>1</strong></span>
-
-                            </div>
-
-                            <div className="modal-product-stock-compact">
-
-                              {isMadeToOrder ? (
-
-                                <span className="stock-badge stock-in">
-
-                                  Available for Made to Order
-
-                                </span>
-
-                              ) : (
-
-                                <span className={`stock-badge ${selectedProduct.stock > 0 ? 'stock-in' : 'stock-out'}`}>
-
-                                  {selectedProduct.stock > 0 ? `In Stock (${selectedProduct.stock})` : 'Out of Stock'}
-
-                                </span>
-
-                              )}
-
-                            </div>
-
-                          </div>
-
-                        </div>
-
-                      );
-
-                    }
+                    const showQuantityControls = isWoodenChair || isAlkansya || isMadeToOrder;
 
                     
 
-                    // For Wooden Chair and Alkansya: Show quantity controls with stock on the right
+                    // For all products with quantity controls: Show quantity selector
 
                     if (showQuantityControls) {
 
-                      const maxQty = isWoodenChair ? 4 : (selectedProduct.stock || 999);
+                      // No max limit for made-to-order products, limit for Wooden Chair is 4, stock limit for Alkansya
+
+                      const maxQty = isMadeToOrder ? 99999 : (isWoodenChair ? 4 : (selectedProduct.stock || 999));
 
                       
 
@@ -1109,13 +1384,13 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                                       setQuantity(1);
 
-                                    } else if (isWoodenChair && newQty > 4) {
+                                    } else if (isWoodenChair && !isMadeToOrder && newQty > 4) {
 
                                       setQuantity(4);
 
                                       toast.error("Wooden Chair maximum quantity is 4");
 
-                                    } else if (newQty > maxQty) {
+                                    } else if (!isMadeToOrder && newQty > maxQty) {
 
                                       setQuantity(maxQty);
 
@@ -1143,7 +1418,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                                     const newQty = quantity + 1;
 
-                                    if (isWoodenChair && newQty > 4) {
+                                    if (isWoodenChair && !isMadeToOrder && newQty > 4) {
 
                                       toast.error("Wooden Chair maximum quantity is 4");
 
@@ -1151,11 +1426,21 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                                     }
 
-                                    setQuantity(Math.min(maxQty, newQty));
+                                    // No limit for made-to-order products
+
+                                    if (isMadeToOrder) {
+
+                                      setQuantity(newQty);
+
+                                    } else {
+
+                                      setQuantity(Math.min(maxQty, newQty));
+
+                                    }
 
                                   }}
 
-                                  disabled={quantity >= maxQty}
+                                  disabled={!isMadeToOrder && quantity >= maxQty}
 
                                 >
 
@@ -1165,7 +1450,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                               </div>
 
-                              {isWoodenChair && (
+                              {isWoodenChair && !isMadeToOrder && (
 
                                 <small className="qty-hint">Max: 4</small>
 
@@ -1177,9 +1462,9 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                               {isMadeToOrder ? (
 
-                                <span className="stock-badge stock-in">
+                                <span className={`stock-badge ${selectedProduct.is_available_for_order === true ? 'stock-in' : 'stock-out'}`}>
 
-                                  Available for Made to Order
+                                  {selectedProduct.is_available_for_order === true ? 'Available for Made to Order' : 'Currently Not Available'}
 
                                 </span>
 
@@ -1251,7 +1536,7 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
 
                   
 
-                  {/* Action Buttons - Add to Cart and Buy Now */}
+                  {/* Action Buttons - Add to Cart, Buy Now, and Wishlist */}
 
                   <div className="modal-action-buttons">
 
@@ -1304,6 +1589,8 @@ const ProductCatalog = ({ products, searchTerm = "" }) => {
                       Buy Now
 
                     </button>
+
+                    
 
                   </div>
 

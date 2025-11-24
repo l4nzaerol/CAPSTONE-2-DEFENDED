@@ -613,23 +613,46 @@ const SimpleOrderTracking = ({ orderId: propOrderId }) => {
                         {item.product?.name} × {item.quantity}
                       </span>
                       <span className="fw-bold text-success">
-                        ₱{(item.product?.price * item.quantity).toLocaleString()}
+                        ₱{((item.price || item.product?.price || 0) * item.quantity).toLocaleString()}
                       </span>
                     </div>
                   ))}
                 </div>
                 {/* Shipping Fee and Total - Right Aligned */}
                 <div className="mt-2 pt-2 border-top">
-                  <div className="d-flex justify-content-between border-bottom py-2">
-                    <span>Shipping Fee:</span>
-                    <span className={order.shipping_fee > 0 ? 'fw-bold text-success' : 'fw-bold text-success'}>
-                      {order.shipping_fee > 0 ? (
-                        `₱${Number(order.shipping_fee || 0).toLocaleString()}`
-                      ) : (
-                        'FREE'
-                      )}
-                    </span>
-                  </div>
+                  {(() => {
+                    // Check if order has any made-to-order items
+                    const hasMadeToOrder = order.items?.some(item => 
+                      item.product?.category_name === 'Made to Order' || 
+                      item.product?.category_name === 'made_to_order'
+                    );
+                    
+                    return (
+                      <>
+                        <div className="d-flex justify-content-between border-bottom py-2">
+                          <span>Shipping Fee:</span>
+                          <span className={hasMadeToOrder ? 'fw-bold text-info' : (order.shipping_fee > 0 ? 'fw-bold text-success' : 'fw-bold text-success')}>
+                            {hasMadeToOrder ? (
+                              <span style={{ fontSize: '0.9rem', fontStyle: 'italic', color: '#0066cc' }}>
+                                To be finalized
+                              </span>
+                            ) : order.shipping_fee > 0 ? (
+                              `₱${Number(order.shipping_fee || 0).toLocaleString()}`
+                            ) : (
+                              'FREE'
+                            )}
+                          </span>
+                        </div>
+                        {hasMadeToOrder && (
+                          <div className="d-flex justify-content-end py-1" style={{ fontSize: '0.85rem', color: '#0066cc', fontStyle: 'italic' }}>
+                            <span>
+                              ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   <div className="d-flex justify-content-between py-2">
                     <span className="fw-bold">Total:</span>
                     <span className="fw-bold text-primary">

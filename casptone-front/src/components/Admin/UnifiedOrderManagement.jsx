@@ -965,16 +965,41 @@ const UnifiedOrderManagement = () => {
                       ))}
                     </tbody>
                     <tfoot className="table-light">
-                      <tr>
-                        <td colSpan="3" className="text-end fw-bold">Shipping Fee:</td>
-                        <td className="fw-bold">
-                          {selectedOrder.shipping_fee > 0 ? (
-                            `₱${parseFloat(selectedOrder.shipping_fee || 0).toFixed(2)}`
-                          ) : (
-                            <span className="text-success">FREE</span>
-                          )}
-                        </td>
-                      </tr>
+                      {(() => {
+                        // Check if order has any made-to-order items
+                        const hasMadeToOrder = selectedOrder.items?.some(item => 
+                          item.product?.category_name === 'Made to Order' || 
+                          item.product?.category_name === 'made_to_order'
+                        );
+                        
+                        return (
+                          <>
+                            <tr>
+                              <td colSpan="3" className="text-end fw-bold">Shipping Fee:</td>
+                              <td className="fw-bold">
+                                {hasMadeToOrder ? (
+                                  <span style={{ fontSize: '0.9rem', fontStyle: 'italic', color: '#0066cc' }}>
+                                    To be finalized
+                                  </span>
+                                ) : selectedOrder.shipping_fee > 0 ? (
+                                  `₱${parseFloat(selectedOrder.shipping_fee || 0).toFixed(2)}`
+                                ) : (
+                                  <span className="text-success">FREE</span>
+                                )}
+                              </td>
+                            </tr>
+                            {hasMadeToOrder && (
+                              <tr>
+                                <td colSpan="4" className="text-end" style={{ fontSize: '0.85rem', color: '#0066cc', fontStyle: 'italic', paddingTop: '0.5rem' }}>
+                                  <span>
+                                    ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
+                                  </span>
+                                </td>
+                              </tr>
+                            )}
+                          </>
+                        );
+                      })()}
                       <tr className="table-primary">
                         <td colSpan="3" className="text-end fw-bold">Total:</td>
                         <td className="fw-bold">₱{parseFloat(selectedOrder.total_price).toFixed(2)}</td>

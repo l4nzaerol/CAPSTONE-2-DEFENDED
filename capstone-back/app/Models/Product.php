@@ -70,6 +70,12 @@ class Product extends Model
         return $this->hasMany(Production::class, 'product_id', 'id');
     }
 
+    // A product can be in multiple wishlists
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'product_id', 'id');
+    }
+
     // BOM relationships
     public function bomMaterials(): HasMany
     {

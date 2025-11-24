@@ -17,6 +17,7 @@ use App\Events\ProductionProcessUpdated;
 use App\Notifications\OrderStageUpdated;
 use App\Notifications\LowStockAlert;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\OrderTracking;
 use App\Models\Notification;
 use Carbon\Carbon;
@@ -779,16 +780,36 @@ class ProductionController extends Controller
             ];
         })->values();
 
-        // Get top products from Production data
-        $topProducts = $productionData->groupBy('product_name')
-            ->map(function($productions, $productName) {
+        // Get top products from OrderItems (actual orders) to show individual product names
+        // This ensures we show specific products, not general categories grouped together
+        $topProductsQuery = OrderItem::select(
+                'products.id',
+                'products.name',
+                'products.product_name',
+                DB::raw('SUM(order_items.quantity) as total_quantity'),
+                DB::raw('COUNT(DISTINCT order_items.order_id) as order_count')
+            )
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereIn('orders.status', ['ready_for_delivery', 'delivered', 'completed', 'processing']);
+        
+        // Apply date filter if provided
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $topProductsQuery->whereBetween('orders.checkout_date', [$request->start_date, $request->end_date]);
+        }
+        
+        $topProducts = $topProductsQuery
+            ->groupBy('products.id', 'products.name', 'products.product_name')
+            ->orderByDesc('total_quantity')
+            ->limit(10)
+            ->get()
+            ->map(function($item) {
                 return [
-                    'name' => $productName,
-                    'quantity' => $productions->sum('quantity'),
+                    'name' => $item->product_name ?: $item->name, // Use product_name if available, else name
+                    'quantity' => (int) $item->total_quantity,
+                    'order_count' => (int) $item->order_count,
                 ];
             })
-            ->sortByDesc('quantity')
-            ->take(5)
             ->values();
 
         // Get top customers (users with most orders)

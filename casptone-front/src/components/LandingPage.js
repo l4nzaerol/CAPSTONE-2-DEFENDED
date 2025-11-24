@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Spinner } from "react-bootstrap";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import axios from "axios";
 import { authUtils } from "../utils/auth";
 import Login from "./Login";
@@ -20,6 +20,8 @@ const LandingPage = () => {
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [showProductModal, setShowProductModal] = useState(false);
+    const [wishlist, setWishlist] = useState([]);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
 
     useEffect(() => {
         // Check if user is already authenticated and redirect if needed
@@ -28,7 +30,123 @@ const LandingPage = () => {
         }
         
         fetchProducts();
+        fetchWishlist();
+
+        // Listen for storage events to refresh products when cache is invalidated
+        const handleStorageChange = (e) => {
+            if (e.key === 'products_cache_invalidated') {
+                console.log("Products cache invalidated, refreshing...");
+                fetchProducts(true); // Force refresh
+                localStorage.removeItem('products_cache_invalidated');
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Also listen for custom events (for same-tab updates)
+        const handleProductsUpdated = () => {
+            console.log("Products updated event received, refreshing...");
+            fetchProducts(true); // Force refresh
+        };
+
+        window.addEventListener('productsUpdated', handleProductsUpdated);
+
+        // Periodic refresh check (every 30 seconds) to catch updates from other tabs
+        const refreshInterval = setInterval(() => {
+            const cacheInvalidated = localStorage.getItem('products_cache_invalidated');
+            if (cacheInvalidated) {
+                console.log("Cache invalidated flag detected, refreshing products...");
+                fetchProducts(true);
+                localStorage.removeItem('products_cache_invalidated');
+            }
+        }, 30000); // Check every 30 seconds
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('productsUpdated', handleProductsUpdated);
+            clearInterval(refreshInterval);
+        };
     }, []);
+
+    const fetchWishlist = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const response = await axios.get("http://localhost:8000/api/wishlist", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setWishlist(response.data.wishlist || []);
+        } catch (error) {
+            // Silently fail if user is not authenticated
+            if (error.response?.status !== 401) {
+                console.error("Error fetching wishlist:", error);
+            }
+        }
+    };
+
+    const handleAddToWishlist = async (product) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setShowProductModal(false);
+            setShowLoginModal(true);
+            return;
+        }
+
+        setWishlistLoading(true);
+
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/api/wishlist",
+                { product_id: product.id },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Update wishlist state optimistically without refetching
+            setWishlist(prev => [...prev, response.data.wishlist]);
+            
+            toast.success("Product added to wishlist!");
+            
+            // Dispatch event to update header count only
+            window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+        } catch (error) {
+            const message = error.response?.data?.message || "Failed to add to wishlist";
+            toast.error(message);
+        } finally {
+            setWishlistLoading(false);
+        }
+    };
+
+    const handleRemoveFromWishlist = async (wishlistId) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            await axios.delete(
+                `http://localhost:8000/api/wishlist/${wishlistId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Update wishlist state optimistically without refetching
+            setWishlist(prev => prev.filter(item => item.id !== wishlistId));
+            
+            // No toast for removal - silent update
+            // Dispatch event to update header count only
+            window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+        } catch (error) {
+            toast.error("Failed to remove from wishlist");
+        }
+    };
+
+    const isInWishlist = (productId) => {
+        return wishlist.some(item => item.product_id === productId);
+    };
+
+    const getWishlistId = (productId) => {
+        const item = wishlist.find(item => item.product_id === productId);
+        return item ? item.id : null;
+    };
 
     // Header scroll detection - only show at top, smooth animations
     useEffect(() => {
@@ -48,24 +166,27 @@ const LandingPage = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const fetchProducts = async () => {
+    const fetchProducts = async (forceRefresh = false) => {
         setLoading(true);
         try {
-            // Check if we have cached products (valid for 5 minutes)
-            const cachedProducts = localStorage.getItem('cached_products');
-            const cacheTimestamp = localStorage.getItem('products_cache_timestamp');
-            const now = Date.now();
-            const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < 300000; // 5 minutes
-            
-            if (cachedProducts && cacheValid) {
-                console.log("Using cached products for faster loading");
-                setProducts(JSON.parse(cachedProducts));
-                setLoading(false);
-                return;
+            // Check if we should use cache (unless force refresh is requested)
+            if (!forceRefresh) {
+                const cachedProducts = localStorage.getItem('cached_products');
+                const cacheTimestamp = localStorage.getItem('products_cache_timestamp');
+                const now = Date.now();
+                // Reduced cache time to 1 minute for faster updates
+                const cacheValid = cacheTimestamp && (now - parseInt(cacheTimestamp)) < 60000; // 1 minute
+                
+                if (cachedProducts && cacheValid) {
+                    console.log("Using cached products for faster loading");
+                    setProducts(JSON.parse(cachedProducts));
+                    setLoading(false);
+                    return;
+                }
             }
     
             const response = await axios.get("http://localhost:8000/api/products", {
-                timeout: 10000, // 10 second timeout
+                timeout: 20000, // 20 second timeout
             });
     
             console.log("Fetched products:", response.data);
@@ -73,16 +194,22 @@ const LandingPage = () => {
             setProducts(response.data);
             
             // Cache the products for faster future loads
+            const now = Date.now();
             localStorage.setItem('cached_products', JSON.stringify(response.data));
             localStorage.setItem('products_cache_timestamp', now.toString());
             
         } catch (error) {
-            console.error("Error fetching products:", error.response || error);
+            // Only log error if it's not a timeout (to reduce console noise)
+            if (error.code !== 'ECONNABORTED') {
+                console.error("Error fetching products:", error.response || error);
+            } else {
+                console.warn("Request timeout - using cached data if available");
+            }
             
             // Try to use cached data if available, even if expired
             const cachedProducts = localStorage.getItem('cached_products');
             if (cachedProducts) {
-                console.log("Using expired cache as fallback");
+                console.log("Using cached products as fallback");
                 setProducts(JSON.parse(cachedProducts));
             } else {
                 // If no cache and error, set empty array to show "no products" message
@@ -175,6 +302,33 @@ const LandingPage = () => {
     const handleBuyFromModal = () => {
         setShowProductModal(false);
         setShowLoginModal(true);
+    };
+
+    const handleAddToCartFromModal = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setShowProductModal(false);
+            setShowLoginModal(true);
+            return;
+        }
+
+        try {
+            await axios.post(
+                "http://localhost:8000/api/cart",
+                { 
+                    product_id: selectedProduct.id, 
+                    quantity: 1 
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            toast.success("Product added to cart!");
+            window.dispatchEvent(new CustomEvent('cartUpdated'));
+            handleCloseProductModal();
+        } catch (error) {
+            const message = error.response?.data?.message || "Failed to add to cart";
+            toast.error(message);
+        }
     };
 
     const handleFacebookClick = () => {
@@ -309,15 +463,26 @@ const LandingPage = () => {
                             transition={{ duration: 0.8, delay: 0.6 }}
                         >
                             <div className="hero-search-wrapper">
+                                <label htmlFor="hero-search-input" className="visually-hidden">
+                                    Search woodcraft products
+                                </label>
                                 <input
+                                    id="hero-search-input"
                                     type="text"
                                     className="hero-search-input"
                                     placeholder="Search woodcraft products"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                    aria-label="Search woodcraft products"
                                 />
-                                <button className="hero-search-btn">
-                                    <i className="fas fa-search"></i>
+                                <button 
+                                    className="hero-search-btn"
+                                    type="button"
+                                    aria-label="Search products"
+                                    title="Search products"
+                                >
+                                    <i className="fas fa-search" aria-hidden="true"></i>
+                                    <span className="visually-hidden">Search</span>
                                 </button>
                             </div>
                         </motion.div>
@@ -450,7 +615,63 @@ const LandingPage = () => {
                                             }}
                                         >
                                             <div className="product-image-container">
-                                                {/* Wood Type Badge */}
+                                                {/* Wishlist Heart Icon - Top Left */}
+                                                {(() => {
+                                                    const token = localStorage.getItem("token");
+                                                    if (!token) return null;
+                                                    
+                                                    const inWishlist = isInWishlist(product.id);
+                                                    const wishId = getWishlistId(product.id);
+                                                    
+                                                    return (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                if (inWishlist) {
+                                                                    handleRemoveFromWishlist(wishId);
+                                                                } else {
+                                                                    handleAddToWishlist(product);
+                                                                }
+                                                            }}
+                                                            disabled={wishlistLoading}
+                                                            title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '10px',
+                                                                left: '10px',
+                                                                zIndex: 10,
+                                                                background: 'rgba(255, 255, 255, 0.9)',
+                                                                border: 'none',
+                                                                borderRadius: '50%',
+                                                                width: '36px',
+                                                                height: '36px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.3s ease',
+                                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(1.1)';
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.transform = 'scale(1)';
+                                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+                                                            }}
+                                                        >
+                                                            <span style={{
+                                                                fontSize: '20px',
+                                                                color: inWishlist ? '#DC2626' : '#999',
+                                                                transition: 'color 0.3s ease'
+                                                            }}>
+                                                                {inWishlist ? '♥' : '♡'}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })()}
                                                 
                                                 <img
                                                     src={`http://localhost:8000/${product.image}`}
@@ -494,9 +715,9 @@ const LandingPage = () => {
                                                 <p className="product-price">{formatPrice(product.price)}</p>
                                                 <div className="product-stock">
                                                     {product.category_name === 'Made to Order' || product.category_name === 'made_to_order' ? (
-                                                        <span className="stock-status in-stock">
-                                                            <i className="fas fa-tools"></i>
-                                                            Available for Order
+                                                        <span className={`stock-status ${product.is_available_for_order === true ? 'in-stock' : 'out-of-stock'}`}>
+                                                            <i className={`fas ${product.is_available_for_order === true ? 'fa-tools' : 'fa-times-circle'}`}></i>
+                                                            {product.is_available_for_order === true ? 'Available for Order' : 'Currently Not Available'}
                                                         </span>
                                                     ) : (
                                                         <span className={`stock-status ${product.stock > 10 ? 'in-stock' : product.stock > 0 ? 'low-stock' : 'out-of-stock'}`}>
@@ -631,7 +852,65 @@ const LandingPage = () => {
                             </button>
                             
                             <div className="product-modal-body">
-                                <div className="product-modal-image">
+                                <div className="product-modal-image" style={{ position: 'relative' }}>
+                                    {/* Wishlist Heart Icon - Top Left */}
+                                    {(() => {
+                                        const token = localStorage.getItem("token");
+                                        if (!token) return null;
+                                        
+                                        const inWishlist = isInWishlist(selectedProduct.id);
+                                        const wishId = getWishlistId(selectedProduct.id);
+                                        
+                                        return (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (inWishlist) {
+                                                        handleRemoveFromWishlist(wishId);
+                                                    } else {
+                                                        handleAddToWishlist(selectedProduct);
+                                                    }
+                                                }}
+                                                disabled={wishlistLoading}
+                                                title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '10px',
+                                                    left: '10px',
+                                                    zIndex: 10,
+                                                    background: 'rgba(255, 255, 255, 0.9)',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    width: '36px',
+                                                    height: '36px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = 'scale(1.1)';
+                                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 1)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'scale(1)';
+                                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
+                                                }}
+                                            >
+                                                <span style={{
+                                                    fontSize: '20px',
+                                                    color: inWishlist ? '#DC2626' : '#999',
+                                                    transition: 'color 0.3s ease'
+                                                }}>
+                                                    {inWishlist ? '♥' : '♡'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })()}
+                                    
                                     <img
                                         src={`http://localhost:8000/${selectedProduct.image}`}
                                         alt={selectedProduct.name}
@@ -643,7 +922,7 @@ const LandingPage = () => {
                                 </div>
                                 
                                 <div className="product-modal-info">
-                                    <h2 className="modal-product-name">{selectedProduct.name}</h2>
+                                    <h2 className="modal-product-name">{selectedProduct.product_name || selectedProduct.name}</h2>
                                     
                                     <div className="modal-product-price">
                                         ₱{selectedProduct.price.toLocaleString()}
@@ -653,27 +932,169 @@ const LandingPage = () => {
                                         <h3>Product Description</h3>
                                         <p>
                                             {selectedProduct.description || 
-                                            `Premium quality ${selectedProduct.name.toLowerCase()} made with traditional craftsmanship and modern design. Each piece is carefully crafted to bring warmth and elegance to your home.`}
+                                            `Premium quality ${(selectedProduct.product_name || selectedProduct.name).toLowerCase()} made with traditional craftsmanship and modern design. Each piece is carefully crafted to bring warmth and elegance to your home.`}
                                         </p>
                                     </div>
+
+                                    {/* Product Details Section */}
+                                    {(() => {
+                                        const productName = (selectedProduct.product_name || selectedProduct.name || '').toLowerCase();
+                                        const categoryName = selectedProduct.category_name || '';
+                                        const isAlkansya = productName.includes('alkansya') || categoryName === 'stocked products';
+                                        const isMadeToOrder = categoryName === 'Made to Order' || categoryName === 'made_to_order';
+
+                                        if (isAlkansya || isMadeToOrder) {
+                                            return (
+                                                <div className="modal-product-details">
+                                                    <h3>Product Information</h3>
+                                                    <div className="product-details-list">
+                                                        {/* Dimensions/Sizes */}
+                                                        {selectedProduct.dimensions ? (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Dimensions</span>
+                                                                <span className="detail-value">{selectedProduct.dimensions}</span>
+                                                            </div>
+                                                        ) : selectedProduct.sizes ? (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Available Sizes</span>
+                                                                <span className="detail-value">{selectedProduct.sizes}</span>
+                                                            </div>
+                                                        ) : isAlkansya ? (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Standard Size</span>
+                                                                <span className="detail-value">8 x 9 inches</span>
+                                                            </div>
+                                                        ) : null}
+
+                                                        {/* Material */}
+                                                        {(selectedProduct.material || selectedProduct.wood_type) ? (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Material</span>
+                                                                <span className="detail-value">{selectedProduct.material || selectedProduct.wood_type}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Materials</span>
+                                                                <span className="detail-value">{isAlkansya ? 'Glass Acrylic, Wood' : 'Select from available wood types'}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Weight (if available) */}
+                                                        {selectedProduct.weight && (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Weight</span>
+                                                                <span className="detail-value">{selectedProduct.weight}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Finish - Only for Made-to-Order */}
+                                                        {!isAlkansya && (
+                                                            selectedProduct.finish ? (
+                                                                <div className="detail-row">
+                                                                    <span className="detail-label">Finish</span>
+                                                                    <span className="detail-value">{selectedProduct.finish}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="detail-row">
+                                                                    <span className="detail-label">Finish Options</span>
+                                                                    <span className="detail-value">Customizable</span>
+                                                                </div>
+                                                            )
+                                                        )}
+
+                                                        {/* Availability */}
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">Availability</span>
+                                                            <span className="detail-value">{isAlkansya ? `${selectedProduct.stock || 0} units in stock` : 'Available for custom order'}</span>
+                                                        </div>
+
+                                                        {/* Made-to-Order Specific Info */}
+                                                        {isMadeToOrder && (
+                                                            <>
+                                                                <div className="detail-row">
+                                                                    <span className="detail-label">Customization</span>
+                                                                    <span className="detail-value">Dimensions, materials, finishes, and design</span>
+                                                                </div>
+                                                                <div className="detail-row">
+                                                                    <span className="detail-label">Production Time</span>
+                                                                    <span className="detail-value">2-4 weeks from order confirmation</span>
+                                                                </div>
+                                                                <div className="detail-row">
+                                                                    <span className="detail-label">Consultation</span>
+                                                                    <span className="detail-value">Free design consultation included</span>
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {/* Alkansya Specific Info - Weight only if available */}
+                                                        {isAlkansya && !selectedProduct.weight && (
+                                                            <div className="detail-row">
+                                                                <span className="detail-label">Weight</span>
+                                                                <span className="detail-value">Varies by size (approx. 1-3 kg)</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Delivery */}
+                                                        <div className="detail-row delivery-row">
+                                                            <span className="detail-label">Delivery Time</span>
+                                                            <span className={`detail-value ${isAlkansya ? 'delivery-fast' : 'delivery-standard'}`}>
+                                                                {isAlkansya ? '2-3 days after placing order' : 'Estimated 2 weeks or more after production'}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Additional Note */}
+                                                        {!selectedProduct.dimensions && !selectedProduct.sizes && (
+                                                            <div className="detail-note">
+                                                                {isAlkansya 
+                                                                    ? 'Custom sizes available upon request. Contact us for special dimensions and finishes.'
+                                                                    : 'Contact us to discuss your specific requirements, dimensions, and design preferences.'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                     
                                     <div className="modal-product-stock">
-                                        <span className={`stock-status ${selectedProduct.stock > 10 ? 'in-stock' : selectedProduct.stock > 0 ? 'low-stock' : 'out-of-stock'}`}>
-                                            <i className={`fas ${selectedProduct.stock > 10 ? 'fa-check-circle' : selectedProduct.stock > 0 ? 'fa-exclamation-triangle' : 'fa-times-circle'}`}></i>
-                                            {selectedProduct.stock > 10 ? 'In Stock' : selectedProduct.stock > 0 ? `Only ${selectedProduct.stock} left` : 'Out of Stock'}
-                                        </span>
+                                        {selectedProduct.category_name === 'Made to Order' || selectedProduct.category_name === 'made_to_order' ? (
+                                            <span className={`stock-status ${selectedProduct.is_available_for_order === true ? 'in-stock' : 'out-of-stock'}`}>
+                                                <i className={`fas ${selectedProduct.is_available_for_order === true ? 'fa-tools' : 'fa-times-circle'}`}></i>
+                                                {selectedProduct.is_available_for_order === true ? 'Available for Order' : 'Currently Not Available'}
+                                            </span>
+                                        ) : (
+                                            <span className={`stock-status ${selectedProduct.stock > 10 ? 'in-stock' : selectedProduct.stock > 0 ? 'low-stock' : 'out-of-stock'}`}>
+                                                <i className={`fas ${selectedProduct.stock > 10 ? 'fa-check-circle' : selectedProduct.stock > 0 ? 'fa-exclamation-triangle' : 'fa-times-circle'}`}></i>
+                                                {selectedProduct.stock > 10 ? 'In Stock' : selectedProduct.stock > 0 ? `Only ${selectedProduct.stock} left` : 'Out of Stock'}
+                                            </span>
+                                        )}
                                     </div>
                                     
-                                    <motion.button 
-                                        className="modal-buy-now-btn"
-                                        onClick={handleBuyFromModal}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        disabled={selectedProduct.stock === 0}
-                                    >
-                                        <i className="fas fa-shopping-bag"></i>
-                                        Buy Now
-                                    </motion.button>
+                                    <div className="modal-action-buttons-landing">
+                                        <motion.button 
+                                            className="modal-add-to-cart-btn"
+                                            onClick={handleAddToCartFromModal}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            disabled={(selectedProduct.category_name === 'Made to Order' || selectedProduct.category_name === 'made_to_order') ? (selectedProduct.is_available_for_order !== true) : (selectedProduct.stock === 0)}
+                                        >
+                                            <i className="fas fa-cart-plus"></i>
+                                            Add to Cart
+                                        </motion.button>
+                                        
+                                        <motion.button 
+                                            className="modal-buy-now-btn"
+                                            onClick={handleBuyFromModal}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            disabled={(selectedProduct.category_name === 'Made to Order' || selectedProduct.category_name === 'made_to_order') ? (selectedProduct.is_available_for_order !== true) : (selectedProduct.stock === 0)}
+                                        >
+                                            <i className="fas fa-bolt"></i>
+                                            Buy Now
+                                        </motion.button>
+                                        
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

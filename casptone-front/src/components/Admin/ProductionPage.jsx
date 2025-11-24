@@ -2066,15 +2066,16 @@ export default function ProductionTrackingSystem() {
 
           {/* Resource Allocation Optimization */}
           <div className="card shadow-sm">
-            <div className="card-header bg-primary text-white">
+            <div className="card-header" style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
               <div className="d-flex justify-content-between align-items-center">
-                <h5 className="card-title mb-0">
-                  <i className="fas fa-tasks me-2"></i>
+                <h5 className="card-title mb-0" style={{ color: '#212529', fontWeight: '600' }}>
+                  <i className="fas fa-tasks me-2" style={{ color: '#6b4423' }}></i>
                   Resource Allocation Optimization
                 </h5>
                 <button 
-                  className="btn btn-outline-light btn-sm" 
+                  className="btn btn-outline-secondary btn-sm" 
                   onClick={fetchAnalytics}
+                  style={{ color: '#212529', borderColor: '#6b4423' }}
                 >
                   <i className="fas fa-sync me-1"></i>
                   Refresh
@@ -2083,9 +2084,9 @@ export default function ProductionTrackingSystem() {
             </div>
             <div className="card-body">
               {/* Optimization Metrics Summary - Display all 6 processes */}
-              <div className="mb-3">
-                <h6 className="text-muted mb-3">
-                  <i className="fas fa-info-circle me-2"></i>
+              <div className="mb-4">
+                <h6 className="mb-0" style={{ color: '#495057', fontWeight: '500' }}>
+                  <i className="fas fa-info-circle me-2" style={{ color: '#6b4423' }}></i>
                   All Production Processes - Resource Utilization Overview
                 </h6>
               </div>
@@ -2137,63 +2138,86 @@ export default function ProductionTrackingSystem() {
                     const isOptimal = utilization >= 50 && utilization <= 70;
                     const isUnderutilized = utilization < 50;
                     
+                    // Determine border and header colors based on status
+                    const getStatusColors = () => {
+                      if (isOverloaded) {
+                        return { border: '#dc3545', headerBg: '#fff5f5', text: '#721c24', badge: '#dc3545' };
+                      } else if (isBusy) {
+                        return { border: '#ffc107', headerBg: '#fffbf0', text: '#856404', badge: '#ffc107' };
+                      } else if (isOptimal) {
+                        return { border: '#28a745', headerBg: '#f0fff4', text: '#155724', badge: '#28a745' };
+                      } else {
+                        return { border: '#17a2b8', headerBg: '#f0f9fa', text: '#0c5460', badge: '#17a2b8' };
+                      }
+                    };
+                    const colors = getStatusColors();
+                    
                     return (
                       <div key={s.stage} className="col-lg-4 col-md-6 mb-3">
-                      <div className={`card h-100 border-${isOverloaded ? 'danger' : isBusy ? 'warning' : isOptimal ? 'success' : 'info'}`}>
-                        <div className={`card-header bg-${isOverloaded ? 'danger' : isBusy ? 'warning' : isOptimal ? 'success' : 'info'} text-white`}>
-                          <h6 className="mb-0">
-                            <strong>{s.stage}</strong>
+                        <div className="card h-100" style={{ border: `1px solid ${colors.border}`, borderTop: `3px solid ${colors.border}` }}>
+                          <div className="card-header" style={{ backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
+                            <h6 className="mb-0" style={{ color: colors.text, fontWeight: '600' }}>
+                              <strong>{s.stage}</strong>
+                              {isOverloaded && (
+                                <i className="fas fa-exclamation-triangle ms-2" style={{ color: colors.badge }} title="Overloaded - Action Required"></i>
+                              )}
+                            </h6>
+                          </div>
+                          <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Utilization:</span>
+                              <span className="badge" style={{ backgroundColor: colors.badge, color: '#fff', fontSize: '0.75rem', padding: '0.35em 0.65em' }}>
+                                {Math.round(utilization)}%
+                              </span>
+                            </div>
+                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef' }}>
+                              <div 
+                                className="progress-bar"
+                                role="progressbar" 
+                                style={{ 
+                                  width: `${Math.min(utilization, 100)}%`,
+                                  backgroundColor: colors.badge,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#fff',
+                                  fontWeight: '500',
+                                  fontSize: '0.75rem'
+                                }}
+                              >
+                                {s.queued}/{s.capacity}
+                              </div>
+                            </div>
+                            <div className="small mb-3" style={{ color: '#6c757d' }}>
+                              Queued: <strong style={{ color: '#212529' }}>{s.queued}</strong> / Capacity: <strong style={{ color: '#212529' }}>{s.capacity}</strong>
+                            </div>
                             {isOverloaded && (
-                              <i className="fas fa-exclamation-triangle ms-2" title="Overloaded - Action Required"></i>
+                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#fff5f5', border: '1px solid #fecaca', color: '#721c24' }}>
+                                <i className="fas fa-exclamation-circle me-1"></i>
+                                <strong>Action Required:</strong> Consider reallocating resources
+                              </div>
                             )}
-                          </h6>
-                        </div>
-                        <div className="card-body">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <span className="small text-muted">Utilization:</span>
-                            <span className={`badge bg-${isOverloaded ? 'danger' : isBusy ? 'warning' : isOptimal ? 'success' : 'info'}`}>
-                              {Math.round(utilization)}%
-                            </span>
+                            {isBusy && (
+                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#fffbf0', border: '1px solid #ffeaa7', color: '#856404' }}>
+                                <i className="fas fa-clock me-1"></i>
+                                <strong>High Activity:</strong> Monitor workload closely
+                              </div>
+                            )}
+                            {isOptimal && (
+                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0fff4', border: '1px solid #c3e6cb', color: '#155724' }}>
+                                <i className="fas fa-check-circle me-1"></i>
+                                <strong>Optimal:</strong> Resources well-balanced
+                              </div>
+                            )}
+                            {isUnderutilized && (
+                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0f9fa', border: '1px solid #bee5eb', color: '#0c5460' }}>
+                                <i className="fas fa-info-circle me-1"></i>
+                                <strong>Capacity Available:</strong> Can accept more work
+                              </div>
+                            )}
                           </div>
-                          <div className="progress mb-2" style={{ height: '20px' }}>
-                            <div 
-                              className={`progress-bar ${isOverloaded ? 'bg-danger' : isBusy ? 'bg-warning' : isOptimal ? 'bg-success' : 'bg-info'}`}
-                              role="progressbar" 
-                              style={{ width: `${Math.min(utilization, 100)}%` }}
-                            >
-                              {s.queued}/{s.capacity}
-                            </div>
-                          </div>
-                          <div className="small text-muted">
-                            Queued: <strong>{s.queued}</strong> / Capacity: <strong>{s.capacity}</strong>
-                          </div>
-                          {isOverloaded && (
-                            <div className="alert alert-danger mt-2 mb-0 py-2">
-                              <i className="fas fa-exclamation-circle me-1"></i>
-                              <strong>Action Required:</strong> Consider reallocating resources
-                            </div>
-                          )}
-                          {isBusy && (
-                            <div className="alert alert-warning mt-2 mb-0 py-2">
-                              <i className="fas fa-clock me-1"></i>
-                              <strong>High Activity:</strong> Monitor workload closely
-                            </div>
-                          )}
-                          {isOptimal && (
-                            <div className="alert alert-success mt-2 mb-0 py-2">
-                              <i className="fas fa-check-circle me-1"></i>
-                              <strong>Optimal:</strong> Resources well-balanced
-                            </div>
-                          )}
-                          {isUnderutilized && (
-                            <div className="alert alert-info mt-2 mb-0 py-2">
-                              <i className="fas fa-info-circle me-1"></i>
-                              <strong>Capacity Available:</strong> Can accept more work
-                            </div>
-                          )}
                         </div>
                       </div>
-                    </div>
                     );
                   })
                 ) : (
@@ -2213,30 +2237,41 @@ export default function ProductionTrackingSystem() {
                     
                     return (
                       <div key={stage} className="col-lg-4 col-md-6 mb-3">
-                        <div className="card h-100 border-info">
-                          <div className="card-header bg-info text-white">
-                            <h6 className="mb-0">
+                        <div className="card h-100" style={{ border: '1px solid #17a2b8', borderTop: '3px solid #17a2b8' }}>
+                          <div className="card-header" style={{ backgroundColor: '#f0f9fa', borderBottom: '1px solid #17a2b8' }}>
+                            <h6 className="mb-0" style={{ color: '#0c5460', fontWeight: '600' }}>
                               <strong>{stage}</strong>
                             </h6>
                           </div>
                           <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                              <span className="small text-muted">Utilization:</span>
-                              <span className="badge bg-info">0%</span>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Utilization:</span>
+                              <span className="badge" style={{ backgroundColor: '#17a2b8', color: '#fff', fontSize: '0.75rem', padding: '0.35em 0.65em' }}>
+                                0%
+                              </span>
                             </div>
-                            <div className="progress mb-2" style={{ height: '20px' }}>
+                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef' }}>
                               <div 
-                                className="progress-bar bg-info"
+                                className="progress-bar"
                                 role="progressbar" 
-                                style={{ width: '0%' }}
+                                style={{ 
+                                  width: '0%',
+                                  backgroundColor: '#17a2b8',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#fff',
+                                  fontWeight: '500',
+                                  fontSize: '0.75rem'
+                                }}
                               >
                                 0/{cap}
                               </div>
                             </div>
-                            <div className="small text-muted">
-                              Queued: <strong>0</strong> / Capacity: <strong>{cap}</strong>
+                            <div className="small mb-3" style={{ color: '#6c757d' }}>
+                              Queued: <strong style={{ color: '#212529' }}>0</strong> / Capacity: <strong style={{ color: '#212529' }}>{cap}</strong>
                             </div>
-                            <div className="alert alert-info mt-2 mb-0 py-2">
+                            <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0f9fa', border: '1px solid #bee5eb', color: '#0c5460' }}>
                               <i className="fas fa-info-circle me-1"></i>
                               <strong>Capacity Available:</strong> Can accept more work
                             </div>

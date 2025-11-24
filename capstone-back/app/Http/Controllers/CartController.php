@@ -18,22 +18,13 @@ class CartController extends Controller
 
         $product = Product::findOrFail($request->product_id);
 
-        // Enforce quantity limits for specific products
+        // Enforce quantity limits for specific products (only for non-made-to-order products)
         $isMadeToOrder = ($product->category_name === 'Made to Order' || $product->category_name === 'made_to_order');
         $productNameLower = strtolower($product->name);
-        $isDiningTable = str_contains($productNameLower, 'dining table');
         $isWoodenChair = str_contains($productNameLower, 'wooden chair');
 
-        // For made-to-order Dining Table: force quantity to 1
-        if ($isMadeToOrder && $isDiningTable) {
-            if ($request->quantity != 1) {
-                return response()->json(['message' => 'Dining Table (Made to Order) can only be ordered with a quantity of 1'], 400);
-            }
-            $request->merge(['quantity' => 1]);
-        }
-
-        // For Wooden Chair: maximum quantity is 4
-        if ($isWoodenChair) {
+        // For Wooden Chair (not made-to-order): maximum quantity is 4
+        if ($isWoodenChair && !$isMadeToOrder) {
             if ($request->quantity > 4) {
                 return response()->json(['message' => 'Wooden Chair maximum quantity is 4'], 400);
             }
@@ -55,13 +46,8 @@ class CartController extends Controller
             ->first();
 
         if ($cartItem) {
-            // For made-to-order Dining Table: prevent adding more if already in cart
-            if ($isMadeToOrder && $isDiningTable) {
-                return response()->json(['message' => 'Dining Table (Made to Order) is already in your cart. Quantity is fixed to 1.'], 400);
-            }
-
-            // For Wooden Chair: check total quantity limit
-            if ($isWoodenChair && (($cartItem->quantity + $request->quantity) > 4)) {
+            // For Wooden Chair (not made-to-order): check total quantity limit
+            if ($isWoodenChair && !$isMadeToOrder && (($cartItem->quantity + $request->quantity) > 4)) {
                 return response()->json(['message' => 'Wooden Chair maximum quantity is 4. Current quantity: ' . $cartItem->quantity], 400);
             }
 
@@ -141,19 +127,13 @@ class CartController extends Controller
     // Get the product to check stock availability (only for stocked products)
     $product = $cartItem->product;
     
-    // Enforce quantity limits for specific products
+    // Enforce quantity limits for specific products (only for non-made-to-order products)
     $isMadeToOrder = ($product->category_name === 'Made to Order' || $product->category_name === 'made_to_order');
     $productNameLower = strtolower($product->name);
-    $isDiningTable = str_contains($productNameLower, 'dining table');
     $isWoodenChair = str_contains($productNameLower, 'wooden chair');
 
-    // For made-to-order Dining Table: prevent quantity changes (must be 1)
-    if ($isMadeToOrder && $isDiningTable) {
-        return response()->json(['message' => 'Dining Table (Made to Order) quantity cannot be changed. It is fixed to 1.'], 400);
-    }
-
-    // For Wooden Chair: maximum quantity is 4
-    if ($isWoodenChair && $request->quantity > 4) {
+    // For Wooden Chair (not made-to-order): maximum quantity is 4
+    if ($isWoodenChair && !$isMadeToOrder && $request->quantity > 4) {
         return response()->json(['message' => 'Wooden Chair maximum quantity is 4'], 400);
     }
 

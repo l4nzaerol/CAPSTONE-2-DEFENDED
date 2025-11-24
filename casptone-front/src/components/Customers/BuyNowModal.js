@@ -208,7 +208,8 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
   const subtotal = product ? (product.price * quantity) : 0;
   // For made-to-order products, shipping fee is not calculated upfront
   const shippingFee = isMadeToOrder ? 0 : (formData.selectedProvince ? shippingInfo.shippingFee : 0);
-  const totalPrice = subtotal + shippingFee;
+  // For made-to-order products, total should be the same as subtotal (no shipping fee)
+  const totalPrice = isMadeToOrder ? subtotal : (subtotal + shippingFee);
 
   if (!show || !product) {
     return null;
@@ -424,7 +425,7 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
                           fontSize: '0.85rem',
                           fontStyle: 'italic'
                         }}>
-                          Depends on location
+                          To be finalized
                         </span>
                       ) : shippingInfo.isFreeShipping ? (
                         <span style={{ color: '#28a745', fontWeight: 600 }}>
@@ -445,7 +446,7 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
                       marginTop: '4px'
                     }}>
                       <span style={{ display: 'block', lineHeight: '1.4' }}>
-                        ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
+                        ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
                       </span>
                     </div>
                   )}
