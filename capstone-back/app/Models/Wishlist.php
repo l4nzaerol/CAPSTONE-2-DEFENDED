@@ -44,3 +44,4 @@ class Wishlist extends Model
     }
 }
 
+

@@ -4943,6 +4943,7 @@ class EnhancedInventoryReportsController extends Controller
     {
         try {
             $reportType = $request->get('report_type', 'stock');
+            $categoryFilter = $request->get('category', 'all'); // Get category filter
             $data = [];
             $dateRange = null;
 
@@ -4968,7 +4969,50 @@ class EnhancedInventoryReportsController extends Controller
                         return $daysWithConsumption > 0 ? $totalConsumption / $daysWithConsumption : 0;
                     });
                     
-                    $data = $materials->map(function($material) use ($materialDailyConsumption) {
+                    // Get Alkansya and Made to Order product IDs for filtering
+                    $alkansyaProducts = Product::where(function($q) {
+                        $q->where('name', 'LIKE', '%Alkansya%')
+                          ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                          ->orWhere(function($q2) {
+                              $q2->where('category_name', 'Stocked Products')
+                                 ->where(function($q3) {
+                                     $q3->where('name', 'LIKE', '%Alkansya%')
+                                        ->orWhere('product_name', 'LIKE', '%Alkansya%');
+                                 });
+                          });
+                    })->pluck('id');
+                    
+                    $madeToOrderProducts = Product::where(function($q) {
+                        $q->where('category_name', 'Made to Order')
+                          ->orWhere('category_name', 'Made-to-Order')
+                          ->orWhere('category_name', 'made_to_order');
+                    })->pluck('id');
+                    
+                    $data = $materials->map(function($material) use ($materialDailyConsumption, $alkansyaProducts, $madeToOrderProducts, $categoryFilter) {
+                        // Check if material is used in Alkansya or Made-to-Order
+                        $alkansyaBom = BOM::where('material_id', $material->material_id)->whereIn('product_id', $alkansyaProducts)->exists();
+                        $madeToOrderBom = BOM::where('material_id', $material->material_id)->whereIn('product_id', $madeToOrderProducts)->exists();
+                        
+                        // Determine category
+                        $category = 'Other';
+                        if ($alkansyaBom && $madeToOrderBom) {
+                            $category = 'Both';
+                        } elseif ($alkansyaBom) {
+                            $category = 'Alkansya';
+                        } elseif ($madeToOrderBom) {
+                            $category = 'Made to Order';
+                        }
+                        
+                        // Apply category filter
+                        if ($categoryFilter !== 'all') {
+                            if ($categoryFilter === 'alkansya' && $category !== 'Alkansya' && $category !== 'Both') {
+                                return null; // Skip this material
+                            }
+                            if ($categoryFilter === 'made_to_order' && $category !== 'Made to Order' && $category !== 'Both') {
+                                return null; // Skip this material
+                            }
+                        }
+                        
                         $totalStock = $material->inventory->sum('current_stock');
                         $reorderPoint = $material->reorder_point ?? $material->reorder_level ?? 10;
                         $criticalStock = $material->critical_stock ?? $material->safety_stock ?? 0;
@@ -4997,7 +5041,7 @@ class EnhancedInventoryReportsController extends Controller
                         return [
                             'Material Name' => $material->material_name,
                             'SKU' => $material->material_code ?: 'MAT-' . str_pad($material->material_id, 3, '0', STR_PAD_LEFT),
-                            'Category' => $material->category ?? 'Material',
+                            'Category' => $category,
                             'Current Stock' => number_format($totalStock, 2),
                             'Safety Stock' => number_format($criticalStock, 2),
                             'Reorder Point' => number_format($reorderPoint, 2),
@@ -5006,14 +5050,22 @@ class EnhancedInventoryReportsController extends Controller
                             'Total Value' => number_format($totalValue, 2),
                             'Status' => $status,
                         ];
-                    })->toArray();
+                    })->filter(function($item) {
+                        return $item !== null;
+                    })->values()->toArray();
                     break;
                     
                 case 'usage':
                     // Get actual usage data from InventoryTransaction and calculate material-level summaries (matches CSV format)
-                    $days = (int) $request->get('days', 90);
-                    $startDate = Carbon::now()->subDays($days)->startOfDay();
-                    $endDate = Carbon::now()->endOfDay();
+                    // Support both start_date/end_date and days parameter
+                    if ($request->has('start_date') && $request->has('end_date')) {
+                        $startDate = Carbon::parse($request->get('start_date'))->startOfDay();
+                        $endDate = Carbon::parse($request->get('end_date'))->endOfDay();
+                    } else {
+                        $days = (int) $request->get('days', 90);
+                        $startDate = Carbon::now()->subDays($days)->startOfDay();
+                        $endDate = Carbon::now()->endOfDay();
+                    }
                     
                     // Get all consumption transactions (includes seeder and manual data)
                     $transactions = InventoryTransaction::whereBetween('timestamp', [$startDate, $endDate])
@@ -5023,6 +5075,9 @@ class EnhancedInventoryReportsController extends Controller
                         ->get();
                     
                     \Log::info('Usage PDF - Transactions found: ' . $transactions->count());
+                    
+                    // Calculate number of days in the date range
+                    $days = max(1, $startDate->diffInDays($endDate));
                     
                     // Group by material to calculate average daily consumption
                     $materialUsage = $transactions->groupBy('material_id')->map(function($materialTransactions, $materialId) use ($days) {
@@ -5141,6 +5196,21 @@ class EnhancedInventoryReportsController extends Controller
                         return $bVal <=> $aVal;
                     });
                     
+                    // Apply category filter
+                    if ($categoryFilter !== 'all') {
+                        $materialUsageArray = array_filter($materialUsageArray, function($item) use ($categoryFilter) {
+                            $category = $item['Category'] ?? '';
+                            if ($categoryFilter === 'alkansya') {
+                                return $category === 'Alkansya' || $category === 'Both';
+                            } elseif ($categoryFilter === 'made_to_order') {
+                                return $category === 'Made to Order' || $category === 'Both';
+                            }
+                            return false;
+                        });
+                        // Re-index array after filtering
+                        $materialUsageArray = array_values($materialUsageArray);
+                    }
+                    
                     $data = $materialUsageArray;
                     
                     \Log::info('Usage PDF - Material usage data count: ' . count($data));
@@ -5169,9 +5239,12 @@ class EnhancedInventoryReportsController extends Controller
                     $allReplenishmentItems = $replenishmentData['replenishment_items'] ?? [];
                     
                     // Combine Alkansya and Made-to-Order replenishment schedules
+                    // Apply category filter
                     if (isset($replenishmentData['alkansya_replenishment']['schedule']) && is_array($replenishmentData['alkansya_replenishment']['schedule'])) {
-                        \Log::info('Replenishment PDF - Alkansya schedule count: ' . count($replenishmentData['alkansya_replenishment']['schedule']));
-                        foreach ($replenishmentData['alkansya_replenishment']['schedule'] as $item) {
+                        // Only process Alkansya if filter is 'all' or 'alkansya'
+                        if ($categoryFilter === 'all' || $categoryFilter === 'alkansya') {
+                            \Log::info('Replenishment PDF - Alkansya schedule count: ' . count($replenishmentData['alkansya_replenishment']['schedule']));
+                            foreach ($replenishmentData['alkansya_replenishment']['schedule'] as $item) {
                             // Calculate accurate status based on projected stock
                             $projectedStock = $item['projected_stock'] ?? $item['current_stock'] ?? 0;
                             $reorderPoint = $item['reorder_point'] ?? 0;
@@ -5219,12 +5292,15 @@ class EnhancedInventoryReportsController extends Controller
                                 'Unit Cost' => number_format($unitCost, 2),
                                 'Estimated Cost' => number_format($recommendedQty * $unitCost, 2),
                             ];
+                            }
                         }
                     }
                     
                     if (isset($replenishmentData['made_to_order_replenishment']['schedule']) && is_array($replenishmentData['made_to_order_replenishment']['schedule'])) {
-                        \Log::info('Replenishment PDF - Made-to-Order schedule count: ' . count($replenishmentData['made_to_order_replenishment']['schedule']));
-                        foreach ($replenishmentData['made_to_order_replenishment']['schedule'] as $item) {
+                        // Only process Made to Order if filter is 'all' or 'made_to_order'
+                        if ($categoryFilter === 'all' || $categoryFilter === 'made_to_order') {
+                            \Log::info('Replenishment PDF - Made-to-Order schedule count: ' . count($replenishmentData['made_to_order_replenishment']['schedule']));
+                            foreach ($replenishmentData['made_to_order_replenishment']['schedule'] as $item) {
                             // Calculate accurate status based on projected stock
                             $projectedStock = $item['projected_stock'] ?? $item['current_stock'] ?? 0;
                             $reorderPoint = $item['reorder_point'] ?? 0;
@@ -5272,6 +5348,7 @@ class EnhancedInventoryReportsController extends Controller
                                 'Unit Cost' => number_format($unitCost, 2),
                                 'Estimated Cost' => number_format($recommendedQty * $unitCost, 2),
                             ];
+                            }
                         }
                     }
                     
@@ -5303,6 +5380,16 @@ class EnhancedInventoryReportsController extends Controller
                                 $category = 'Alkansya';
                             } elseif (isset($item['is_made_to_order_material']) && $item['is_made_to_order_material']) {
                                 $category = 'Made to Order';
+                            }
+                            
+                            // Apply category filter - skip items that don't match the filter
+                            if ($categoryFilter !== 'all') {
+                                if ($categoryFilter === 'alkansya' && $category !== 'Alkansya') {
+                                    continue; // Skip this item
+                                }
+                                if ($categoryFilter === 'made_to_order' && $category !== 'Made to Order') {
+                                    continue; // Skip this item
+                                }
                             }
                             
                             // Priority: Out of Stock > Critical > Low Stock > Overstocked > In Stock

@@ -377,11 +377,32 @@ const ProductionReports = () => {
         
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         let content = 'Production Performance Report\n';
         content += `Generated: ${new Date().toLocaleString()}\n`;
         content += `Date Range: ${dateRangeStr}\n`;
-        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
-        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        content += `Category Filter: ${getCategoryDisplayName(categoryFilter)}\n`;
+        content += `Status Filter: ${getStatusDisplayName(statusFilter)}\n\n`;
         
         // Apply category filter to product performance data
         let filteredProducts = productPerformanceData?.products || [];
@@ -472,11 +493,32 @@ const ProductionReports = () => {
     const generateWorkProgressReportCSV = (overview, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         let content = 'Work Progress Report\n';
         content += `Generated: ${new Date().toLocaleString()}\n`;
         content += `Date Range: ${dateRangeStr}\n`;
-        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
-        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        content += `Category Filter: ${getCategoryDisplayName(categoryFilter)}\n`;
+        content += `Status Filter: ${getStatusDisplayName(statusFilter)}\n\n`;
         
         // Apply category filter to data
         let filteredAlkansya = overview?.alkansya?.recent_output || [];
@@ -531,11 +573,32 @@ const ProductionReports = () => {
     const generateComprehensiveReportCSV = (overview, output, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : `Last ${windowDays} days`;
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         let content = 'COMPREHENSIVE PRODUCTION REPORT\n';
         content += `Generated: ${new Date().toLocaleString()}\n`;
         content += `Report Period: ${dateRangeStr}\n`;
-        content += `Category Filter: ${categoryFilter === 'all' ? 'All' : categoryFilter}\n`;
-        content += `Status Filter: ${statusFilter === 'all' ? 'All' : statusFilter}\n\n`;
+        content += `Category Filter: ${getCategoryDisplayName(categoryFilter)}\n`;
+        content += `Status Filter: ${getStatusDisplayName(statusFilter)}\n\n`;
         
         // Apply filters
         let filteredMadeToOrder = madeToOrder?.items || [];
@@ -623,13 +686,34 @@ const ProductionReports = () => {
         
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         const sections = [
             {
                 title: 'Report Filters',
                 data: [
                     { label: 'Date Range', value: dateRangeStr },
-                    { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
-                    { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                    { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) },
+                    { label: 'Status Filter', value: getStatusDisplayName(statusFilter) }
                 ]
             }
         ];
@@ -711,6 +795,27 @@ const ProductionReports = () => {
     const generateWorkProgressReportData = (overview, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         // Apply filters
         let filteredAlkansya = overview?.alkansya?.recent_output || [];
         let filteredMadeToOrder = madeToOrder?.items || [];
@@ -737,8 +842,8 @@ const ProductionReports = () => {
                     title: 'Report Filters',
                     data: [
                         { label: 'Date Range', value: dateRangeStr },
-                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
-                        { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                        { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) },
+                        { label: 'Status Filter', value: getStatusDisplayName(statusFilter) }
                     ]
                 },
                 {
@@ -780,10 +885,35 @@ const ProductionReports = () => {
     const generateComprehensiveReportData = (overview, output, alkansya, madeToOrder, dateRange = null, categoryFilter = 'all', statusFilter = 'all') => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_progress': 'In Progress',
+                'completed': 'Completed',
+                'pending': 'Pending'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         // Apply filters
+        let filteredAlkansya = overview?.alkansya?.recent_output || [];
         let filteredMadeToOrder = madeToOrder?.items || [];
+        
         if (categoryFilter === 'alkansya') {
             filteredMadeToOrder = [];
+        } else if (categoryFilter === 'made_to_order') {
+            filteredAlkansya = [];
         }
         
         if (statusFilter !== 'all' && filteredMadeToOrder.length > 0) {
@@ -802,8 +932,8 @@ const ProductionReports = () => {
                     title: 'Report Filters',
                     data: [
                         { label: 'Date Range', value: dateRangeStr },
-                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter },
-                        { label: 'Status Filter', value: statusFilter === 'all' ? 'All' : statusFilter }
+                        { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) },
+                        { label: 'Status Filter', value: getStatusDisplayName(statusFilter) }
                     ]
                 },
                 {
@@ -824,14 +954,14 @@ const ProductionReports = () => {
                     ]
                 },
                 {
-                    title: 'Recent Production Output',
+                    title: categoryFilter === 'made_to_order' ? 'Made-to-Order Production Output' : 'Alkansya Recent Output',
                     type: 'table',
                     headers: ['Date', 'Quantity', 'Produced By'],
-                    data: overview?.alkansya?.recent_output?.map(output => [
+                    data: filteredAlkansya.map(output => [
                         output.date,
                         output.quantity,
                         output.produced_by
-                    ]) || []
+                    ])
                 },
                 {
                     title: 'Made-to-Order Progress',

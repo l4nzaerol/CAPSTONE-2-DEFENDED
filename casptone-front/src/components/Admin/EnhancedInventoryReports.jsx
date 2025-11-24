@@ -815,13 +815,23 @@ const EnhancedInventoryReports = () => {
         
         let filteredItems = [...data.items];
         
-        // Apply category filter
+        // Apply category filter - show only materials for the selected category
         if (reportCategoryFilter !== 'all') {
             filteredItems = filteredItems.filter(item => {
-                if (reportCategoryFilter === 'alkansya') return item.is_alkansya_material === true;
-                if (reportCategoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
-                if (reportCategoryFilter === 'raw') return item.category === 'raw';
-                if (reportCategoryFilter === 'packaging') return item.category === 'packaging';
+                if (reportCategoryFilter === 'alkansya') {
+                    // Show materials used in Alkansya products
+                    return item.is_alkansya_material === true;
+                }
+                if (reportCategoryFilter === 'made_to_order') {
+                    // Show materials used in Made to Order products
+                    return item.is_made_to_order_material === true;
+                }
+                if (reportCategoryFilter === 'raw') {
+                    return item.category === 'raw' || item.category?.toLowerCase() === 'raw materials';
+                }
+                if (reportCategoryFilter === 'packaging') {
+                    return item.category === 'packaging' || item.category?.toLowerCase() === 'packaging';
+                }
                 return false;
             });
         }
@@ -1058,14 +1068,38 @@ const EnhancedInventoryReports = () => {
         
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order',
+                'raw': 'Raw Materials',
+                'packaging': 'Packaging'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
+        // Helper function to get display name for status filter
+        const getStatusDisplayName = (filter) => {
+            const statusMap = {
+                'all': 'All Status',
+                'in_stock': 'In Stock',
+                'low_stock': 'Low Stock',
+                'out_of_stock': 'Out of Stock',
+                'overstocked': 'Overstocked'
+            };
+            return statusMap[filter] || filter;
+        };
+        
         return {
             sections: [
                 {
                     title: 'Report Information',
                     data: [
                         { label: 'Date Range', value: dateRangeStr },
-                        { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter },
-                        { label: 'Status Filter', value: reportStatusFilter === 'all' ? 'All' : reportStatusFilter }
+                        { label: 'Category Filter', value: getCategoryDisplayName(reportCategoryFilter) },
+                        { label: 'Status Filter', value: getStatusDisplayName(reportStatusFilter) }
                     ]
                 },
                 {
@@ -1108,20 +1142,21 @@ const EnhancedInventoryReports = () => {
     const generateUsageReportData = (inventoryData, alkansyaForecast, madeToOrderForecast, dateRange = null) => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
-        // Apply category filter to usage data
-        let filteredData = { ...inventoryData };
-        if (reportCategoryFilter !== 'all' && inventoryData?.items) {
-            filteredData.items = inventoryData.items.filter(item => {
-                if (reportCategoryFilter === 'alkansya') return item.is_alkansya_material === true;
-                if (reportCategoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
-                if (reportCategoryFilter === 'raw') return item.category === 'raw';
-                if (reportCategoryFilter === 'packaging') return item.category === 'packaging';
-                return false;
-            });
-        }
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order',
+                'raw': 'Raw Materials',
+                'packaging': 'Packaging'
+            };
+            return categoryMap[filter] || filter;
+        };
         
-        // Use filtered inventoryData items to calculate usage data
-        const usageData = filteredData?.items || [];
+        // Data is already filtered by applyFiltersToData before being passed to this function
+        // Use the filtered inventoryData items directly
+        const usageData = inventoryData?.items || [];
         
         if (usageData.length === 0) {
             return {
@@ -1130,7 +1165,7 @@ const EnhancedInventoryReports = () => {
                         title: 'Report Information',
                         data: [
                             { label: 'Date Range', value: dateRangeStr },
-                            { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter }
+                            { label: 'Category Filter', value: getCategoryDisplayName(reportCategoryFilter) }
                         ]
                     },
                     {
@@ -1143,7 +1178,7 @@ const EnhancedInventoryReports = () => {
                         ]
                     },
                     {
-                        title: 'Top Materials by Usage',
+                        title: 'Material Details',
                         type: 'table',
                         headers: ['Material Name', 'Category', 'Avg Daily Usage', 'Current Stock', 'Days Until Stockout', 'Projected Usage', 'Status'],
                         data: []
@@ -1161,26 +1196,21 @@ const EnhancedInventoryReports = () => {
             .filter(item => item.is_made_to_order_material)
             .reduce((sum, item) => sum + (item.avg_daily_consumption || 0), 0);
         
-        // Count materials with consumption data
+        // Count materials with consumption
         const materialsWithConsumption = usageData.filter(item => (item.avg_daily_consumption || 0) > 0).length;
         
-        // Sort all materials: those with consumption first (sorted by consumption), then others
-        const sortedMaterials = [...usageData].sort((a, b) => {
-            const aConsumption = a.avg_daily_consumption || 0;
-            const bConsumption = b.avg_daily_consumption || 0;
-            
-            // If both have consumption, sort by consumption descending
-            if (aConsumption > 0 && bConsumption > 0) {
-                return bConsumption - aConsumption;
-            }
-            // If only one has consumption, prioritize it
-            if (aConsumption > 0) return -1;
-            if (bConsumption > 0) return 1;
-            // If neither has consumption, sort by name
-            const aName = (a.name || a.material_name || '').toLowerCase();
-            const bName = (b.name || b.material_name || '').toLowerCase();
-            return aName.localeCompare(bName);
-        });
+        // Show all materials in the table (like Stock Levels Report), sorted by average daily consumption (descending)
+        // Materials with no consumption will show 0.00 and appear at the bottom
+        const allMaterials = [...usageData]
+            .sort((a, b) => {
+                // Sort by consumption first (descending), then by name
+                const aConsumption = a.avg_daily_consumption || 0;
+                const bConsumption = b.avg_daily_consumption || 0;
+                if (bConsumption !== aConsumption) {
+                    return bConsumption - aConsumption;
+                }
+                return (a.name || a.material_name || '').localeCompare(b.name || b.material_name || '');
+            });
         
         return {
             sections: [
@@ -1188,7 +1218,7 @@ const EnhancedInventoryReports = () => {
                     title: 'Report Information',
                     data: [
                         { label: 'Date Range', value: dateRangeStr },
-                        { label: 'Category Filter', value: reportCategoryFilter === 'all' ? 'All' : reportCategoryFilter },
+                        { label: 'Category Filter', value: getCategoryDisplayName(reportCategoryFilter) },
                         { label: 'Total Materials', value: usageData.length }
                     ]
                 },
@@ -1198,30 +1228,22 @@ const EnhancedInventoryReports = () => {
                         { label: 'Total Consumption', value: totalConsumption.toFixed(2) },
                         { label: 'Alkansya Consumption', value: alkansyaConsumption.toFixed(2) },
                         { label: 'Made-to-Order Consumption', value: madeToOrderConsumption.toFixed(2) },
-                        { label: 'Materials with Consumption Data', value: materialsWithConsumption }
+                        { label: 'Materials Consumed', value: materialsWithConsumption }
                     ]
                 },
                 {
-                    title: 'Top Materials by Usage',
+                    title: 'Material Details',
                     type: 'table',
                     headers: ['Material Name', 'Category', 'Avg Daily Usage', 'Current Stock', 'Days Until Stockout', 'Projected Usage', 'Status'],
-                    data: sortedMaterials.map(material => {
-                        const avgDailyUsage = material.avg_daily_consumption || 0;
-                        const currentStock = material.current_stock || material.available_quantity || 0;
-                        const daysUntilStockout = material.days_until_stockout;
-                        const projectedUsage = avgDailyUsage > 0 ? `${(avgDailyUsage * 30).toFixed(2)} (30-day projection)` : 'N/A';
-                        const status = material.stock_status || calculateStockStatus(material);
-                        
-                        return [
-                            material.name || material.material_name || 'N/A',
-                            material.is_alkansya_material ? 'Alkansya' : material.is_made_to_order_material ? 'Made to Order' : 'Other',
-                            avgDailyUsage.toFixed(2),
-                            currentStock,
-                            daysUntilStockout !== null && daysUntilStockout !== undefined ? daysUntilStockout : 'N/A',
-                            projectedUsage,
-                            status
-                        ];
-                    })
+                    data: allMaterials.map(material => [
+                        material.name || material.material_name || 'N/A',
+                        material.is_alkansya_material ? 'Alkansya' : material.is_made_to_order_material ? 'Made to Order' : 'Other',
+                        (material.avg_daily_consumption || 0).toFixed(2),
+                        material.current_stock || material.available_quantity || 0,
+                        material.days_until_stockout || 'N/A',
+                        `${((material.avg_daily_consumption || 0) * 30).toFixed(2)} (30-day projection)`,
+                        material.stock_status || calculateStockStatus(material)
+                    ])
                 }
             ]
         };
@@ -1231,6 +1253,18 @@ const EnhancedInventoryReports = () => {
     const generateReplenishmentReportData = (data, dateRange = null, categoryFilter = 'all') => {
         const dateRangeStr = dateRange ? `${dateRange.start_date} to ${dateRange.end_date}` : 'All Time';
         
+        // Helper function to get display name for category filter
+        const getCategoryDisplayName = (filter) => {
+            const categoryMap = {
+                'all': 'All Categories',
+                'alkansya': 'Alkansya',
+                'made_to_order': 'Made to Order',
+                'raw': 'Raw Materials',
+                'packaging': 'Packaging'
+            };
+            return categoryMap[filter] || filter;
+        };
+        
         if (!data) {
             return { 
                 sections: [
@@ -1238,7 +1272,7 @@ const EnhancedInventoryReports = () => {
                         title: 'Report Information',
                         data: [
                             { label: 'Date Range', value: dateRangeStr },
-                            { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                            { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) }
                         ]
                     },
                     {
@@ -1280,7 +1314,7 @@ const EnhancedInventoryReports = () => {
                         title: 'Report Information',
                         data: [
                             { label: 'Date Range', value: dateRangeStr },
-                            { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                            { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) }
                         ]
                     },
                     {
@@ -1318,7 +1352,7 @@ const EnhancedInventoryReports = () => {
                     title: 'Report Information',
                     data: [
                         { label: 'Date Range', value: dateRangeStr },
-                        { label: 'Category Filter', value: categoryFilter === 'all' ? 'All' : categoryFilter }
+                        { label: 'Category Filter', value: getCategoryDisplayName(categoryFilter) }
                     ]
                 },
                 {
@@ -2138,7 +2172,25 @@ const EnhancedInventoryReports = () => {
                                                         onClick={() => {
                                                             const dateRange = getDateRange();
                                                             console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
-                                                            toast.success('Filters applied to all reports!');
+                                                            
+                                                            // Apply filters to existing data and update filtered state
+                                                            try {
+                                                                // Apply filters to existing inventory data
+                                                                if (inventoryReport) {
+                                                                    const filtered = applyFiltersToData(inventoryReport);
+                                                                    setFilteredInventoryData(filtered);
+                                                                    console.log('Filtered inventory data updated:', {
+                                                                        totalItems: filtered.items?.length || 0,
+                                                                        categoryFilter: reportCategoryFilter,
+                                                                        statusFilter: reportStatusFilter
+                                                                    });
+                                                                }
+                                                                
+                                                                toast.success(`Filters applied! Reports will show ${reportCategoryFilter === 'all' ? 'all' : reportCategoryFilter === 'made_to_order' ? 'Made to Order' : reportCategoryFilter} materials.`);
+                                                            } catch (error) {
+                                                                console.error('Error applying filters:', error);
+                                                                toast.error('Failed to apply filters. Please try again.');
+                                                            }
                                                         }}
                                                         style={{ borderRadius: '8px', fontWeight: '600' }}
                                                     >

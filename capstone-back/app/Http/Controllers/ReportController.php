@@ -411,49 +411,76 @@ class ReportController extends Controller
     {
         $start = $request->query('start_date');
         $end = $request->query('end_date');
+        $categoryFilter = $request->query('category', 'all');
+        $statusFilter = $request->query('status', 'all');
+        $reportType = $request->query('report_type', 'comprehensive');
         
-        // Get regular production data (excluding alkansya)
+        // Get regular production data (Made-to-Order products)
         $q = Production::with('product');
         if ($start && $end) {
             $q->whereBetween('date', [$start, $end]);
         }
-        $productionRows = $q->get()->map(function($p){
-            return [
-                'id' => $p->id,
-                'date' => optional($p->date)->format('Y-m-d'),
-                'product' => optional($p->product)->name ?? $p->product_name,
-                'stage' => $p->current_stage,
-                'status' => $p->status,
-                'quantity' => $p->quantity,
-            ];
-        })->toArray();
+        
+        // Filter by category - only get Made-to-Order if category is 'all' or 'made_to_order'
+        if ($categoryFilter === 'alkansya') {
+            // Skip Made-to-Order productions when filtering for Alkansya
+            $productionRows = [];
+        } else {
+            $productionRows = $q->get()->map(function($p){
+                return [
+                    'id' => $p->id,
+                    'date' => optional($p->date)->format('Y-m-d'),
+                    'product' => optional($p->product)->name ?? $p->product_name,
+                    'stage' => $p->current_stage,
+                    'status' => $p->status,
+                    'quantity' => $p->quantity,
+                    'category' => 'Made to Order'
+                ];
+            })->toArray();
+            
+            // Apply status filter for Made-to-Order
+            if ($statusFilter !== 'all' && !empty($productionRows)) {
+                $productionRows = array_filter($productionRows, function($row) use ($statusFilter) {
+                    $status = strtolower($row['status'] ?? '');
+                    if ($statusFilter === 'in_progress') return $status === 'in progress' || $status === 'in_progress';
+                    if ($statusFilter === 'completed') return $status === 'completed';
+                    if ($statusFilter === 'pending') return $status === 'pending';
+                    return true;
+                });
+                $productionRows = array_values($productionRows);
+            }
+        }
 
         // Get alkansya production data from AlkansyaDailyOutput
-        $alkansyaQuery = AlkansyaDailyOutput::query();
-        if ($start && $end) {
-            $alkansyaQuery->whereBetween('date', [$start, $end]);
+        $alkansyaRows = [];
+        if ($categoryFilter === 'all' || $categoryFilter === 'alkansya') {
+            $alkansyaQuery = AlkansyaDailyOutput::query();
+            if ($start && $end) {
+                $alkansyaQuery->whereBetween('date', [$start, $end]);
+            }
+            
+            // Get alkansya product name
+            $alkansyaProduct = Product::where('category_name', 'Stocked Products')
+                ->where(function($query) {
+                    $query->where('name', 'LIKE', '%Alkansya%')
+                          ->orWhere('product_name', 'LIKE', '%Alkansya%');
+                })
+                ->first();
+            
+            $alkansyaProductName = $alkansyaProduct ? ($alkansyaProduct->product_name ?? $alkansyaProduct->name) : 'Alkansya';
+            
+            $alkansyaRows = $alkansyaQuery->get()->map(function($alkansya, $index) use ($alkansyaProductName) {
+                return [
+                    'id' => 'ALK-' . ($alkansya->id ?? $index + 1),
+                    'date' => optional($alkansya->date)->format('Y-m-d'),
+                    'product' => $alkansyaProductName,
+                    'stage' => 'Completed', // Alkansya is pre-made, so always completed
+                    'status' => 'Completed',
+                    'quantity' => $alkansya->quantity_produced ?? 0,
+                    'category' => 'Alkansya'
+                ];
+            })->toArray();
         }
-        
-        // Get alkansya product name
-        $alkansyaProduct = Product::where('category_name', 'Stocked Products')
-            ->where(function($query) {
-                $query->where('name', 'LIKE', '%Alkansya%')
-                      ->orWhere('product_name', 'LIKE', '%Alkansya%');
-            })
-            ->first();
-        
-        $alkansyaProductName = $alkansyaProduct ? ($alkansyaProduct->product_name ?? $alkansyaProduct->name) : 'Alkansya';
-        
-        $alkansyaRows = $alkansyaQuery->get()->map(function($alkansya, $index) use ($alkansyaProductName) {
-            return [
-                'id' => 'ALK-' . ($alkansya->id ?? $index + 1),
-                'date' => optional($alkansya->date)->format('Y-m-d'),
-                'product' => $alkansyaProductName,
-                'stage' => 'Completed', // Alkansya is pre-made, so always completed
-                'status' => 'Completed',
-                'quantity' => $alkansya->quantity_produced ?? 0,
-            ];
-        })->toArray();
 
         // Merge both arrays
         $rows = array_merge($productionRows, $alkansyaRows);
