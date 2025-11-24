@@ -67,31 +67,129 @@ class AlkansyaDailyOutputController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get all Alkansya products
-            $alkansyaProducts = Product::where('category_name', 'Stocked Products')
-                ->where('name', 'Alkansya')
-                ->get();
-
-            if ($alkansyaProducts->isEmpty()) {
-                Log::error('No Alkansya products found in database');
-                return response()->json(['error' => 'No Alkansya products found. Please ensure the products exist in the database.'], 404);
+            // Get all Alkansya products using a simple, reliable query
+            // Try multiple approaches to ensure we find the products
+            $alkansyaProducts = collect();
+            
+            // Approach 1: Simple query - find any product with Alkansya in name or product_name
+            // This is the most permissive approach
+            $alkansyaProducts = Product::where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(COALESCE(name, "")) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(COALESCE(product_name, "")) LIKE ?', ['%alkansya%']);
+            })->get();
+            
+            // Filter by category if we found products (optional filter)
+            if ($alkansyaProducts->isNotEmpty()) {
+                // Prefer products with 'Stocked Products' category, but don't exclude others
+                $stockedProducts = $alkansyaProducts->filter(function($product) {
+                    $category = strtolower($product->category_name ?? '');
+                    return $category === 'stocked products' || $category === 'stocked_products';
+                });
+                
+                // Use stocked products if available, otherwise use all found
+                if ($stockedProducts->isNotEmpty()) {
+                    $alkansyaProducts = $stockedProducts;
+                }
             }
 
-            Log::info('Found ' . $alkansyaProducts->count() . ' Alkansya products');
+            // Approach 2: If empty, try without category filter
+            if ($alkansyaProducts->isEmpty()) {
+                Log::info('Trying query without category filter');
+                $alkansyaProducts = Product::where(function($query) {
+                    $query->where('name', 'LIKE', '%Alkansya%')
+                          ->orWhere('product_name', 'LIKE', '%Alkansya%');
+                })->get();
+            }
+
+            // Approach 3: If still empty, try case-insensitive search
+            if ($alkansyaProducts->isEmpty()) {
+                Log::info('Trying case-insensitive search');
+                $alkansyaProducts = Product::where(function($query) {
+                    $query->whereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                          ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+                })->get();
+            }
+
+            if ($alkansyaProducts->isEmpty()) {
+                // Get all products for debugging
+                $allProducts = Product::select('id', 'name', 'product_name', 'category_name')->get();
+                $productList = $allProducts->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'product_name' => $p->product_name,
+                        'category_name' => $p->category_name
+                    ];
+                })->toArray();
+                
+                Log::error('No Alkansya products found in database', [
+                    'total_products' => $allProducts->count(),
+                    'all_products' => $productList,
+                    'request_date' => $request->date,
+                    'request_quantity' => $request->quantity
+                ]);
+                
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'No Alkansya products found. Please ensure the products exist in the database.',
+                    'debug_info' => [
+                        'total_products' => $allProducts->count(),
+                        'sample_products' => array_slice($productList, 0, 10)
+                    ]
+                ], 404);
+            }
+
+            Log::info('Found ' . $alkansyaProducts->count() . ' Alkansya products', [
+                'product_ids' => $alkansyaProducts->pluck('id')->toArray(),
+                'product_names' => $alkansyaProducts->map(function($p) {
+                    return $p->product_name ?? $p->name;
+                })->toArray(),
+                'category_names' => $alkansyaProducts->pluck('category_name')->toArray()
+            ]);
 
             // Use the first Alkansya product for BOM calculation (they all have the same BOM)
             $alkansyaProduct = $alkansyaProducts->first();
+            
+            if (!$alkansyaProduct) {
+                DB::rollBack();
+                Log::error('Alkansya product is null after query');
+                return response()->json([
+                    'error' => 'Failed to retrieve Alkansya product. Please check the database.'
+                ], 500);
+            }
+            
+            Log::info('Using Alkansya product for BOM', [
+                'product_id' => $alkansyaProduct->id,
+                'product_name' => $alkansyaProduct->product_name ?? $alkansyaProduct->name,
+                'category_name' => $alkansyaProduct->category_name
+            ]);
+            
             $bomMaterials = BOM::where('product_id', $alkansyaProduct->id)
                 ->with('material')
                 ->get();
 
-            Log::info('Found ' . $bomMaterials->count() . ' BOM materials for Alkansya');
+            Log::info('Found ' . $bomMaterials->count() . ' BOM materials for Alkansya', [
+                'product_id' => $alkansyaProduct->id,
+                'bom_material_ids' => $bomMaterials->pluck('id')->toArray()
+            ]);
 
             if ($bomMaterials->isEmpty()) {
-                Log::error('No BOM materials found for Alkansya product ID: ' . $alkansyaProduct->id);
+                DB::rollBack();
+                Log::error('No BOM materials found for Alkansya product', [
+                    'product_id' => $alkansyaProduct->id,
+                    'product_name' => $alkansyaProduct->product_name ?? $alkansyaProduct->name,
+                    'total_boms' => BOM::count(),
+                    'sample_boms' => BOM::take(5)->pluck('product_id')->toArray()
+                ]);
                 return response()->json([
                     'error' => 'Alkansya BOM not found. Please run the database seeders to create the Bill of Materials.',
-                    'details' => 'Product ID: ' . $alkansyaProduct->id . ', Product Name: ' . $alkansyaProduct->name
+                    'details' => [
+                        'product_id' => $alkansyaProduct->id,
+                        'product_name' => $alkansyaProduct->product_name ?? $alkansyaProduct->name,
+                        'total_boms_in_db' => BOM::count()
+                    ]
                 ], 404);
             }
 
@@ -394,13 +492,29 @@ class AlkansyaDailyOutputController extends Controller
                     continue; // Skip if transactions already exist
                 }
 
-                // Get Alkansya products and BOM
-                $alkansyaProducts = Product::where('category_name', 'Stocked Products')
+                // Get Alkansya products and BOM - use case-insensitive and flexible matching
+                $alkansyaProducts = Product::where(function($query) {
+                        $query->whereRaw('LOWER(category_name) = ?', ['stocked products'])
+                              ->orWhere('category_name', 'Stocked Products')
+                              ->orWhere('category_name', 'stocked_products');
+                    })
                     ->where(function($query) {
                         $query->where('name', 'LIKE', '%Alkansya%')
-                              ->orWhere('product_name', 'LIKE', '%Alkansya%');
+                              ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                              ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                              ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
                     })
                     ->get();
+
+                // If still empty, try without category filter as fallback
+                if ($alkansyaProducts->isEmpty()) {
+                    $alkansyaProducts = Product::where(function($query) {
+                        $query->where('name', 'LIKE', '%Alkansya%')
+                              ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                              ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                              ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+                    })->get();
+                }
 
                 if ($alkansyaProducts->isEmpty()) {
                     $errors[] = "No Alkansya products found for date {$dailyOutput->date}";
@@ -485,7 +599,30 @@ class AlkansyaDailyOutputController extends Controller
      */
 public function materialsAnalysis()
     {
-        $alkansyaProduct = Product::where('name', 'Alkansya')->first();
+        // Get Alkansya product - use case-insensitive and flexible matching
+        $alkansyaProduct = Product::where(function($query) {
+                $query->whereRaw('LOWER(category_name) = ?', ['stocked products'])
+                      ->orWhere('category_name', 'Stocked Products')
+                      ->orWhere('category_name', 'stocked_products');
+            })
+            ->where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+            })
+            ->first();
+
+        // If still not found, try without category filter as fallback
+        if (!$alkansyaProduct) {
+            $alkansyaProduct = Product::where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+            })->first();
+        }
+
         if (!$alkansyaProduct) {
             return response()->json(['error' => 'Alkansya product not found'], 404);
         }
@@ -515,6 +652,50 @@ public function materialsAnalysis()
         }
 
         return response()->json($materialsAnalysis);
+    }
+
+    /**
+     * Diagnostic endpoint to check if Alkansya products exist
+     */
+    public function checkProducts()
+    {
+        try {
+            // Try the same query logic as store method
+            $alkansyaProducts = Product::where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(COALESCE(name, "")) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(COALESCE(product_name, "")) LIKE ?', ['%alkansya%']);
+            })->get();
+
+            $allProducts = Product::select('id', 'name', 'product_name', 'category_name')->get();
+
+            return response()->json([
+                'alkansya_products_found' => $alkansyaProducts->count(),
+                'alkansya_products' => $alkansyaProducts->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'product_name' => $p->product_name,
+                        'category_name' => $p->category_name
+                    ];
+                })->toArray(),
+                'total_products' => $allProducts->count(),
+                'all_products_sample' => $allProducts->take(10)->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'product_name' => $p->product_name,
+                        'category_name' => $p->category_name
+                    ];
+                })->toArray()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 
 }

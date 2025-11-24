@@ -253,6 +253,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/inventory/daily-usage', [InventoryController::class, 'getDailyUsage']);
     Route::get('/inventory/alkansya-daily-output', [AlkansyaDailyOutputController::class, 'index']);
     Route::post('/inventory/alkansya-daily-output', [AlkansyaDailyOutputController::class, 'store']);
+    Route::get('/inventory/alkansya-daily-output/check-products', [AlkansyaDailyOutputController::class, 'checkProducts']);
     
     // Price Calculator Routes
     Route::post('/price-calculator/calculate', [PriceCalculatorController::class, 'calculatePrice']);

@@ -2221,8 +2221,8 @@ const EnhancedInventoryReports = () => {
                                                 <h6 className="text-muted mb-2">Alkansya Materials</h6>
                                                 <small className="text-muted">Materials for Alkansya production</small>
                                             </div>
-                    </div>
-                </div>
+                                        </div>
+                                    </div>
                                     <div className="col-md-4">
                                         <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '12px', transition: 'all 0.3s ease' }}
                                              onMouseEnter={(e) => {
@@ -2243,8 +2243,8 @@ const EnhancedInventoryReports = () => {
                                                 <h6 className="text-muted mb-2">Made to Order Materials</h6>
                                                 <small className="text-muted">Materials for made to order products</small>
                                             </div>
-                                            </div>
                                         </div>
+                                    </div>
                                     <div className="col-md-4">
                                         <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '12px', transition: 'all 0.3s ease' }}
                                              onMouseEnter={(e) => {

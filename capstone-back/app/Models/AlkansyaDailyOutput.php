@@ -55,10 +55,29 @@ class AlkansyaDailyOutput extends Model
      */
     public static function addDailyOutput($date, $quantity, $producedBy = null)
     {
-        // Get all Alkansya products
-        $alkansyaProducts = Product::where('category_name', 'Stocked Products')
-            ->where('name', 'Alkansya')
+        // Get all Alkansya products - use case-insensitive and flexible matching
+        $alkansyaProducts = Product::where(function($query) {
+                $query->whereRaw('LOWER(category_name) = ?', ['stocked products'])
+                      ->orWhere('category_name', 'Stocked Products')
+                      ->orWhere('category_name', 'stocked_products');
+            })
+            ->where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+            })
             ->get();
+
+        // If still empty, try without category filter as fallback
+        if ($alkansyaProducts->isEmpty()) {
+            $alkansyaProducts = Product::where(function($query) {
+                $query->where('name', 'LIKE', '%Alkansya%')
+                      ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                      ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%']);
+            })->get();
+        }
 
         if ($alkansyaProducts->isEmpty()) {
             throw new \Exception('No Alkansya products found');
