@@ -323,12 +323,12 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Secondary Charts Row - Responsive */}
+                  {/* Secondary Charts Row - Responsive - Larger Cards */}
                   <div className="row mb-4">
-                    <div className="col-12 col-md-6 col-lg-4 mb-4">
+                    <div className="col-12 col-md-6 col-lg-4 mb-4 d-flex">
                       <Suspense 
                         fallback={
-                          <div className="text-center py-4" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div className="text-center py-4 w-100" style={{ minHeight: '550px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div>
                               <div className="spinner-border spinner-border-sm" style={{ color: '#8b5e34' }} role="status">
                                 <span className="visually-hidden">Loading...</span>
@@ -341,10 +341,10 @@ const AdminDashboard = () => {
                         <TopStaffChart data={analytics?.top_staff || []} />
                       </Suspense>
                     </div>
-                    <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4">
+                    <div className="col-12 col-md-6 col-lg-4 mb-4 d-flex">
                       <Suspense 
                         fallback={
-                          <div className="text-center py-4" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div className="text-center py-4 w-100" style={{ minHeight: '550px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div>
                               <div className="spinner-border spinner-border-sm" style={{ color: '#8b5e34' }} role="status">
                                 <span className="visually-hidden">Loading...</span>
@@ -357,10 +357,10 @@ const AdminDashboard = () => {
                         <TopProductsChart data={analytics?.top_products || []} />
                       </Suspense>
                     </div>
-                    <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4">
+                    <div className="col-12 col-md-6 col-lg-4 mb-4 d-flex">
                       <Suspense 
                         fallback={
-                          <div className="text-center py-4" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div className="text-center py-4 w-100" style={{ minHeight: '550px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div>
                               <div className="spinner-border spinner-border-sm" style={{ color: '#8b5e34' }} role="status">
                                 <span className="visually-hidden">Loading...</span>

@@ -415,61 +415,33 @@ const BuyNowModal = ({ show, onClose, product, onOrderSuccess, position = { x: 0
                     <span>Subtotal:</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="total-row">
-                    <span>Shipping Fee:</span>
-                    <span>
-                      {isMadeToOrder ? (
-                        <span style={{ 
-                          color: '#0066cc', 
-                          fontWeight: 500,
-                          fontSize: '0.85rem',
-                          fontStyle: 'italic'
-                        }}>
-                          To be finalized
+                  {!isMadeToOrder && (
+                    <>
+                      <div className="total-row">
+                        <span>Shipping Fee:</span>
+                        <span>
+                          {shippingInfo.isFreeShipping ? (
+                            <span style={{ color: '#28a745', fontWeight: 600 }}>
+                              FREE
+                            </span>
+                          ) : formData.selectedProvince ? (
+                            formatPrice(shippingFee)
+                          ) : (
+                            <span style={{ color: '#999', fontStyle: 'italic' }}>Select address</span>
+                          )}
                         </span>
-                      ) : shippingInfo.isFreeShipping ? (
-                        <span style={{ color: '#28a745', fontWeight: 600 }}>
-                          FREE
-                        </span>
-                      ) : formData.selectedProvince ? (
-                        formatPrice(shippingFee)
-                      ) : (
-                        <span style={{ color: '#999', fontStyle: 'italic' }}>Select address</span>
+                      </div>
+                      {shippingInfo.isFreeShipping && (
+                        <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
+                          <span>🎉 Free shipping for 3+ alkansya!</span>
+                        </div>
                       )}
-                    </span>
-                  </div>
-                  {isMadeToOrder && (
-                    <div className="total-row" style={{ 
-                      fontSize: '0.85rem', 
-                      color: '#0066cc', 
-                      fontStyle: 'italic',
-                      marginTop: '4px'
-                    }}>
-                      <span style={{ display: 'block', lineHeight: '1.4' }}>
-                        ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
-                      </span>
-                    </div>
-                  )}
-                  {!isMadeToOrder && shippingInfo.isFreeShipping && (
-                    <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
-                      <span>🎉 Free shipping for 3+ alkansya!</span>
-                    </div>
+                    </>
                   )}
                   <div className="total-row final-total">
-                    <span>Total{isMadeToOrder ? ' (excl. shipping)' : ''}:</span>
+                    <span>Total:</span>
                     <span className="final-amount">{formatPrice(totalPrice)}</span>
                   </div>
-                  {isMadeToOrder && (
-                    <div style={{ 
-                      fontSize: '0.8rem', 
-                      color: '#666', 
-                      fontStyle: 'italic',
-                      marginTop: '4px',
-                      textAlign: 'right'
-                    }}>
-                      *Shipping fee will be calculated based on your delivery address
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

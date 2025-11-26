@@ -1607,23 +1607,22 @@ const ProductionReports = () => {
                                         </div>
                                         <p className="text-muted mb-4">Generate detailed reports for production performance, work progress, and efficiency metrics</p>
                                         
-                                        {/* Unified Report Filters - Applies to both CSV and PDF */}
+                                        {/* Minimalist Report Filters */}
                                         <div className="mb-4">
-                                            <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', background: 'linear-gradient(135deg, #f8f9fa, #ffffff)' }}>
-                                                <div className="card-header bg-white border-0 pb-2" style={{ borderRadius: '12px 12px 0 0' }}>
-                                                    <div className="d-flex align-items-center">
+                                            <div className="card border shadow-sm" style={{ borderRadius: '12px' }}>
+                                                <div className="card-body p-3">
+                                                    <div className="d-flex align-items-center mb-3">
                                                         <i className="fas fa-filter text-primary me-2"></i>
-                                                        <h6 className="mb-0 fw-bold" style={{ color: '#495057', fontSize: '0.95rem' }}>
-                                                            Report Filters
-                                                        </h6>
+                                                        <h6 className="mb-0 fw-bold">Report Filters</h6>
                                                         <small className="text-muted ms-2">(Applies to all reports)</small>
                                                     </div>
-                                                </div>
-                                                <div className="card-body p-3">
-                                                    <div className="row g-3 align-items-end">
-                                                        <div className="col-md-2">
-                                                            <label className="form-label small fw-bold text-muted mb-1">
-                                                                <i className="fas fa-calendar-alt me-1"></i>Date Range
+                                                    
+                                                    <div className="row g-2 align-items-end">
+                                                        {/* Date Range */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-calendar-alt me-1 text-primary"></i>
+                                                                Date Range
                                                             </label>
                                                             <select
                                                                 className="form-select form-select-sm"
@@ -1635,7 +1634,6 @@ const ProductionReports = () => {
                                                                         setReportEndDate('');
                                                                     }
                                                                 }}
-                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
                                                             >
                                                                 <option value="days">Days</option>
                                                                 <option value="weeks">Weeks</option>
@@ -1644,10 +1642,13 @@ const ProductionReports = () => {
                                                                 <option value="custom">Custom Range</option>
                                                             </select>
                                                         </div>
+                                                        
+                                                        {/* Period */}
                                                         {reportDateRange !== 'custom' && reportDateRange !== 'year' && (
-                                                            <div className="col-md-2">
-                                                                <label className="form-label small fw-bold text-muted mb-1">
-                                                                    <i className="fas fa-hashtag me-1"></i>Period
+                                                            <div className="col-lg-1 col-md-2 col-sm-6">
+                                                                <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                    <i className="fas fa-hashtag me-1 text-primary"></i>
+                                                                    Period
                                                                 </label>
                                                                 <input
                                                                     type="number"
@@ -1655,62 +1656,70 @@ const ProductionReports = () => {
                                                                     value={reportDateValue}
                                                                     onChange={(e) => setReportDateValue(parseInt(e.target.value) || 1)}
                                                                     min="1"
-                                                                    style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                    style={{ height: '31px' }}
                                                                 />
                                                             </div>
                                                         )}
+                                                        
+                                                        {/* Custom Dates */}
                                                         {reportDateRange === 'custom' && (
                                                             <>
-                                                                <div className="col-md-2">
-                                                                    <label className="form-label small fw-bold text-muted mb-1">
-                                                                        <i className="fas fa-calendar-check me-1"></i>Start Date
+                                                                <div className="col-lg-2 col-md-3 col-sm-6">
+                                                                    <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                        <i className="fas fa-calendar-check me-1 text-primary"></i>
+                                                                        Start Date
                                                                     </label>
                                                                     <input
                                                                         type="date"
                                                                         className="form-control form-control-sm"
                                                                         value={reportStartDate}
                                                                         onChange={(e) => setReportStartDate(e.target.value)}
-                                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                        style={{ height: '31px' }}
                                                                     />
                                                                 </div>
-                                                                <div className="col-md-2">
-                                                                    <label className="form-label small fw-bold text-muted mb-1">
-                                                                        <i className="fas fa-calendar-times me-1"></i>End Date
+                                                                <div className="col-lg-2 col-md-3 col-sm-6">
+                                                                    <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                        <i className="fas fa-calendar-times me-1 text-primary"></i>
+                                                                        End Date
                                                                     </label>
                                                                     <input
                                                                         type="date"
                                                                         className="form-control form-control-sm"
                                                                         value={reportEndDate}
                                                                         onChange={(e) => setReportEndDate(e.target.value)}
-                                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
+                                                                        style={{ height: '31px' }}
                                                                     />
                                                                 </div>
                                                             </>
                                                         )}
-                                                        <div className="col-md-2">
-                                                            <label className="form-label small fw-bold text-muted mb-1">
-                                                                <i className="fas fa-tags me-1"></i>Category
+                                                        
+                                                        {/* Category */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-tags me-1 text-primary"></i>
+                                                                Category
                                                             </label>
                                                             <select
                                                                 className="form-select form-select-sm"
                                                                 value={reportCategoryFilter}
                                                                 onChange={(e) => setReportCategoryFilter(e.target.value)}
-                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
                                                             >
                                                                 <option value="all">All Categories</option>
                                                                 <option value="alkansya">Alkansya</option>
                                                                 <option value="made_to_order">Made to Order</option>
                                                             </select>
                                                         </div>
-                                                        <div className="col-md-2">
-                                                            <label className="form-label small fw-bold text-muted mb-1">
-                                                                <i className="fas fa-info-circle me-1"></i>Status
+                                                        
+                                                        {/* Status */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-info-circle me-1 text-primary"></i>
+                                                                Status
                                                             </label>
                                                             <select
                                                                 className="form-select form-select-sm"
                                                                 value={reportStatusFilter}
                                                                 onChange={(e) => setReportStatusFilter(e.target.value)}
-                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
                                                             >
                                                                 <option value="all">All Status</option>
                                                                 <option value="in_progress">In Progress</option>
@@ -1718,15 +1727,16 @@ const ProductionReports = () => {
                                                                 <option value="pending">Pending</option>
                                                             </select>
                                                         </div>
-                                                        <div className="col-md-2">
+                                                        
+                                                        {/* Apply Button */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
                                                             <button
-                                                                className="btn btn-sm btn-primary w-100"
+                                                                className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center"
                                                                 onClick={() => {
                                                                     const dateRange = getDateRange();
                                                                     console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
                                                                     toast.success('Filters applied to all reports!');
                                                                 }}
-                                                                style={{ borderRadius: '8px', fontWeight: '600' }}
                                                             >
                                                                 <i className="fas fa-check me-1"></i>
                                                                 Apply Filters
@@ -1879,68 +1889,6 @@ const ProductionReports = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Comprehensive Production Report */}
-                                                <div className="col-md-4">
-                                                    <div className="card border-0 shadow-sm h-100" style={{ 
-                                                        background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.05), rgba(255, 193, 7, 0.02))',
-                                                        borderRadius: '12px',
-                                                        border: '1px solid rgba(255, 193, 7, 0.1)'
-                                                    }}>
-                                                        <div className="card-body p-3">
-                                                            <div className="d-flex align-items-center mb-3">
-                                                                <div className="rounded-circle p-2 me-2" style={{ 
-                                                                    background: 'linear-gradient(135deg, #ffc107, #e0a800)',
-                                                                    width: '32px',
-                                                                    height: '32px',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center'
-                                                                }}>
-                                                                    <FaChartBar className="text-white" style={{ fontSize: '14px' }} />
-                                                                </div>
-                                                                <h6 className="mb-0 fw-bold" style={{ color: '#ffc107', fontSize: '0.85rem' }}>
-                                                                    Comprehensive Production Report
-                                                                </h6>
-                                                            </div>
-                                                            <div className="btn-group w-100" role="group">
-                                                                <button 
-                                                                    className="btn btn-outline-warning"
-                                                                    onClick={() => previewReport('comprehensive')}
-                                                                    style={{ borderRadius: '8px 0 0 8px', transition: 'all 0.3s', borderWidth: '2px', flex: 1 }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#ffc107';
-                                                                        e.currentTarget.style.color = 'white';
-                                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                                                        e.currentTarget.style.color = '#ffc107';
-                                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-eye me-2"></i>
-                                                                    Preview
-                                                                </button>
-                                                                <button 
-                                                                    className="btn btn-warning"
-                                                                    onClick={() => downloadReport('comprehensive')}
-                                                                    style={{ borderRadius: '0 8px 8px 0', transition: 'all 0.3s', flex: 1 }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#e0a800';
-                                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#ffc107';
-                                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-file-csv me-2"></i>
-                                                                    CSV
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
 
@@ -2086,68 +2034,6 @@ const ProductionReports = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Comprehensive Production Report PDF */}
-                                                <div className="col-md-4">
-                                                    <div className="card border-0 shadow-sm h-100" style={{ 
-                                                        background: 'linear-gradient(135deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.02))',
-                                                        borderRadius: '12px',
-                                                        border: '1px solid rgba(220, 53, 69, 0.1)'
-                                                    }}>
-                                                        <div className="card-body p-3">
-                                                            <div className="d-flex align-items-center mb-3">
-                                                                <div className="rounded-circle p-2 me-2" style={{ 
-                                                                    background: 'linear-gradient(135deg, #dc3545, #c82333)',
-                                                                    width: '32px',
-                                                                    height: '32px',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center'
-                                                                }}>
-                                                                    <FaChartBar className="text-white" style={{ fontSize: '14px' }} />
-                                                                </div>
-                                                                <h6 className="mb-0 fw-bold" style={{ color: '#dc3545', fontSize: '0.85rem' }}>
-                                                                    Comprehensive Production Report
-                                                                </h6>
-                                                            </div>
-                                                            <div className="btn-group w-100" role="group">
-                                                                <button 
-                                                                    className="btn btn-outline-danger"
-                                                                    onClick={() => previewPdfReport('comprehensive')}
-                                                                    style={{ borderRadius: '8px 0 0 8px', transition: 'all 0.3s', borderWidth: '2px', flex: 1 }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#dc3545';
-                                                                        e.currentTarget.style.color = 'white';
-                                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                                                        e.currentTarget.style.color = '#dc3545';
-                                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-eye me-2"></i>
-                                                                    Preview
-                                                                </button>
-                                                                <button 
-                                                                    className="btn btn-danger"
-                                                                    onClick={() => downloadPdfReport('comprehensive')}
-                                                                    style={{ borderRadius: '0 8px 8px 0', transition: 'all 0.3s', flex: 1 }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#c82333';
-                                                                        e.currentTarget.style.transform = 'translateY(-2px)';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.backgroundColor = '#dc3545';
-                                                                        e.currentTarget.style.transform = 'translateY(0)';
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-file-pdf me-2"></i>
-                                                                    PDF
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>

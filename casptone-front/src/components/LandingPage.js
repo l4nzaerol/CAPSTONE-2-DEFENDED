@@ -944,40 +944,117 @@ const LandingPage = () => {
                                         const isMadeToOrder = categoryName === 'Made to Order' || categoryName === 'made_to_order';
 
                                         if (isAlkansya || isMadeToOrder) {
+                                            // Get BOM materials
+                                            const bomMaterials = selectedProduct.bom || [];
+                                            
+                                            // Extract wood/material names from BOM
+                                            const getWoodMaterials = () => {
+                                                if (isAlkansya) {
+                                                    // For alkansya, find Pinewood from BOM
+                                                    const pinewood = bomMaterials.find(m => 
+                                                        m.material_name && (
+                                                            m.material_name.toLowerCase().includes('pinewood') ||
+                                                            m.material_name.toLowerCase().includes('pine wood') ||
+                                                            m.material_code === 'PW-1X4X8'
+                                                        )
+                                                    );
+                                                    const plywood = bomMaterials.find(m => 
+                                                        m.material_name && (
+                                                            m.material_name.toLowerCase().includes('plywood') ||
+                                                            m.material_code === 'PLY-4.2-4X8'
+                                                        )
+                                                    );
+                                                    const acrylic = bomMaterials.find(m => 
+                                                        m.material_name && (
+                                                            m.material_name.toLowerCase().includes('acrylic') ||
+                                                            m.material_code === 'ACR-1.5-4X8'
+                                                        )
+                                                    );
+                                                    
+                                                    const materials = [];
+                                                    if (pinewood) materials.push(pinewood.material_name);
+                                                    if (plywood) materials.push(plywood.material_name);
+                                                    if (acrylic) materials.push(acrylic.material_name);
+                                                    
+                                                    return materials.length > 0 ? materials.join(', ') : 'Pinewood, Plywood, Acrylic';
+                                                } else {
+                                                    // For made to order, find premium wood materials
+                                                    const premiumMaterials = bomMaterials
+                                                        .filter(m => m.material_name && (
+                                                            m.material_name.toLowerCase().includes('mahogany') ||
+                                                            m.material_name.toLowerCase().includes('hardwood') ||
+                                                            m.material_name.toLowerCase().includes('oak') ||
+                                                            m.material_name.toLowerCase().includes('teak') ||
+                                                            m.material_name.toLowerCase().includes('walnut')
+                                                        ))
+                                                        .slice(0, 3) // Get top 3 most engaging materials
+                                                        .map(m => m.material_name);
+                                                    
+                                                    return premiumMaterials.length > 0 
+                                                        ? premiumMaterials.join(', ') 
+                                                        : 'Premium Hardwood (Mahogany)';
+                                                }
+                                            };
+
+                                            // Get dimensions based on product
+                                            const getDimensions = () => {
+                                                if (selectedProduct.dimensions) return selectedProduct.dimensions;
+                                                if (selectedProduct.sizes) return selectedProduct.sizes;
+                                                
+                                                const name = selectedProduct.product_name || selectedProduct.name || '';
+                                                
+                                                if (name.toLowerCase().includes('dining table set') && !name.toLowerCase().includes('no bench')) {
+                                                    return 'Table: 4ft x 3ft x 30in (H) | Bench: 4ft x 14in x 18in (H) | 2 Chairs: 22in (W) x 22in (D) x 40in (H)';
+                                                } else if (name.toLowerCase().includes('dining table set') && name.toLowerCase().includes('no bench')) {
+                                                    return 'Table: 4ft x 3ft x 30in (H) | 2 Chairs: 22in (W) x 22in (D) x 40in (H)';
+                                                } else if (name.toLowerCase().includes('chair') && (name.toLowerCase().includes('curved') || name.toLowerCase().includes('square'))) {
+                                                    return '22in (W) x 22in (D) x 40in (H)';
+                                                } else if (isAlkansya) {
+                                                    return '8 x 9 inches';
+                                                }
+                                                return null;
+                                            };
+
+                                            // Get "How it's made" description
+                                            const getHowItsMade = () => {
+                                                const name = (selectedProduct.product_name || selectedProduct.name || '').toLowerCase();
+                                                
+                                                if (isAlkansya) {
+                                                    return 'Each Alkansya is handcrafted using traditional Filipino woodworking techniques. We start with premium Pinewood boards that are precisely cut and shaped. The base is constructed from sturdy Plywood, while a clear Acrylic sheet creates the transparent viewing window. The pieces are carefully assembled using pin nails and screws, then finished with premium adhesives and protective coatings. Each Alkansya undergoes quality inspection to ensure durability and craftsmanship.';
+                                                } else if (name.includes('dining table set')) {
+                                                    return 'Our dining table set is built step by step with care and precision. First, we select beautiful mahogany wood and cut it to size for the table top and legs. The table frame is assembled using strong steel supports for stability. Next, we craft the comfortable chairs with curved backs and soft cushioned seats. Each piece is sanded smooth, then we apply a rich walnut stain to bring out the wood\'s natural beauty. Finally, we add a protective clear finish so your dining set stays beautiful for years. The bench is made the same way, ensuring everything matches perfectly.';
+                                                } else if (name.includes('chair')) {
+                                                    return 'Each wooden chair is made with attention to comfort and style. We start by cutting mahogany wood pieces for the chair frame and back. The seat is made from plywood and padded with soft foam for comfort. We cover the seat with quality fabric that matches your style. All the pieces are carefully joined together using wood screws and strong glue. After assembly, we sand everything smooth so there are no rough edges. Then we apply a beautiful stain and clear protective finish. The result is a comfortable, sturdy chair that looks great in any dining room.';
+                                                } else {
+                                                    return 'Our made-to-order furniture is crafted by skilled artisans using time-honored techniques. We begin with carefully selected premium hardwoods that are milled and shaped to exact specifications. Each piece is assembled using traditional joinery methods combined with modern hardware. The furniture is then sanded through multiple grits for a smooth finish, stained to enhance the natural wood grain, and protected with multiple coats of premium polyurethane or lacquer. Every detail is meticulously attended to, ensuring your custom piece will last for generations.';
+                                                }
+                                            };
+
                                             return (
                                                 <div className="modal-product-details">
                                                     <h3>Product Information</h3>
                                                     <div className="product-details-list">
                                                         {/* Dimensions/Sizes */}
-                                                        {selectedProduct.dimensions ? (
+                                                        {getDimensions() ? (
                                                             <div className="detail-row">
                                                                 <span className="detail-label">Dimensions</span>
-                                                                <span className="detail-value">{selectedProduct.dimensions}</span>
-                                                            </div>
-                                                        ) : selectedProduct.sizes ? (
-                                                            <div className="detail-row">
-                                                                <span className="detail-label">Available Sizes</span>
-                                                                <span className="detail-value">{selectedProduct.sizes}</span>
-                                                            </div>
-                                                        ) : isAlkansya ? (
-                                                            <div className="detail-row">
-                                                                <span className="detail-label">Standard Size</span>
-                                                                <span className="detail-value">8 x 9 inches</span>
+                                                                <span className="detail-value">{getDimensions()}</span>
                                                             </div>
                                                         ) : null}
 
-                                                        {/* Material */}
-                                                        {(selectedProduct.material || selectedProduct.wood_type) ? (
-                                                            <div className="detail-row">
-                                                                <span className="detail-label">Material</span>
-                                                                <span className="detail-value">{selectedProduct.material || selectedProduct.wood_type}</span>
+                                                        {/* Materials - Based on BOM */}
+                                                        <div className="detail-row">
+                                                            <span className="detail-label">Materials</span>
+                                                            <span className="detail-value">{getWoodMaterials()}</span>
+                                                        </div>
+
+                                                        {/* How it's Made Section */}
+                                                        <div className="detail-row how-its-made-row">
+                                                            <span className="detail-label">How it's Made</span>
+                                                            <div className="detail-value how-its-made-content">
+                                                                <p>{getHowItsMade()}</p>
                                                             </div>
-                                                        ) : (
-                                                            <div className="detail-row">
-                                                                <span className="detail-label">Materials</span>
-                                                                <span className="detail-value">{isAlkansya ? 'Glass Acrylic, Wood' : 'Select from available wood types'}</span>
-                                                            </div>
-                                                        )}
+                                                        </div>
 
                                                         {/* Weight (if available) */}
                                                         {selectedProduct.weight && (
@@ -1043,7 +1120,7 @@ const LandingPage = () => {
                                                         </div>
 
                                                         {/* Additional Note */}
-                                                        {!selectedProduct.dimensions && !selectedProduct.sizes && (
+                                                        {!getDimensions() && (
                                                             <div className="detail-note">
                                                                 {isAlkansya 
                                                                     ? 'Custom sizes available upon request. Contact us for special dimensions and finishes.'

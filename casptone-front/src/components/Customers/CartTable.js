@@ -648,47 +648,22 @@ const CartTable = () => {
               <span>Subtotal:</span>
               <strong>₱{selectedItemsPrice.toLocaleString()}</strong>
             </div>
-            {selectedProvince && (
+            {!hasMadeToOrder && selectedProvince && (
               <div className="summary-row">
                 <span>Shipping:</span>
                 <strong style={{ 
-                  color: hasMadeToOrder ? '#0066cc' : (shippingInfo.isFreeShipping ? '#28a745' : 'inherit'),
-                  fontSize: hasMadeToOrder ? '0.9rem' : 'inherit',
-                  fontStyle: hasMadeToOrder ? 'italic' : 'normal'
+                  color: shippingInfo.isFreeShipping ? '#28a745' : 'inherit'
                 }}>
-                  {hasMadeToOrder ? 'To be finalized' : (shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`)}
+                  {shippingInfo.isFreeShipping ? 'FREE' : `₱${shippingInfo.shippingFee.toLocaleString()}`}
                 </strong>
               </div>
             )}
-            {hasMadeToOrder && (
-              <div className="summary-row" style={{ 
-                fontSize: '0.85rem', 
-                color: '#0066cc', 
-                fontStyle: 'italic',
-                marginTop: '4px'
-              }}>
-                <span style={{ display: 'block', lineHeight: '1.4' }}>
-                  ℹ️ The shipping fee will be finalized according to our mutual agreement at the time of delivery by our staff
-                </span>
-              </div>
-            )}
             <div className="summary-row total-row">
-              <span>Total Amount{hasMadeToOrder ? ' (excl. shipping)' : ''}:</span>
+              <span>Total Amount:</span>
               <strong className="total-amount">
-                ₱{selectedProvince ? totalWithShipping.toLocaleString() : selectedItemsPrice.toLocaleString()}
+                ₱{hasMadeToOrder ? selectedItemsPrice.toLocaleString() : (selectedProvince ? totalWithShipping.toLocaleString() : selectedItemsPrice.toLocaleString())}
               </strong>
             </div>
-            {hasMadeToOrder && (
-              <div style={{ 
-                fontSize: '0.8rem', 
-                color: '#666', 
-                fontStyle: 'italic',
-                marginTop: '4px',
-                textAlign: 'right'
-              }}>
-                *Shipping fee will be calculated based on your delivery address
-              </div>
-            )}
           </div>
           
           <button 
@@ -1118,61 +1093,33 @@ const CartTable = () => {
                       <span>Items ({selectedItemsCount}):</span>
                       <span>₱{selectedItemsPrice.toLocaleString()}</span>
                     </div>
-                    <div className="total-row">
-                      <span>Shipping Fee:</span>
-                      <span>
-                        {hasMadeToOrder ? (
-                          <span style={{ 
-                            color: '#0066cc', 
-                            fontWeight: 500,
-                            fontSize: '0.85rem',
-                            fontStyle: 'italic'
-                          }}>
-                            Depends on location
+                    {!hasMadeToOrder && (
+                      <>
+                        <div className="total-row">
+                          <span>Shipping Fee:</span>
+                          <span>
+                            {shippingInfo.isFreeShipping ? (
+                              <span style={{ color: '#28a745', fontWeight: 600 }}>
+                                FREE
+                              </span>
+                            ) : selectedProvince ? (
+                              `₱${shippingInfo.shippingFee.toLocaleString()}`
+                            ) : (
+                              <span style={{ color: '#999', fontStyle: 'italic' }}>Select address</span>
+                            )}
                           </span>
-                        ) : shippingInfo.isFreeShipping ? (
-                          <span style={{ color: '#28a745', fontWeight: 600 }}>
-                            FREE
-                          </span>
-                        ) : selectedProvince ? (
-                          `₱${shippingInfo.shippingFee.toLocaleString()}`
-                        ) : (
-                          <span style={{ color: '#999', fontStyle: 'italic' }}>Select address</span>
+                        </div>
+                        {shippingInfo.isFreeShipping && (
+                          <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
+                            <span>🎉 Free shipping for 3+ alkansya!</span>
+                          </div>
                         )}
-                      </span>
-                    </div>
-                    {hasMadeToOrder && (
-                      <div className="total-row" style={{ 
-                        fontSize: '0.85rem', 
-                        color: '#0066cc', 
-                        fontStyle: 'italic',
-                        marginTop: '4px'
-                      }}>
-                        <span style={{ display: 'block', lineHeight: '1.4' }}>
-                          ℹ️ Shipping fee depends on your address location and will be directly delivered by Unick Enterprises staff
-                        </span>
-                      </div>
-                    )}
-                    {!hasMadeToOrder && shippingInfo.isFreeShipping && (
-                      <div className="total-row" style={{ fontSize: '0.9rem', color: '#28a745', fontStyle: 'italic' }}>
-                        <span>🎉 Free shipping for 3+ alkansya!</span>
-                      </div>
+                      </>
                     )}
                     <div className="total-row final-total">
-                      <span>Total Amount{hasMadeToOrder ? ' (excl. shipping)' : ''}:</span>
-                      <span className="final-amount">₱{totalWithShipping.toLocaleString()}</span>
+                      <span>Total Amount:</span>
+                      <span className="final-amount">₱{hasMadeToOrder ? selectedItemsPrice.toLocaleString() : totalWithShipping.toLocaleString()}</span>
                     </div>
-                    {hasMadeToOrder && (
-                      <div style={{ 
-                        fontSize: '0.8rem', 
-                        color: '#666', 
-                        fontStyle: 'italic',
-                        marginTop: '4px',
-                        textAlign: 'right'
-                      }}>
-                        *Shipping fee will be calculated based on your delivery address
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

@@ -5,13 +5,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContaine
 const COLORS = ['#7F5112', '#9d6a1a', '#b87d22', '#d4902a', '#e6a332'];
 
 export default function TopProductsChart({ data }) {
-  // Fixed height to prevent movement
-  const chartHeight = 350;
-
   if (!data || data.length === 0) {
     return (
-      <div className="card shadow-sm h-100" style={{ border: '1px solid #e5e7eb', borderRadius: '12px', backgroundColor: '#ffffff', minHeight: '400px' }}>
-        <div className="card-body p-4">
+      <div className="card shadow-sm h-100 w-100" style={{ border: '1px solid #e5e7eb', borderRadius: '12px', backgroundColor: '#ffffff', minHeight: '550px', height: '100%' }}>
+        <div className="card-body" style={{ padding: '1rem 1rem 0 1rem', paddingBottom: 0 }}>
           <div className="d-flex align-items-center mb-3">
             <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '48px', height: '48px', backgroundColor: '#f5f5f0', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               <i className="fas fa-box" style={{ color: '#7F5112', fontSize: '20px' }}></i>
@@ -35,18 +32,19 @@ export default function TopProductsChart({ data }) {
   }));
 
   return (
-    <div className="card shadow-sm h-100" style={{ 
+      <div className="card shadow-sm h-100 w-100" style={{ 
       border: '1px solid #e5e7eb', 
       borderRadius: '12px', 
       backgroundColor: '#ffffff',
       display: 'flex', 
       flexDirection: 'column',
       boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      minHeight: '450px'
+      minHeight: '550px',
+      height: '100%'
     }}>
-      <div className="card-body p-3" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '400px' }}>
-        {/* Enhanced Header */}
-        <div className="d-flex align-items-center mb-2" style={{ flexShrink: 0 }}>
+      <div className="card-body" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '1rem 1rem 0 1rem', height: '100%', paddingBottom: 0 }}>
+        {/* Header - Minimal spacing */}
+        <div className="d-flex align-items-center" style={{ flexShrink: 0, marginBottom: '0.5rem' }}>
           <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ 
             width: '48px', 
             height: '48px', 
@@ -58,12 +56,12 @@ export default function TopProductsChart({ data }) {
           <h5 className="mb-0 fw-bold" style={{ color: '#6b4423', fontSize: '1.1rem', letterSpacing: '0.3px' }}>Top Products</h5>
         </div>
 
-        {/* Enhanced Bar Chart - Takes remaining space */}
-        <div style={{ flex: 1, minHeight: '300px', width: '100%', marginTop: '8px' }}>
-          <ResponsiveContainer width="100%" height={chartHeight}>
+        {/* Bar Chart - Fills remaining space with no bottom margin */}
+        <div style={{ flex: 1, width: '100%', height: '100%', overflow: 'hidden' }}>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart 
               data={topProducts} 
-              margin={{ top: 10, right: 20, left: 10, bottom: 100 }}
+              margin={{ top: 5, right: 20, left: 10, bottom: 80 }}
               animationDuration={0}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e8e5e0" vertical={false} opacity={0.6} />

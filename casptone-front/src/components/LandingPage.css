@@ -1346,6 +1346,38 @@ body {
   line-height: 1.5;
 }
 
+/* How it's Made Section */
+.detail-row.how-its-made-row {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+  margin-top: 0.5rem;
+}
+
+.detail-row.how-its-made-row .detail-label {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.how-its-made-content {
+  text-align: left !important;
+  width: 100%;
+  padding: 0.875rem;
+  background: rgba(139, 69, 19, 0.02);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-brown);
+}
+
+.how-its-made-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  line-height: 1.7;
+  text-align: justify;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .detail-row {

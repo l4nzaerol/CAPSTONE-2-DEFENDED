@@ -26,7 +26,7 @@ const EnhancedInventoryReports = () => {
     const [reportDateValue, setReportDateValue] = useState(30); // Number of days/weeks/months
     const [reportStartDate, setReportStartDate] = useState('');
     const [reportEndDate, setReportEndDate] = useState('');
-    const [reportCategoryFilter, setReportCategoryFilter] = useState('all'); // 'all', 'alkansya', 'made_to_order', 'raw', 'packaging'
+    const [reportCategoryFilter, setReportCategoryFilter] = useState('all'); // 'all', 'alkansya', 'made_to_order', 'raw'
     const [reportStatusFilter, setReportStatusFilter] = useState('all'); // 'all', 'in_stock', 'low_stock', 'out_of_stock', 'overstocked'
     const [reportMaterialFilter, setReportMaterialFilter] = useState('all'); // Material-specific filter
     
@@ -694,7 +694,7 @@ const EnhancedInventoryReports = () => {
                     title = 'Stock Levels Report - PDF Preview';
                     break;
                 case 'usage':
-                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     title = 'Material Usage Trends Report - PDF Preview';
                     break;
                 case 'replenishment':
@@ -744,7 +744,7 @@ const EnhancedInventoryReports = () => {
                     url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=stock&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     break;
                 case 'usage':
-                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
+                    url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=usage&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}&status=${reportStatusFilter}`;
                     break;
                 case 'replenishment':
                     url = `http://localhost:8000/api/enhanced-inventory-reports/export-pdf?report_type=replenishment&start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&category=${reportCategoryFilter}`;
@@ -829,9 +829,6 @@ const EnhancedInventoryReports = () => {
                 if (reportCategoryFilter === 'raw') {
                     return item.category === 'raw' || item.category?.toLowerCase() === 'raw materials';
                 }
-                if (reportCategoryFilter === 'packaging') {
-                    return item.category === 'packaging' || item.category?.toLowerCase() === 'packaging';
-                }
                 return false;
             });
         }
@@ -906,7 +903,6 @@ const EnhancedInventoryReports = () => {
                 if (categoryFilter === 'alkansya') return item.is_alkansya_material === true;
                 if (categoryFilter === 'made_to_order') return item.is_made_to_order_material === true;
                 if (categoryFilter === 'raw') return item.category === 'raw';
-                if (categoryFilter === 'packaging') return item.category === 'packaging';
                 return false;
             });
         }
@@ -1074,8 +1070,7 @@ const EnhancedInventoryReports = () => {
                 'all': 'All Categories',
                 'alkansya': 'Alkansya',
                 'made_to_order': 'Made to Order',
-                'raw': 'Raw Materials',
-                'packaging': 'Packaging'
+                'raw': 'Raw Materials'
             };
             return categoryMap[filter] || filter;
         };
@@ -1148,8 +1143,7 @@ const EnhancedInventoryReports = () => {
                 'all': 'All Categories',
                 'alkansya': 'Alkansya',
                 'made_to_order': 'Made to Order',
-                'raw': 'Raw Materials',
-                'packaging': 'Packaging'
+                'raw': 'Raw Materials'
             };
             return categoryMap[filter] || filter;
         };
@@ -1259,8 +1253,7 @@ const EnhancedInventoryReports = () => {
                 'all': 'All Categories',
                 'alkansya': 'Alkansya',
                 'made_to_order': 'Made to Order',
-                'raw': 'Raw Materials',
-                'packaging': 'Packaging'
+                'raw': 'Raw Materials'
             };
             return categoryMap[filter] || filter;
         };
@@ -2052,156 +2045,163 @@ const EnhancedInventoryReports = () => {
                                 </div>
                                 <p className="text-muted mb-4" style={{ fontSize: '0.9rem' }}>Generate detailed reports for stock levels, material usage trends, and replenishment schedules</p>
                                         
-                                {/* Unified Report Filters - Applies to both CSV and PDF */}
-                                <div className="mb-4">
-                                    <div className="card border-0 shadow-sm" style={{ borderRadius: '12px', background: 'linear-gradient(135deg, #f8f9fa, #ffffff)' }}>
-                                        <div className="card-header bg-white border-0 pb-2" style={{ borderRadius: '12px 12px 0 0' }}>
-                                            <div className="d-flex align-items-center">
-                                                <i className="fas fa-filter text-primary me-2"></i>
-                                                <h6 className="mb-0 fw-bold" style={{ color: '#495057', fontSize: '0.95rem' }}>
-                                                    Report Filters
-                                                </h6>
-                                                <small className="text-muted ms-2">(Applies to all reports)</small>
-                                            </div>
-                                        </div>
-                                        <div className="card-body p-3">
-                                            <div className="row g-3 align-items-end">
-                                                <div className="col-md-2">
-                                                    <label className="form-label small fw-bold text-muted mb-1">
-                                                        <i className="fas fa-calendar-alt me-1"></i>Date Range
-                                                    </label>
-                                                    <select
-                                                        className="form-select form-select-sm"
-                                                        value={reportDateRange}
-                                                        onChange={(e) => {
-                                                            setReportDateRange(e.target.value);
-                                                            if (e.target.value !== 'custom') {
-                                                                setReportStartDate('');
-                                                                setReportEndDate('');
-                                                            }
-                                                        }}
-                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                    >
-                                                        <option value="days">Days</option>
-                                                        <option value="weeks">Weeks</option>
-                                                        <option value="months">Months</option>
-                                                        <option value="year">Year</option>
-                                                        <option value="custom">Custom Range</option>
-                                                    </select>
-                                                </div>
-                                                {reportDateRange !== 'custom' && reportDateRange !== 'year' && (
-                                                    <div className="col-md-2">
-                                                        <label className="form-label small fw-bold text-muted mb-1">
-                                                            <i className="fas fa-hashtag me-1"></i>Period
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            className="form-control form-control-sm"
-                                                            value={reportDateValue}
-                                                            onChange={(e) => setReportDateValue(parseInt(e.target.value) || 1)}
-                                                            min="1"
-                                                            style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                        />
+                                        {/* Minimalist Report Filters */}
+                                        <div className="mb-4">
+                                            <div className="card border shadow-sm" style={{ borderRadius: '12px' }}>
+                                                <div className="card-body p-3">
+                                                    <div className="d-flex align-items-center mb-3">
+                                                        <i className="fas fa-filter text-primary me-2"></i>
+                                                        <h6 className="mb-0 fw-bold">Report Filters</h6>
+                                                        <small className="text-muted ms-2">(Applies to all reports)</small>
                                                     </div>
-                                                )}
-                                                {reportDateRange === 'custom' && (
-                                                    <>
-                                                        <div className="col-md-2">
-                                                            <label className="form-label small fw-bold text-muted mb-1">
-                                                                <i className="fas fa-calendar-check me-1"></i>Start Date
+                                                    
+                                                    <div className="row g-2 align-items-end">
+                                                        {/* Date Range */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-calendar-alt me-1 text-primary"></i>
+                                                                Date Range
                                                             </label>
-                                                            <input
-                                                                type="date"
-                                                                className="form-control form-control-sm"
-                                                                value={reportStartDate}
-                                                                onChange={(e) => setReportStartDate(e.target.value)}
-                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                            />
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportDateRange}
+                                                                onChange={(e) => {
+                                                                    setReportDateRange(e.target.value);
+                                                                    if (e.target.value !== 'custom') {
+                                                                        setReportStartDate('');
+                                                                        setReportEndDate('');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <option value="days">Days</option>
+                                                                <option value="weeks">Weeks</option>
+                                                                <option value="months">Months</option>
+                                                                <option value="year">Year</option>
+                                                                <option value="custom">Custom Range</option>
+                                                            </select>
                                                         </div>
-                                                        <div className="col-md-2">
-                                                            <label className="form-label small fw-bold text-muted mb-1">
-                                                                <i className="fas fa-calendar-times me-1"></i>End Date
+                                                        
+                                                        {/* Period */}
+                                                        {reportDateRange !== 'custom' && reportDateRange !== 'year' && (
+                                                            <div className="col-lg-1 col-md-2 col-sm-6">
+                                                                <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                    <i className="fas fa-hashtag me-1 text-primary"></i>
+                                                                    Period
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control form-control-sm"
+                                                                    value={reportDateValue}
+                                                                    onChange={(e) => setReportDateValue(parseInt(e.target.value) || 1)}
+                                                                    min="1"
+                                                                    style={{ height: '31px' }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Custom Dates */}
+                                                        {reportDateRange === 'custom' && (
+                                                            <>
+                                                                <div className="col-lg-2 col-md-3 col-sm-6">
+                                                                    <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                        <i className="fas fa-calendar-check me-1 text-primary"></i>
+                                                                        Start Date
+                                                                    </label>
+                                                                    <input
+                                                                        type="date"
+                                                                        className="form-control form-control-sm"
+                                                                        value={reportStartDate}
+                                                                        onChange={(e) => setReportStartDate(e.target.value)}
+                                                                        style={{ height: '31px' }}
+                                                                    />
+                                                                </div>
+                                                                <div className="col-lg-2 col-md-3 col-sm-6">
+                                                                    <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                        <i className="fas fa-calendar-times me-1 text-primary"></i>
+                                                                        End Date
+                                                                    </label>
+                                                                    <input
+                                                                        type="date"
+                                                                        className="form-control form-control-sm"
+                                                                        value={reportEndDate}
+                                                                        onChange={(e) => setReportEndDate(e.target.value)}
+                                                                        style={{ height: '31px' }}
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                        
+                                                        {/* Category */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-tags me-1 text-primary"></i>
+                                                                Category
                                                             </label>
-                                                            <input
-                                                                type="date"
-                                                                className="form-control form-control-sm"
-                                                                value={reportEndDate}
-                                                                onChange={(e) => setReportEndDate(e.target.value)}
-                                                                style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                            />
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportCategoryFilter}
+                                                                onChange={(e) => setReportCategoryFilter(e.target.value)}
+                                                            >
+                                                                <option value="all">All Categories</option>
+                                                                <option value="alkansya">Alkansya</option>
+                                                                <option value="made_to_order">Made to Order</option>
+                                                                <option value="raw">Raw Materials</option>
+                                                            </select>
                                                         </div>
-                                                    </>
-                                                )}
-                                                <div className="col-md-2">
-                                                    <label className="form-label small fw-bold text-muted mb-1">
-                                                        <i className="fas fa-tags me-1"></i>Category
-                                                    </label>
-                                                    <select
-                                                        className="form-select form-select-sm"
-                                                        value={reportCategoryFilter}
-                                                        onChange={(e) => setReportCategoryFilter(e.target.value)}
-                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                    >
-                                                        <option value="all">All Categories</option>
-                                                        <option value="alkansya">Alkansya</option>
-                                                        <option value="made_to_order">Made to Order</option>
-                                                        <option value="raw">Raw Materials</option>
-                                                        <option value="packaging">Packaging</option>
-                                                    </select>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <label className="form-label small fw-bold text-muted mb-1">
-                                                        <i className="fas fa-info-circle me-1"></i>Status
-                                                    </label>
-                                                    <select
-                                                        className="form-select form-select-sm"
-                                                        value={reportStatusFilter}
-                                                        onChange={(e) => setReportStatusFilter(e.target.value)}
-                                                        style={{ borderRadius: '8px', border: '2px solid #dee2e6' }}
-                                                    >
-                                                        <option value="all">All Status</option>
-                                                        <option value="in_stock">In Stock</option>
-                                                        <option value="low_stock">Low Stock</option>
-                                                        <option value="out_of_stock">Out of Stock</option>
-                                                        <option value="overstocked">Overstocked</option>
-                                                    </select>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <button
-                                                        className="btn btn-sm btn-primary w-100"
-                                                        onClick={() => {
-                                                            const dateRange = getDateRange();
-                                                            console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
-                                                            
-                                                            // Apply filters to existing data and update filtered state
-                                                            try {
-                                                                // Apply filters to existing inventory data
-                                                                if (inventoryReport) {
-                                                                    const filtered = applyFiltersToData(inventoryReport);
-                                                                    setFilteredInventoryData(filtered);
-                                                                    console.log('Filtered inventory data updated:', {
-                                                                        totalItems: filtered.items?.length || 0,
-                                                                        categoryFilter: reportCategoryFilter,
-                                                                        statusFilter: reportStatusFilter
-                                                                    });
-                                                                }
-                                                                
-                                                                toast.success(`Filters applied! Reports will show ${reportCategoryFilter === 'all' ? 'all' : reportCategoryFilter === 'made_to_order' ? 'Made to Order' : reportCategoryFilter} materials.`);
-                                                            } catch (error) {
-                                                                console.error('Error applying filters:', error);
-                                                                toast.error('Failed to apply filters. Please try again.');
-                                                            }
-                                                        }}
-                                                        style={{ borderRadius: '8px', fontWeight: '600' }}
-                                                    >
-                                                        <i className="fas fa-check me-1"></i>
-                                                        Apply Filters
-                                                    </button>
+                                                        
+                                                        {/* Status */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <label className="form-label small fw-semibold mb-1 d-flex align-items-center">
+                                                                <i className="fas fa-info-circle me-1 text-primary"></i>
+                                                                Status
+                                                            </label>
+                                                            <select
+                                                                className="form-select form-select-sm"
+                                                                value={reportStatusFilter}
+                                                                onChange={(e) => setReportStatusFilter(e.target.value)}
+                                                            >
+                                                                <option value="all">All Status</option>
+                                                                <option value="in_stock">In Stock</option>
+                                                                <option value="low_stock">Low Stock</option>
+                                                                <option value="out_of_stock">Out of Stock</option>
+                                                                <option value="overstocked">Overstocked</option>
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Apply Button */}
+                                                        <div className="col-lg-2 col-md-3 col-sm-6">
+                                                            <button
+                                                                className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center"
+                                                                onClick={() => {
+                                                                    const dateRange = getDateRange();
+                                                                    console.log('Filters applied:', { dateRange, reportCategoryFilter, reportStatusFilter });
+                                                                    
+                                                                    try {
+                                                                        if (inventoryReport) {
+                                                                            const filtered = applyFiltersToData(inventoryReport);
+                                                                            setFilteredInventoryData(filtered);
+                                                                            console.log('Filtered inventory data updated:', {
+                                                                                totalItems: filtered.items?.length || 0,
+                                                                                categoryFilter: reportCategoryFilter,
+                                                                                statusFilter: reportStatusFilter
+                                                                            });
+                                                                        }
+                                                                        
+                                                                        toast.success(`Filters applied! Reports will show ${reportCategoryFilter === 'all' ? 'all' : reportCategoryFilter === 'made_to_order' ? 'Made to Order' : reportCategoryFilter} materials.`);
+                                                                    } catch (error) {
+                                                                        console.error('Error applying filters:', error);
+                                                                        toast.error('Failed to apply filters. Please try again.');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <i className="fas fa-check me-1"></i>
+                                                                Apply Filters
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
                                         
                                 {/* CSV Reports Section */}
                                 <div className="mb-4">

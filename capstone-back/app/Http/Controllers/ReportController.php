@@ -223,49 +223,73 @@ class ReportController extends Controller
     {
         $start = $request->query('start_date');
         $end = $request->query('end_date');
+        $categoryFilter = $request->query('category', 'all');
+        $statusFilter = $request->query('status', 'all');
         
-        // Get regular production data (excluding alkansya)
+        // Get regular production data (Made-to-Order products)
         $q = Production::with('product');
         if ($start && $end) {
             $q->whereBetween('date', [$start, $end]);
         }
-        $productionRows = $q->get()->map(function($p){
-            return [
-                'id' => $p->id,
-                'date' => optional($p->date)->format('Y-m-d'),
-                'product' => optional($p->product)->name ?? $p->product_name,
-                'stage' => $p->current_stage,
-                'status' => $p->status,
-                'quantity' => $p->quantity,
-            ];
-        })->toArray();
+        
+        // Filter by category - only get Made-to-Order if category is 'all' or 'made_to_order'
+        $productionRows = [];
+        if ($categoryFilter === 'all' || $categoryFilter === 'made_to_order') {
+            $productionRows = $q->get()->map(function($p){
+                return [
+                    'id' => $p->id,
+                    'date' => optional($p->date)->format('Y-m-d'),
+                    'product' => optional($p->product)->name ?? $p->product_name,
+                    'stage' => $p->current_stage,
+                    'status' => $p->status,
+                    'quantity' => $p->quantity,
+                    'category' => 'Made to Order'
+                ];
+            })->toArray();
+            
+            // Apply status filter for Made-to-Order
+            if ($statusFilter !== 'all' && !empty($productionRows)) {
+                $productionRows = array_filter($productionRows, function($row) use ($statusFilter) {
+                    $status = strtolower($row['status'] ?? '');
+                    if ($statusFilter === 'in_progress') return $status === 'in progress' || $status === 'in_progress';
+                    if ($statusFilter === 'completed') return $status === 'completed';
+                    if ($statusFilter === 'pending') return $status === 'pending';
+                    return true;
+                });
+                $productionRows = array_values($productionRows);
+            }
+        }
 
         // Get alkansya production data from AlkansyaDailyOutput
-        $alkansyaQuery = AlkansyaDailyOutput::query();
-        if ($start && $end) {
-            $alkansyaQuery->whereBetween('date', [$start, $end]);
+        $alkansyaRows = [];
+        if ($categoryFilter === 'all' || $categoryFilter === 'alkansya') {
+            $alkansyaQuery = AlkansyaDailyOutput::query();
+            if ($start && $end) {
+                $alkansyaQuery->whereBetween('date', [$start, $end]);
+            }
+            
+            // Get alkansya product name
+            $alkansyaProduct = Product::where('category_name', 'Stocked Products')
+                ->where(function($query) {
+                    $query->where('name', 'LIKE', '%Alkansya%')
+                          ->orWhere('product_name', 'LIKE', '%Alkansya%');
+                })
+                ->first();
+            
+            $alkansyaProductName = $alkansyaProduct ? ($alkansyaProduct->product_name ?? $alkansyaProduct->name) : 'Alkansya';
+            
+            $alkansyaRows = $alkansyaQuery->get()->map(function($alkansya, $index) use ($alkansyaProductName) {
+                return [
+                    'id' => 'ALK-' . ($alkansya->id ?? $index + 1),
+                    'date' => optional($alkansya->date)->format('Y-m-d'),
+                    'product' => $alkansyaProductName,
+                    'stage' => 'Completed', // Alkansya is pre-made, so always completed
+                    'status' => 'Completed',
+                    'quantity' => $alkansya->quantity_produced ?? 0,
+                    'category' => 'Alkansya'
+                ];
+            })->toArray();
         }
-        
-        // Get alkansya product name
-        $alkansyaProduct = Product::where('category_name', 'Stocked Products')
-            ->where(function($query) {
-                $query->where('name', 'LIKE', '%Alkansya%')
-                      ->orWhere('product_name', 'LIKE', '%Alkansya%');
-            })
-            ->first();
-        
-        $alkansyaProductName = $alkansyaProduct ? ($alkansyaProduct->product_name ?? $alkansyaProduct->name) : 'Alkansya';
-        
-        $alkansyaRows = $alkansyaQuery->get()->map(function($alkansya, $index) use ($alkansyaProductName) {
-            return [
-                'id' => 'ALK-' . ($alkansya->id ?? $index + 1),
-                'date' => optional($alkansya->date)->format('Y-m-d'),
-                'product' => $alkansyaProductName,
-                'stage' => 'Completed', // Alkansya is pre-made, so always completed
-                'status' => 'Completed',
-                'quantity' => $alkansya->quantity_produced ?? 0,
-            ];
-        })->toArray();
 
         // Merge both arrays
         $rows = array_merge($productionRows, $alkansyaRows);
@@ -278,20 +302,41 @@ class ReportController extends Controller
             }
             return strcmp($a['id'] ?? '', $b['id'] ?? '');
         });
+        
+        // Add header row with date range and filters info
+        $filename = 'production_report';
+        if ($start && $end) {
+            $filename .= '_' . $start . '_to_' . $end;
+        }
+        $filename .= '.csv';
 
-        return $this->arrayToCsvResponse($rows, 'production.csv');
+        return $this->arrayToCsvResponse($rows, $filename, $start, $end, $categoryFilter, $statusFilter);
     }
 
-    private function arrayToCsvResponse(array $rows, string $filename)
+    private function arrayToCsvResponse(array $rows, string $filename, $startDate = null, $endDate = null, $categoryFilter = 'all', $statusFilter = 'all')
     {
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($rows) {
+        $callback = function() use ($rows, $startDate, $endDate, $categoryFilter, $statusFilter) {
             $out = fopen('php://output', 'w');
+            
+            // Add metadata rows
+            fputcsv($out, ['Production Report']);
+            fputcsv($out, ['Generated: ' . now()->format('Y-m-d H:i:s')]);
+            if ($startDate && $endDate) {
+                fputcsv($out, ['Date Range: ' . $startDate . ' to ' . $endDate]);
+            } else {
+                fputcsv($out, ['Date Range: All Time']);
+            }
+            fputcsv($out, ['Category Filter: ' . ($categoryFilter === 'all' ? 'All Categories' : ($categoryFilter === 'alkansya' ? 'Alkansya' : 'Made to Order'))]);
+            fputcsv($out, ['Status Filter: ' . ($statusFilter === 'all' ? 'All Status' : ucfirst(str_replace('_', ' ', $statusFilter)))]);
+            fputcsv($out, []); // Empty row
+            
             if (empty($rows)) {
+                fputcsv($out, ['No data available for the selected filters.']);
                 fclose($out);
                 return;
             }
@@ -409,101 +454,526 @@ class ReportController extends Controller
 
     public function productionPdf(Request $request)
     {
-        $start = $request->query('start_date');
-        $end = $request->query('end_date');
-        $categoryFilter = $request->query('category', 'all');
-        $statusFilter = $request->query('status', 'all');
-        $reportType = $request->query('report_type', 'comprehensive');
-        
-        // Get regular production data (Made-to-Order products)
-        $q = Production::with('product');
-        if ($start && $end) {
-            $q->whereBetween('date', [$start, $end]);
-        }
-        
-        // Filter by category - only get Made-to-Order if category is 'all' or 'made_to_order'
-        if ($categoryFilter === 'alkansya') {
-            // Skip Made-to-Order productions when filtering for Alkansya
-            $productionRows = [];
-        } else {
-            $productionRows = $q->get()->map(function($p){
-                return [
-                    'id' => $p->id,
-                    'date' => optional($p->date)->format('Y-m-d'),
-                    'product' => optional($p->product)->name ?? $p->product_name,
-                    'stage' => $p->current_stage,
-                    'status' => $p->status,
-                    'quantity' => $p->quantity,
-                    'category' => 'Made to Order'
-                ];
-            })->toArray();
+        try {
+            $start = $request->query('start_date');
+            $end = $request->query('end_date');
+            $categoryFilter = $request->query('category', 'all');
+            $statusFilter = $request->query('status', 'all');
+            $reportType = $request->query('report_type', 'comprehensive');
             
-            // Apply status filter for Made-to-Order
-            if ($statusFilter !== 'all' && !empty($productionRows)) {
-                $productionRows = array_filter($productionRows, function($row) use ($statusFilter) {
-                    $status = strtolower($row['status'] ?? '');
-                    if ($statusFilter === 'in_progress') return $status === 'in progress' || $status === 'in_progress';
-                    if ($statusFilter === 'completed') return $status === 'completed';
-                    if ($statusFilter === 'pending') return $status === 'pending';
-                    return true;
-                });
-                $productionRows = array_values($productionRows);
+            // Use EnhancedInventoryReportsController to get detailed data (same as frontend)
+            $enhancedController = new \App\Http\Controllers\EnhancedInventoryReportsController();
+            
+            // Get production overview data
+            $overviewRequest = new Request(['start_date' => $start, 'end_date' => $end]);
+            $overviewResponse = $enhancedController->getProductionOverview($overviewRequest);
+            $overviewData = $overviewResponse->getData(true);
+            $productionOverview = is_array($overviewData) ? $overviewData : [];
+            
+            // Get Alkansya production data
+            $alkansyaRequest = new Request(['start_date' => $start, 'end_date' => $end]);
+            $alkansyaResponse = $enhancedController->getAlkansyaProductionData($alkansyaRequest);
+            $alkansyaResponseData = $alkansyaResponse->getData(true);
+            $alkansyaData = is_array($alkansyaResponseData) ? $alkansyaResponseData : [];
+            
+            // Get Made-to-Order production data
+            $madeToOrderRequest = new Request([
+                'start_date' => $start, 
+                'end_date' => $end,
+                'include_in_progress' => true
+            ]);
+            $madeToOrderResponse = $enhancedController->getMadeToOrderProductionData($madeToOrderRequest);
+            $madeToOrderResponseData = $madeToOrderResponse->getData(true);
+            $madeToOrderData = is_array($madeToOrderResponseData) ? $madeToOrderResponseData : [];
+            
+            // Get production output analytics
+            $outputRequest = new Request(['start_date' => $start, 'end_date' => $end]);
+            $outputResponse = $enhancedController->getProductionOutputAnalytics($outputRequest);
+            $outputResponseData = $outputResponse->getData(true);
+            $outputData = is_array($outputResponseData) ? $outputResponseData : [];
+            
+            // Generate report data based on report type (same structure as CSV preview)
+            $reportData = $this->generateProductionReportDataForPdf(
+                $reportType,
+                $productionOverview,
+                $alkansyaData,
+                $madeToOrderData,
+                $outputData,
+                $start,
+                $end,
+                $categoryFilter,
+                $statusFilter
+            );
+            
+            // Determine report type title
+            $reportTypeTitle = 'Production Report';
+            if ($reportType === 'performance') {
+                $reportTypeTitle = 'Production Performance Report';
+            } elseif ($reportType === 'workprogress') {
+                $reportTypeTitle = 'Work Progress Report';
+            } elseif ($reportType === 'comprehensive') {
+                $reportTypeTitle = 'Comprehensive Production Report';
             }
-        }
+            
+            $pdf = Pdf::loadView('pdf.production-report', [
+                'reportData' => $reportData,
+                'reportType' => $reportTypeTitle,
+                'dateRange' => $start && $end ? [
+                    'start' => $start,
+                    'end' => $end
+                ] : null,
+                'categoryFilter' => $categoryFilter,
+                'statusFilter' => $statusFilter
+            ]);
 
-        // Get alkansya production data from AlkansyaDailyOutput
-        $alkansyaRows = [];
-        if ($categoryFilter === 'all' || $categoryFilter === 'alkansya') {
-            $alkansyaQuery = AlkansyaDailyOutput::query();
+            $filename = 'production_' . str_replace(' ', '_', strtolower($reportTypeTitle)) . '_';
             if ($start && $end) {
-                $alkansyaQuery->whereBetween('date', [$start, $end]);
+                $filename .= $start . '_to_' . $end;
+            } else {
+                $filename .= now()->format('Y-m-d');
+            }
+            $filename .= '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('Error generating production PDF: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Generate production report data for PDF (matching CSV preview structure)
+     */
+    private function generateProductionReportDataForPdf($reportType, $overview, $alkansya, $madeToOrder, $output, $start, $end, $categoryFilter, $statusFilter)
+    {
+        $dateRangeStr = ($start && $end) ? "$start to $end" : 'All Time';
+        
+        // Helper functions
+        $getCategoryDisplayName = function($filter) {
+            $map = ['all' => 'All Categories', 'alkansya' => 'Alkansya', 'made_to_order' => 'Made to Order'];
+            return $map[$filter] ?? $filter;
+        };
+        
+        $getStatusDisplayName = function($filter) {
+            $map = ['all' => 'All Status', 'in_progress' => 'In Progress', 'completed' => 'Completed', 'pending' => 'Pending'];
+            return $map[$filter] ?? $filter;
+        };
+        
+        switch ($reportType) {
+            case 'performance':
+                return $this->generatePerformanceReportDataForPdf($overview, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName);
+                
+            case 'workprogress':
+                return $this->generateWorkProgressReportDataForPdf($overview, $alkansya, $madeToOrder, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName, $start, $end);
+                
+            case 'comprehensive':
+            default:
+                return $this->generateComprehensiveReportDataForPdf($overview, $output, $alkansya, $madeToOrder, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName, $start, $end);
+        }
+    }
+    
+    private function generatePerformanceReportDataForPdf($data, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName)
+    {
+        $sections = [];
+        
+        // Report Filters Section
+        $sections[] = [
+            'title' => 'Report Filters',
+            'type' => 'key-value',
+            'data' => [
+                ['label' => 'Date Range', 'value' => $dateRangeStr],
+                ['label' => 'Category Filter', 'value' => $getCategoryDisplayName($categoryFilter)],
+                ['label' => 'Status Filter', 'value' => $getStatusDisplayName($statusFilter)]
+            ]
+        ];
+        
+        // Overall Metrics
+        if ($categoryFilter === 'alkansya') {
+            $sections[] = [
+                'title' => 'Alkansya Production Metrics',
+                'type' => 'key-value',
+                'data' => [
+                    ['label' => 'Total Units Produced', 'value' => $data['alkansya']['total_units_produced'] ?? 0],
+                    ['label' => 'Production Efficiency', 'value' => ($data['alkansya']['efficiency'] ?? $data['overall']['production_efficiency'] ?? 0) . '%'],
+                    ['label' => 'Average Daily Output', 'value' => $data['alkansya']['average_daily_output'] ?? 0],
+                    ['label' => 'Max Daily Output', 'value' => $data['alkansya']['max_daily_output'] ?? 0],
+                    ['label' => 'Min Daily Output', 'value' => $data['alkansya']['min_daily_output'] ?? 0],
+                    ['label' => 'Production Days', 'value' => $data['alkansya']['total_days'] ?? 0],
+                    ['label' => 'Production Trend', 'value' => $data['alkansya']['production_trend'] ?? 'stable']
+                ]
+            ];
+        } elseif ($categoryFilter === 'made_to_order') {
+            $sections[] = [
+                'title' => 'Made-to-Order Production Metrics',
+                'type' => 'key-value',
+                'data' => [
+                    ['label' => 'Total Products Ordered', 'value' => $data['made_to_order']['total_products_ordered'] ?? 0],
+                    ['label' => 'Production Efficiency', 'value' => ($data['made_to_order']['efficiency'] ?? $data['overall']['production_efficiency'] ?? 0) . '%'],
+                    ['label' => 'Products In Progress', 'value' => $data['made_to_order']['in_progress'] ?? 0],
+                    ['label' => 'Orders Completed', 'value' => $data['made_to_order']['completed'] ?? 0],
+                    ['label' => 'Completion Rate', 'value' => ($data['made_to_order']['completion_rate'] ?? 0) . '%']
+                ]
+            ];
+        } else {
+            $sections[] = [
+                'title' => 'Overall Metrics',
+                'type' => 'key-value',
+                'data' => [
+                    ['label' => 'Total Units Produced', 'value' => $data['overall']['total_units_produced'] ?? 0],
+                    ['label' => 'Production Efficiency', 'value' => ($data['overall']['production_efficiency'] ?? 0) . '%'],
+                    ['label' => 'Average Daily Output', 'value' => $data['overall']['average_daily_output'] ?? 0],
+                    ['label' => 'Total Production Days', 'value' => $data['overall']['total_production_days'] ?? 0]
+                ]
+            ];
+            
+            if ($categoryFilter === 'all') {
+                $sections[] = [
+                    'title' => 'Alkansya Production',
+                    'type' => 'key-value',
+                    'data' => [
+                        ['label' => 'Total Units Produced', 'value' => $data['alkansya']['total_units_produced'] ?? 0],
+                        ['label' => 'Average Daily Output', 'value' => $data['alkansya']['average_daily_output'] ?? 0],
+                        ['label' => 'Max Daily Output', 'value' => $data['alkansya']['max_daily_output'] ?? 0],
+                        ['label' => 'Min Daily Output', 'value' => $data['alkansya']['min_daily_output'] ?? 0],
+                        ['label' => 'Production Days', 'value' => $data['alkansya']['total_days'] ?? 0],
+                        ['label' => 'Production Trend', 'value' => $data['alkansya']['production_trend'] ?? 'stable']
+                    ]
+                ];
+                
+                $sections[] = [
+                    'title' => 'Made-to-Order Production',
+                    'type' => 'key-value',
+                    'data' => [
+                        ['label' => 'Total Products Ordered', 'value' => $data['made_to_order']['total_products_ordered'] ?? 0],
+                        ['label' => 'Products In Progress', 'value' => $data['made_to_order']['in_progress'] ?? 0],
+                        ['label' => 'Orders Completed', 'value' => $data['made_to_order']['completed'] ?? 0],
+                        ['label' => 'Completion Rate', 'value' => ($data['made_to_order']['completion_rate'] ?? 0) . '%']
+                    ]
+                ];
+            }
+        }
+        
+        // Efficiency Metrics
+        $efficiencyData = [
+            ['label' => 'Overall Efficiency', 'value' => ($data['overall']['production_efficiency'] ?? 0) . '%']
+        ];
+        if ($categoryFilter === 'all' || $categoryFilter === 'alkansya') {
+            $efficiencyData[] = ['label' => 'Alkansya Efficiency', 'value' => ($data['alkansya']['efficiency'] ?? 0) . '%'];
+        }
+        if ($categoryFilter === 'all' || $categoryFilter === 'made_to_order') {
+            $efficiencyData[] = ['label' => 'Made-to-Order Efficiency', 'value' => ($data['made_to_order']['efficiency'] ?? 0) . '%'];
+        }
+        
+        $sections[] = [
+            'title' => 'Efficiency Metrics',
+            'type' => 'key-value',
+            'data' => $efficiencyData
+        ];
+        
+        return ['sections' => $sections];
+    }
+    
+    private function generateWorkProgressReportDataForPdf($overview, $alkansya, $madeToOrder, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName, $startDate = null, $endDate = null)
+    {
+        $sections = [];
+        
+        // Report Filters
+        $sections[] = [
+            'title' => 'Report Filters',
+            'type' => 'key-value',
+            'data' => [
+                ['label' => 'Date Range', 'value' => $dateRangeStr],
+                ['label' => 'Category Filter', 'value' => $getCategoryDisplayName($categoryFilter)],
+                ['label' => 'Status Filter', 'value' => $getStatusDisplayName($statusFilter)]
+            ]
+        ];
+        
+        // Get ALL Alkansya output from alkansya data (not just recent_output which is limited to 7)
+        // Use daily_breakdown if available, otherwise use recent_output, or get from overview
+        $allAlkansyaOutput = [];
+        if (!empty($alkansya) && isset($alkansya['daily_breakdown'])) {
+            // Use daily_breakdown which contains all output
+            $allAlkansyaOutput = $alkansya['daily_breakdown'] ?? [];
+        } elseif (!empty($alkansya) && isset($alkansya['metrics']) && isset($alkansya['metrics']['daily_breakdown'])) {
+            $allAlkansyaOutput = $alkansya['metrics']['daily_breakdown'] ?? [];
+        } else {
+            // Fallback to recent_output from overview, but we'll get all from database
+            $allAlkansyaOutput = $overview['alkansya']['recent_output'] ?? [];
+        }
+        
+        // If we still don't have all data, get it directly from AlkansyaDailyOutput
+        if (empty($allAlkansyaOutput) || count($allAlkansyaOutput) <= 7) {
+            // Extract dates from dateRangeStr or use provided dates
+            if (!$startDate || !$endDate) {
+                if (preg_match('/(\d{4}-\d{2}-\d{2})\s+to\s+(\d{4}-\d{2}-\d{2})/', $dateRangeStr, $matches)) {
+                    $startDate = $matches[1];
+                    $endDate = $matches[2];
+                } else {
+                    $startDate = \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
+                    $endDate = \Carbon\Carbon::now()->format('Y-m-d');
+                }
             }
             
-            // Get alkansya product name
-            $alkansyaProduct = Product::where('category_name', 'Stocked Products')
-                ->where(function($query) {
-                    $query->where('name', 'LIKE', '%Alkansya%')
-                          ->orWhere('product_name', 'LIKE', '%Alkansya%');
-                })
-                ->first();
+            $alkansyaOutputs = \App\Models\AlkansyaDailyOutput::whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date', 'desc')
+                ->get();
             
-            $alkansyaProductName = $alkansyaProduct ? ($alkansyaProduct->product_name ?? $alkansyaProduct->name) : 'Alkansya';
-            
-            $alkansyaRows = $alkansyaQuery->get()->map(function($alkansya, $index) use ($alkansyaProductName) {
+            $allAlkansyaOutput = $alkansyaOutputs->map(function($output) {
                 return [
-                    'id' => 'ALK-' . ($alkansya->id ?? $index + 1),
-                    'date' => optional($alkansya->date)->format('Y-m-d'),
-                    'product' => $alkansyaProductName,
-                    'stage' => 'Completed', // Alkansya is pre-made, so always completed
-                    'status' => 'Completed',
-                    'quantity' => $alkansya->quantity_produced ?? 0,
-                    'category' => 'Alkansya'
+                    'date' => $output->date->format('Y-m-d'),
+                    'quantity' => $output->quantity_produced,
+                    'produced_by' => $output->produced_by ?? 'N/A'
                 ];
             })->toArray();
         }
-
-        // Merge both arrays
-        $rows = array_merge($productionRows, $alkansyaRows);
         
-        // Sort by date (most recent first) and then by id
-        usort($rows, function($a, $b) {
-            $dateCompare = strcmp($b['date'] ?? '', $a['date'] ?? '');
-            if ($dateCompare !== 0) {
-                return $dateCompare;
+        // Apply filters
+        $filteredAlkansya = $allAlkansyaOutput;
+        // Use 'current_orders' from API response, or 'items' if available (for compatibility)
+        $filteredMadeToOrder = $madeToOrder['current_orders'] ?? $madeToOrder['items'] ?? [];
+        
+        if ($categoryFilter === 'alkansya') {
+            $filteredMadeToOrder = [];
+        } elseif ($categoryFilter === 'made_to_order') {
+            $filteredAlkansya = [];
+        }
+        
+        if ($statusFilter !== 'all' && !empty($filteredMadeToOrder)) {
+            $filteredMadeToOrder = array_filter($filteredMadeToOrder, function($item) use ($statusFilter) {
+                $status = strtolower($item['status'] ?? '');
+                if ($statusFilter === 'in_progress') return $status === 'in progress' || $status === 'in_progress';
+                if ($statusFilter === 'completed') return $status === 'completed';
+                if ($statusFilter === 'pending') return $status === 'pending';
+                return true;
+            });
+            $filteredMadeToOrder = array_values($filteredMadeToOrder);
+        }
+        
+        // Alkansya Output (all output, not limited)
+        if (!empty($filteredAlkansya)) {
+            $sections[] = [
+                'title' => 'Alkansya Output',
+                'type' => 'table',
+                'headers' => ['Date', 'Quantity', 'Produced By'],
+                'data' => array_map(function($output) {
+                    return [
+                        $output['date'] ?? 'N/A',
+                        $output['quantity'] ?? $output['quantity_produced'] ?? 0,
+                        $output['produced_by'] ?? 'N/A'
+                    ];
+                }, $filteredAlkansya)
+            ];
+        }
+        
+        // Made-to-Order Status
+        $sections[] = [
+            'title' => 'Made-to-Order Status',
+            'type' => 'key-value',
+            'data' => [
+                ['label' => 'Total Orders', 'value' => count($filteredMadeToOrder)],
+                ['label' => 'In Progress', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                    $status = strtolower($item['status'] ?? '');
+                    return $status === 'in progress' || $status === 'in_progress';
+                }))],
+                ['label' => 'Completed', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                    return strtolower($item['status'] ?? '') === 'completed';
+                }))],
+                ['label' => 'Pending', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                    return strtolower($item['status'] ?? '') === 'pending';
+                }))]
+            ]
+        ];
+        
+        // Order Details
+        if (!empty($filteredMadeToOrder)) {
+            $sections[] = [
+                'title' => 'Order Details',
+                'type' => 'table',
+                'headers' => ['Order ID', 'Product', 'Status', 'Quantity', 'Progress'],
+                'data' => array_slice(array_map(function($item) {
+                    return [
+                        $item['id'] ?? $item['order_id'] ?? 'N/A',
+                        $item['product_name'] ?? 'N/A',
+                        $item['status'] ?? 'N/A',
+                        $item['quantity'] ?? 0,
+                        ($item['progress'] ?? 0) . '%'
+                    ];
+                }, $filteredMadeToOrder), 0, 20)
+            ];
+        }
+        
+        return ['sections' => $sections];
+    }
+    
+    private function generateComprehensiveReportDataForPdf($overview, $output, $alkansya, $madeToOrder, $dateRangeStr, $categoryFilter, $statusFilter, $getCategoryDisplayName, $getStatusDisplayName, $startDate = null, $endDate = null)
+    {
+        $sections = [];
+        
+        // Report Filters
+        $sections[] = [
+            'title' => 'Report Filters',
+            'type' => 'key-value',
+            'data' => [
+                ['label' => 'Date Range', 'value' => $dateRangeStr],
+                ['label' => 'Category Filter', 'value' => $getCategoryDisplayName($categoryFilter)],
+                ['label' => 'Status Filter', 'value' => $getStatusDisplayName($statusFilter)]
+            ]
+        ];
+        
+        // Get ALL Alkansya output from alkansya data (not just recent_output which is limited to 7)
+        // Use daily_breakdown if available, otherwise use recent_output, or get from overview
+        $allAlkansyaOutput = [];
+        if (!empty($alkansya) && isset($alkansya['daily_breakdown'])) {
+            // Use daily_breakdown which contains all output
+            $allAlkansyaOutput = $alkansya['daily_breakdown'] ?? [];
+        } elseif (!empty($alkansya) && isset($alkansya['metrics']) && isset($alkansya['metrics']['daily_breakdown'])) {
+            $allAlkansyaOutput = $alkansya['metrics']['daily_breakdown'] ?? [];
+        } else {
+            // Fallback to recent_output from overview, but we'll get all from database
+            $allAlkansyaOutput = $overview['alkansya']['recent_output'] ?? [];
+        }
+        
+        // If we still don't have all data, get it directly from AlkansyaDailyOutput
+        if (empty($allAlkansyaOutput) || count($allAlkansyaOutput) <= 7) {
+            // Extract dates from dateRangeStr or use provided dates
+            if (!$startDate || !$endDate) {
+                if (preg_match('/(\d{4}-\d{2}-\d{2})\s+to\s+(\d{4}-\d{2}-\d{2})/', $dateRangeStr, $matches)) {
+                    $startDate = $matches[1];
+                    $endDate = $matches[2];
+                } else {
+                    $startDate = \Carbon\Carbon::now()->subDays(30)->format('Y-m-d');
+                    $endDate = \Carbon\Carbon::now()->format('Y-m-d');
+                }
             }
-            return strcmp($a['id'] ?? '', $b['id'] ?? '');
-        });
-
-        $pdf = Pdf::loadView('pdf.production-report', [
-            'data' => $rows,
-            'reportType' => 'Production Report',
-            'dateRange' => $start && $end ? [
-                'start' => $start,
-                'end' => $end
-            ] : null
-        ]);
-
-        return $pdf->download('production_report_' . now()->format('Y-m-d') . '.pdf');
+            
+            $alkansyaOutputs = \App\Models\AlkansyaDailyOutput::whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date', 'desc')
+                ->get();
+            
+            $allAlkansyaOutput = $alkansyaOutputs->map(function($output) {
+                return [
+                    'date' => $output->date->format('Y-m-d'),
+                    'quantity' => $output->quantity_produced,
+                    'produced_by' => $output->produced_by ?? 'N/A'
+                ];
+            })->toArray();
+        }
+        
+        // Apply filters
+        $filteredAlkansya = $allAlkansyaOutput;
+        // Use 'current_orders' from API response, or 'items' if available (for compatibility)
+        $filteredMadeToOrder = $madeToOrder['current_orders'] ?? $madeToOrder['items'] ?? [];
+        
+        if ($categoryFilter === 'alkansya') {
+            $filteredMadeToOrder = [];
+        } elseif ($categoryFilter === 'made_to_order') {
+            $filteredAlkansya = [];
+        }
+        
+        if ($statusFilter !== 'all' && !empty($filteredMadeToOrder)) {
+            $filteredMadeToOrder = array_filter($filteredMadeToOrder, function($item) use ($statusFilter) {
+                $status = strtolower($item['status'] ?? '');
+                if ($statusFilter === 'in_progress') return $status === 'in progress' || $status === 'in_progress';
+                if ($statusFilter === 'completed') return $status === 'completed';
+                if ($statusFilter === 'pending') return $status === 'pending';
+                return true;
+            });
+            $filteredMadeToOrder = array_values($filteredMadeToOrder);
+        }
+        
+        // Production Overview
+        if ($overview) {
+            if ($categoryFilter === 'alkansya') {
+                $sections[] = [
+                    'title' => 'Production Overview',
+                    'type' => 'key-value',
+                    'data' => [
+                        ['label' => 'Total Units Produced', 'value' => $overview['alkansya']['total_units_produced'] ?? 0],
+                        ['label' => 'Production Efficiency', 'value' => ($overview['alkansya']['efficiency'] ?? $overview['overall']['production_efficiency'] ?? 0) . '%'],
+                        ['label' => 'Average Daily Output', 'value' => $overview['alkansya']['average_daily_output'] ?? 0],
+                        ['label' => 'Production Days', 'value' => $overview['alkansya']['total_days'] ?? 0]
+                    ]
+                ];
+            } elseif ($categoryFilter === 'made_to_order') {
+                $sections[] = [
+                    'title' => 'Production Overview',
+                    'type' => 'key-value',
+                    'data' => [
+                        ['label' => 'Total Products Ordered', 'value' => $overview['made_to_order']['total_products_ordered'] ?? 0],
+                        ['label' => 'Products In Progress', 'value' => $overview['made_to_order']['in_progress'] ?? 0],
+                        ['label' => 'Orders Completed', 'value' => $overview['made_to_order']['completed'] ?? 0],
+                        ['label' => 'Completion Rate', 'value' => ($overview['made_to_order']['completion_rate'] ?? 0) . '%']
+                    ]
+                ];
+            } else {
+                $sections[] = [
+                    'title' => 'Production Overview',
+                    'type' => 'key-value',
+                    'data' => [
+                        ['label' => 'Total Units Produced', 'value' => $overview['overall']['total_units_produced'] ?? 0],
+                        ['label' => 'Production Efficiency', 'value' => ($overview['overall']['production_efficiency'] ?? 0) . '%'],
+                        ['label' => 'Average Daily Output', 'value' => $overview['overall']['average_daily_output'] ?? 0],
+                        ['label' => 'Total Production Days', 'value' => $overview['overall']['total_production_days'] ?? 0]
+                    ]
+                ];
+            }
+        }
+        
+        // Alkansya Output (all output, not limited)
+        if (!empty($filteredAlkansya)) {
+            $sections[] = [
+                'title' => 'Alkansya Output',
+                'type' => 'table',
+                'headers' => ['Date', 'Quantity', 'Produced By'],
+                'data' => array_map(function($output) {
+                    return [
+                        $output['date'] ?? 'N/A',
+                        $output['quantity'] ?? $output['quantity_produced'] ?? 0,
+                        $output['produced_by'] ?? 'N/A'
+                    ];
+                }, $filteredAlkansya)
+            ];
+        }
+        
+        // Made-to-Order Status Summary
+        if (!empty($filteredMadeToOrder)) {
+            $sections[] = [
+                'title' => 'Made-to-Order Status Summary',
+                'type' => 'key-value',
+                'data' => [
+                    ['label' => 'Total Orders', 'value' => count($filteredMadeToOrder)],
+                    ['label' => 'In Progress', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                        $status = strtolower($item['status'] ?? '');
+                        return $status === 'in progress' || $status === 'in_progress';
+                    }))],
+                    ['label' => 'Completed', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                        return strtolower($item['status'] ?? '') === 'completed';
+                    }))],
+                    ['label' => 'Pending', 'value' => count(array_filter($filteredMadeToOrder, function($item) {
+                        return strtolower($item['status'] ?? '') === 'pending';
+                    }))]
+                ]
+            ];
+            
+            // Order Details Table
+            $sections[] = [
+                'title' => 'Order Details',
+                'type' => 'table',
+                'headers' => ['Order ID', 'Product', 'Status', 'Quantity', 'Progress'],
+                'data' => array_slice(array_map(function($item) {
+                    return [
+                        $item['id'] ?? $item['order_id'] ?? 'N/A',
+                        $item['product_name'] ?? 'N/A',
+                        $item['status'] ?? 'N/A',
+                        $item['quantity'] ?? 0,
+                        ($item['progress'] ?? 0) . '%'
+                    ];
+                }, $filteredMadeToOrder), 0, 50) // Show up to 50 orders in PDF
+            ];
+        }
+        
+        return ['sections' => $sections];
     }
 
     /**

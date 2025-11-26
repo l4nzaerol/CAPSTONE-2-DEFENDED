@@ -3913,19 +3913,62 @@ class EnhancedInventoryReportsController extends Controller
                 ->orderBy('date', 'desc')
                 ->get();
 
-            // Get Made-to-Order orders and their status
-            $madeToOrderOrders = Order::whereBetween('created_at', [$startDate, $endDate])
-                ->whereHas('items', function($query) {
-                    $query->whereHas('product', function($q) {
-                        $q->where('category_name', 'Made-to-Order');
+            // Get all Made-to-Order products (including both category name variations)
+            $madeToOrderProducts = Product::where(function($query) {
+                $query->where('category_name', 'Made-to-Order')
+                      ->orWhere('category_name', 'Made to Order');
+            })->get();
+
+            // Get Made-to-Order orders - include ALL orders with made-to-order products
+            // This ensures we capture all orders including seeded ones and manual ones
+            // We'll filter by date range later when calculating metrics
+            $madeToOrderOrders = Order::whereHas('items', function($query) {
+                $query->whereHas('product', function($q) {
+                    $q->where(function($categoryQuery) {
+                        $categoryQuery->where('category_name', 'Made-to-Order')
+                                      ->orWhere('category_name', 'Made to Order');
                     });
-                })
-                ->with(['items.product'])
-                ->get();
+                });
+            })
+            ->with(['items.product', 'productions'])
+            ->get();
+            
+            // Filter orders by date range: include orders that were created in range OR have productions in range
+            $madeToOrderOrders = $madeToOrderOrders->filter(function($order) use ($startDate, $endDate) {
+                // Include if order was created in date range
+                $orderDate = Carbon::parse($order->created_at)->format('Y-m-d');
+                if ($orderDate >= $startDate && $orderDate <= $endDate) {
+                    return true;
+                }
+                
+                // Include if order has productions within date range
+                $hasProductionInRange = $order->productions->filter(function($production) use ($startDate, $endDate) {
+                    // Include in-progress productions (always active)
+                    if ($production->status === 'In Progress') {
+                        return true;
+                    }
+                    
+                    // Include completed productions within date range
+                    if ($production->status === 'Completed') {
+                        $prodDate = $production->date ? Carbon::parse($production->date)->format('Y-m-d') : null;
+                        $startDateProd = $production->production_started_at ? Carbon::parse($production->production_started_at)->format('Y-m-d') : null;
+                        $endDateProd = $production->actual_completion_date ? Carbon::parse($production->actual_completion_date)->format('Y-m-d') : null;
+                        
+                        return ($prodDate && $prodDate >= $startDate && $prodDate <= $endDate) ||
+                               ($startDateProd && $startDateProd >= $startDate && $startDateProd <= $endDate) ||
+                               ($endDateProd && $endDateProd >= $startDate && $endDateProd <= $endDate);
+                    }
+                    
+                    return false;
+                })->isNotEmpty();
+                
+                return $hasProductionInRange;
+            })->values();
 
             // Get all products to categorize them
-            $alkansyaProducts = Product::where('name', 'Alkansya')->get();
-            $madeToOrderProducts = Product::where('category_name', 'Made-to-Order')->get();
+            $alkansyaProducts = Product::where('name', 'Alkansya')
+                ->orWhere('product_name', 'LIKE', '%Alkansya%')
+                ->get();
 
             // Calculate Alkansya metrics
             $alkansyaMetrics = [
@@ -3943,6 +3986,32 @@ class EnhancedInventoryReportsController extends Controller
                 })->values(),
             ];
 
+            // Get all productions for made-to-order products (including seeded ones)
+            // This ensures we count all productions regardless of order date
+            $allMadeToOrderProductions = \App\Models\Production::whereHas('product', function($query) {
+                $query->where(function($q) {
+                    $q->where('category_name', 'Made-to-Order')
+                      ->orWhere('category_name', 'Made to Order');
+                });
+            })
+            ->whereHas('order', function($query) {
+                $query->where('acceptance_status', 'accepted');
+            })
+            ->with(['product', 'order'])
+            ->get();
+
+            // Calculate production status counts
+            $inProgressCount = $allMadeToOrderProductions->where('status', 'In Progress')->count();
+            $completedCount = $allMadeToOrderProductions->where('status', 'Completed')->count();
+            $pendingCount = $allMadeToOrderProductions->where('status', 'Pending')->count();
+            
+            // Calculate completion rate
+            $totalProductions = $allMadeToOrderProductions->count();
+            $completionRate = $totalProductions > 0 ? round(($completedCount / $totalProductions) * 100, 1) : 0;
+            
+            // Calculate efficiency (simplified - can be enhanced)
+            $efficiency = $completionRate; // Use completion rate as efficiency metric
+
             // Calculate Made-to-Order metrics
             $madeToOrderMetrics = [
                 'total_orders' => $madeToOrderOrders->count(),
@@ -3950,8 +4019,13 @@ class EnhancedInventoryReportsController extends Controller
                     return $order->items->sum('quantity');
                 }),
                 'unique_products' => $madeToOrderProducts->count(),
-                'average_order_value' => $madeToOrderOrders->avg('total_amount'),
+                'average_order_value' => $madeToOrderOrders->count() > 0 ? round($madeToOrderOrders->avg('total_amount'), 2) : 0,
                 'total_revenue' => $madeToOrderOrders->sum('total_amount'),
+                'in_progress' => $inProgressCount,
+                'completed' => $completedCount,
+                'pending' => $pendingCount,
+                'completion_rate' => $completionRate,
+                'efficiency' => $efficiency,
                 'recent_orders' => $madeToOrderOrders->take(10)->map(function($order) {
                     return [
                         'id' => $order->id,
@@ -3970,12 +4044,37 @@ class EnhancedInventoryReportsController extends Controller
                 })->values(),
             ];
 
+            // Calculate Alkansya efficiency (based on consistency)
+            $alkansyaEfficiency = 0;
+            if ($alkansyaOutput->count() > 0) {
+                $avgOutput = $alkansyaOutput->avg('quantity_produced');
+                $targetDaily = 20; // Default target
+                $alkansyaEfficiency = $targetDaily > 0 ? round(($avgOutput / $targetDaily) * 100, 1) : 0;
+                $alkansyaEfficiency = min($alkansyaEfficiency, 100); // Cap at 100%
+            }
+            
+            // Add efficiency to alkansya metrics
+            $alkansyaMetrics['efficiency'] = $alkansyaEfficiency;
+            $alkansyaMetrics['production_trend'] = $this->calculateProductionTrend($alkansyaOutput);
+            
             $totalUnits = $alkansyaMetrics['total_units_produced'] + $madeToOrderMetrics['total_products_ordered'];
+            
+            // Calculate overall production efficiency (average of alkansya and made-to-order)
+            $overallEfficiency = 0;
+            if ($alkansyaEfficiency > 0 || $efficiency > 0) {
+                $overallEfficiency = round(($alkansyaEfficiency + $efficiency) / 2, 1);
+            }
+            
+            // Calculate average daily output (combined)
+            $totalDays = max($alkansyaMetrics['total_days'], 1);
+            $averageDailyOutput = $totalDays > 0 ? round($totalUnits / $totalDays, 2) : 0;
             
             // Calculate overall production metrics
             $overallMetrics = [
                 'total_production_days' => $alkansyaMetrics['total_days'],
                 'total_units_produced' => $totalUnits,
+                'production_efficiency' => $overallEfficiency,
+                'average_daily_output' => $averageDailyOutput,
                 'production_breakdown' => [
                     'alkansya_percentage' => $totalUnits > 0 ? 
                         round(($alkansyaMetrics['total_units_produced'] / $totalUnits) * 100, 1) : 0,
@@ -4944,8 +5043,12 @@ class EnhancedInventoryReportsController extends Controller
         try {
             $reportType = $request->get('report_type', 'stock');
             $categoryFilter = $request->get('category', 'all'); // Get category filter
+            $statusFilter = $request->get('status', 'all'); // Get status filter
+            $statusFilter = $statusFilter ?: 'all'; // Ensure it's not empty
             $data = [];
             $dateRange = null;
+            
+            \Log::info('PDF Export - Filters: category=' . $categoryFilter . ', status=' . $statusFilter . ', report_type=' . $reportType);
 
             switch($reportType) {
                 case 'stock':
@@ -5050,8 +5153,19 @@ class EnhancedInventoryReportsController extends Controller
                             'Total Value' => number_format($totalValue, 2),
                             'Status' => $status,
                         ];
-                    })->filter(function($item) {
-                        return $item !== null;
+                    })->filter(function($item) use ($statusFilter) {
+                        if ($item === null) return false;
+                        // Apply status filter
+                        if ($statusFilter !== 'all') {
+                            $status = $item['Status'] ?? '';
+                            // Normalize status: convert to lowercase and replace spaces with underscores
+                            $statusNormalized = strtolower(str_replace(' ', '_', trim($status)));
+                            $filterNormalized = strtolower(trim($statusFilter));
+                            
+                            // Only return true if the normalized status matches the normalized filter
+                            return $statusNormalized === $filterNormalized;
+                        }
+                        return true;
                     })->values()->toArray();
                     break;
                     
@@ -5077,10 +5191,10 @@ class EnhancedInventoryReportsController extends Controller
                     \Log::info('Usage PDF - Transactions found: ' . $transactions->count());
                     
                     // Calculate number of days in the date range
-                    $days = max(1, $startDate->diffInDays($endDate));
+                    $daysInRange = max(1, $startDate->diffInDays($endDate));
                     
                     // Group by material to calculate average daily consumption
-                    $materialUsage = $transactions->groupBy('material_id')->map(function($materialTransactions, $materialId) use ($days) {
+                    $materialUsage = $transactions->groupBy('material_id')->map(function($materialTransactions, $materialId) use ($daysInRange) {
                         $material = $materialTransactions->first()->material;
                         if (!$material) {
                             \Log::warning('Usage PDF - Material not found for material_id: ' . $materialId);
@@ -5130,14 +5244,14 @@ class EnhancedInventoryReportsController extends Controller
                             $category = 'Made to Order';
                         }
                         
-                        // Calculate max_level: use database value if set, otherwise calculate from daily consumption (30 days)
+                        // Calculate max_level: use database value if set, otherwise calculate from daily consumption
                         $backendMaxLevel = $material->max_level ?? 0;
-                        $calculatedMaxLevel = $avgDailyConsumption > 0 ? ceil($avgDailyConsumption * 30) : 0;
+                        $calculatedMaxLevel = $avgDailyConsumption > 0 ? ceil($avgDailyConsumption * $daysInRange) : 0;
                         $maxLevel = $backendMaxLevel > 0 ? $backendMaxLevel : $calculatedMaxLevel;
                         
-                        // Calculate projected stock after 30 days
-                        $projectedUsage30Days = $avgDailyConsumption * 30;
-                        $projectedStock30Days = $currentStock - $projectedUsage30Days;
+                        // Calculate projected stock after the date range period
+                        $projectedUsageForPeriod = $avgDailyConsumption * $daysInRange;
+                        $projectedStockAfterPeriod = $currentStock - $projectedUsageForPeriod;
                         
                         // Calculate current status based on actual data
                         $criticalStock = $material->critical_stock ?? $material->safety_stock ?? 0;
@@ -5155,15 +5269,15 @@ class EnhancedInventoryReportsController extends Controller
                             $currentStatus = 'Overstocked';
                         }
                         
-                        // Calculate projected status (after 30 days)
+                        // Calculate projected status (after the date range period)
                         $projectedStatus = 'In Stock';
-                        if ($projectedStock30Days <= 0) {
+                        if ($projectedStockAfterPeriod <= 0) {
                             $projectedStatus = 'Out of Stock';
-                        } elseif ($criticalStock > 0 && $projectedStock30Days <= $criticalStock) {
+                        } elseif ($criticalStock > 0 && $projectedStockAfterPeriod <= $criticalStock) {
                             $projectedStatus = 'Critical';
-                        } elseif ($reorderPoint > 0 && $projectedStock30Days <= $reorderPoint) {
+                        } elseif ($reorderPoint > 0 && $projectedStockAfterPeriod <= $reorderPoint) {
                             $projectedStatus = 'Low Stock';
-                        } elseif ($maxLevel > 0 && $projectedStock30Days > $maxLevel) {
+                        } elseif ($maxLevel > 0 && $projectedStockAfterPeriod > $maxLevel) {
                             $projectedStatus = 'Overstocked';
                         }
                         
@@ -5173,10 +5287,10 @@ class EnhancedInventoryReportsController extends Controller
                             'Average Daily Consumption' => number_format($avgDailyConsumption, 2),
                             'Current Stock' => number_format($currentStock, 2),
                             'Days Until Stockout' => $daysUntilStockout,
-                            'Projected Usage (30 days)' => number_format($projectedUsage30Days, 2),
-                            'Projected Stock (30 days)' => number_format($projectedStock30Days, 2),
+                            'Projected Usage (' . $daysInRange . ' days)' => number_format($projectedUsageForPeriod, 2),
+                            'Projected Stock (' . $daysInRange . ' days)' => number_format($projectedStockAfterPeriod, 2),
                             'Current Status' => $currentStatus,
-                            'Projected Status (30 days)' => $projectedStatus,
+                            'Projected Status (' . $daysInRange . ' days)' => $projectedStatus,
                             'Total Consumption' => number_format($totalConsumption, 2),
                             'Days With Consumption' => $daysWithConsumption,
                         ];
@@ -5209,6 +5323,43 @@ class EnhancedInventoryReportsController extends Controller
                         });
                         // Re-index array after filtering
                         $materialUsageArray = array_values($materialUsageArray);
+                    }
+                    
+                    // Apply status filter
+                    if ($statusFilter !== 'all' && !empty($statusFilter)) {
+                        $beforeCount = count($materialUsageArray);
+                        $filterNormalized = strtolower(trim($statusFilter));
+                        
+                        \Log::info('Usage PDF - Applying status filter: ' . $statusFilter . ' (normalized: ' . $filterNormalized . ') to ' . $beforeCount . ' items');
+                        
+                        $materialUsageArray = array_filter($materialUsageArray, function($item) use ($filterNormalized, $statusFilter) {
+                            $currentStatus = $item['Current Status'] ?? '';
+                            
+                            if (empty($currentStatus)) {
+                                \Log::warning('Usage PDF - Material has empty status: ' . ($item['Material Name'] ?? 'N/A'));
+                                return false; // Exclude items with empty status when filtering
+                            }
+                            
+                            // Normalize status: convert to lowercase and replace spaces with underscores
+                            $statusNormalized = strtolower(str_replace(' ', '_', trim($currentStatus)));
+                            
+                            // Only return true if the normalized status matches the normalized filter
+                            $matches = $statusNormalized === $filterNormalized;
+                            
+                            if (!$matches) {
+                                \Log::debug('Usage PDF - Status filter EXCLUDED: Material=' . ($item['Material Name'] ?? 'N/A') . ', Status="' . $currentStatus . '" (normalized: "' . $statusNormalized . '"), Filter="' . $statusFilter . '" (normalized: "' . $filterNormalized . '")');
+                            } else {
+                                \Log::debug('Usage PDF - Status filter INCLUDED: Material=' . ($item['Material Name'] ?? 'N/A') . ', Status="' . $currentStatus . '"');
+                            }
+                            
+                            return $matches;
+                        });
+                        // Re-index array after filtering
+                        $materialUsageArray = array_values($materialUsageArray);
+                        
+                        \Log::info('Usage PDF - Status filter result: ' . $statusFilter . ', Before: ' . $beforeCount . ', After: ' . count($materialUsageArray));
+                    } else {
+                        \Log::info('Usage PDF - No status filter applied (statusFilter=' . $statusFilter . ')');
                     }
                     
                     $data = $materialUsageArray;
@@ -5447,6 +5598,26 @@ class EnhancedInventoryReportsController extends Controller
                     
                     \Log::info('Replenishment PDF - Total rows: ' . count($data));
                     \Log::info('Replenishment PDF - Forecast days: ' . $forecastDays);
+                    // Apply status filter for replenishment report
+                    if ($statusFilter !== 'all') {
+                        $data = array_filter($data, function($item) use ($statusFilter) {
+                            $status = $item['Status'] ?? '';
+                            // Normalize status: convert to lowercase and replace spaces with underscores
+                            $statusNormalized = strtolower(str_replace(' ', '_', trim($status)));
+                            $filterNormalized = strtolower(trim($statusFilter));
+                            
+                            // Handle "Need Reorder" status mapping to "low_stock"
+                            if ($statusNormalized === 'need_reorder' && $filterNormalized === 'low_stock') {
+                                return true;
+                            }
+                            
+                            // Only return true if the normalized status matches the normalized filter
+                            return $statusNormalized === $filterNormalized;
+                        });
+                        // Re-index array after filtering
+                        $data = array_values($data);
+                    }
+                    
                     if (count($data) > 0) {
                         \Log::info('Replenishment PDF - First item: ' . json_encode($data[0]));
                     }
@@ -5489,6 +5660,21 @@ class EnhancedInventoryReportsController extends Controller
                             'Status' => $status,
                         ];
                     })->toArray();
+                    
+                    // Apply status filter for full report
+                    if ($statusFilter !== 'all') {
+                        $data = array_filter($data, function($item) use ($statusFilter) {
+                            $status = $item['Status'] ?? '';
+                            // Normalize status: convert to lowercase and replace spaces with underscores
+                            $statusNormalized = strtolower(str_replace(' ', '_', trim($status)));
+                            $filterNormalized = strtolower(trim($statusFilter));
+                            
+                            // Only return true if the normalized status matches the normalized filter
+                            return $statusNormalized === $filterNormalized;
+                        });
+                        // Re-index array after filtering
+                        $data = array_values($data);
+                    }
                     break;
             }
 

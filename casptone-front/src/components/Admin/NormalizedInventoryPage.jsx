@@ -45,6 +45,44 @@ const customStyles = `
     color: inherit;
   }
   
+  /* Sort dropdown - open upwards */
+  .sort-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* Force dropdown to open upwards by positioning select near bottom */
+  .sort-dropdown-upward {
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+  
+  /* Style for when dropdown is focused */
+  .sort-dropdown-upward:focus {
+    outline: 2px solid #6c757d;
+    outline-offset: 2px;
+  }
+  
+  /* Add custom arrow that points up to indicate upward direction */
+  .sort-dropdown-wrapper::before {
+    content: '▲';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #6c757d;
+    font-size: 10px;
+    z-index: 1;
+  }
+  
+  /* Ensure select padding doesn't overlap with arrow */
+  .sort-dropdown-upward {
+    padding-right: 2rem !important;
+  }
+  
   /* Modal styles */
   .material-details-modal .modal-content {
     border: none;
@@ -1146,32 +1184,174 @@ const NormalizedInventoryPage = () => {
     if (materialSort !== "none") {
       filtered = [...filtered].sort((a, b) => {
         switch (materialSort) {
+          // Quantity sorting
           case "quantity_low_high":
-            // Sort by quantity (low → high)
-            const qtyA = parseFloat(a.available_quantity || 0);
-            const qtyB = parseFloat(b.available_quantity || 0);
-            return qtyA - qtyB;
-            
+            return parseFloat(a.available_quantity || 0) - parseFloat(b.available_quantity || 0);
+          case "quantity_high_low":
+            return parseFloat(b.available_quantity || 0) - parseFloat(a.available_quantity || 0);
+          
+          // Price/Cost sorting
+          case "price_low_high":
+            return parseFloat(a.standard_cost || 0) - parseFloat(b.standard_cost || 0);
           case "price_high_low":
-            // Sort by price (high → low)
-            const priceA = parseFloat(a.standard_cost || 0);
-            const priceB = parseFloat(b.standard_cost || 0);
-            return priceB - priceA;
-            
-          case "category_alphabetical":
-            // Sort by category (alphabetical)
+            return parseFloat(b.standard_cost || 0) - parseFloat(a.standard_cost || 0);
+          
+          // Total Value sorting (quantity * cost)
+          case "value_low_high": {
+            const valueA = parseFloat(a.available_quantity || 0) * parseFloat(a.standard_cost || 0);
+            const valueB = parseFloat(b.available_quantity || 0) * parseFloat(b.standard_cost || 0);
+            return valueA - valueB;
+          }
+          case "value_high_low": {
+            const valueA = parseFloat(a.available_quantity || 0) * parseFloat(a.standard_cost || 0);
+            const valueB = parseFloat(b.available_quantity || 0) * parseFloat(b.standard_cost || 0);
+            return valueB - valueA;
+          }
+          
+          // Reorder Level sorting
+          case "reorder_level_low_high":
+            return parseFloat(a.reorder_level || 0) - parseFloat(b.reorder_level || 0);
+          case "reorder_level_high_low":
+            return parseFloat(b.reorder_level || 0) - parseFloat(a.reorder_level || 0);
+          
+          // Quantity on Hand sorting
+          case "on_hand_low_high":
+            return parseFloat(a.quantity_on_hand || a.total_quantity_on_hand || 0) - parseFloat(b.quantity_on_hand || b.total_quantity_on_hand || 0);
+          case "on_hand_high_low":
+            return parseFloat(b.quantity_on_hand || b.total_quantity_on_hand || 0) - parseFloat(a.quantity_on_hand || a.total_quantity_on_hand || 0);
+          
+          // Quantity Reserved sorting
+          case "reserved_low_high":
+            return parseFloat(a.quantity_reserved || a.total_quantity_reserved || 0) - parseFloat(b.quantity_reserved || b.total_quantity_reserved || 0);
+          case "reserved_high_low":
+            return parseFloat(b.quantity_reserved || b.total_quantity_reserved || 0) - parseFloat(a.quantity_reserved || a.total_quantity_reserved || 0);
+          
+          // Max Level sorting
+          case "max_level_low_high":
+            return parseFloat(a.max_level || 0) - parseFloat(b.max_level || 0);
+          case "max_level_high_low":
+            return parseFloat(b.max_level || 0) - parseFloat(a.max_level || 0);
+          
+          // Critical Stock sorting
+          case "critical_stock_low_high":
+            return parseFloat(a.critical_stock || 0) - parseFloat(b.critical_stock || 0);
+          case "critical_stock_high_low":
+            return parseFloat(b.critical_stock || 0) - parseFloat(a.critical_stock || 0);
+          
+          // Lead Time sorting
+          case "lead_time_low_high":
+            return parseFloat(a.lead_time_days || 0) - parseFloat(b.lead_time_days || 0);
+          case "lead_time_high_low":
+            return parseFloat(b.lead_time_days || 0) - parseFloat(a.lead_time_days || 0);
+          
+          // Name sorting
+          case "name_a_z": {
+            const nameA = (a.material_name || '').toLowerCase();
+            const nameB = (b.material_name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return 0;
+          }
+          case "name_z_a": {
+            const nameA = (a.material_name || '').toLowerCase();
+            const nameB = (b.material_name || '').toLowerCase();
+            if (nameA > nameB) return -1;
+            if (nameA < nameB) return 1;
+            return 0;
+          }
+          
+          // Code sorting
+          case "code_a_z": {
+            const codeA = (a.material_code || '').toLowerCase();
+            const codeB = (b.material_code || '').toLowerCase();
+            if (codeA < codeB) return -1;
+            if (codeA > codeB) return 1;
+            return 0;
+          }
+          case "code_z_a": {
+            const codeA = (a.material_code || '').toLowerCase();
+            const codeB = (b.material_code || '').toLowerCase();
+            if (codeA > codeB) return -1;
+            if (codeA < codeB) return 1;
+            return 0;
+          }
+          
+          // Category sorting
+          case "category_a_z": {
             const catA = (a.category || '').toLowerCase();
             const catB = (b.category || '').toLowerCase();
             if (catA < catB) return -1;
             if (catA > catB) return 1;
             return 0;
-            
-          case "date_newest_oldest":
-            // Sort by date added (newest → oldest)
+          }
+          case "category_z_a": {
+            const catA = (a.category || '').toLowerCase();
+            const catB = (b.category || '').toLowerCase();
+            if (catA > catB) return -1;
+            if (catA < catB) return 1;
+            return 0;
+          }
+          
+          // Location sorting
+          case "location_a_z": {
+            const locA = (a.location || '').toLowerCase();
+            const locB = (b.location || '').toLowerCase();
+            if (locA < locB) return -1;
+            if (locA > locB) return 1;
+            return 0;
+          }
+          case "location_z_a": {
+            const locA = (a.location || '').toLowerCase();
+            const locB = (b.location || '').toLowerCase();
+            if (locA > locB) return -1;
+            if (locA < locB) return 1;
+            return 0;
+          }
+          
+          // Supplier sorting
+          case "supplier_a_z": {
+            const supA = (a.supplier || '').toLowerCase();
+            const supB = (b.supplier || '').toLowerCase();
+            if (supA < supB) return -1;
+            if (supA > supB) return 1;
+            return 0;
+          }
+          case "supplier_z_a": {
+            const supA = (a.supplier || '').toLowerCase();
+            const supB = (b.supplier || '').toLowerCase();
+            if (supA > supB) return -1;
+            if (supA < supB) return 1;
+            return 0;
+          }
+          
+          // Status sorting
+          case "status_a_z": {
+            const statusA = (a.status_label || '').toLowerCase();
+            const statusB = (b.status_label || '').toLowerCase();
+            if (statusA < statusB) return -1;
+            if (statusA > statusB) return 1;
+            return 0;
+          }
+          case "status_z_a": {
+            const statusA = (a.status_label || '').toLowerCase();
+            const statusB = (b.status_label || '').toLowerCase();
+            if (statusA > statusB) return -1;
+            if (statusA < statusB) return 1;
+            return 0;
+          }
+          
+          // Date sorting
+          case "date_newest_oldest": {
             const dateA = new Date(a.created_at || a.date_added || 0);
             const dateB = new Date(b.created_at || b.date_added || 0);
             return dateB - dateA;
-            
+          }
+          case "date_oldest_newest": {
+            const dateA = new Date(a.created_at || a.date_added || 0);
+            const dateB = new Date(b.created_at || b.date_added || 0);
+            return dateA - dateB;
+          }
+          
           default:
             return 0;
         }
@@ -1591,27 +1771,140 @@ const NormalizedInventoryPage = () => {
                       </option>
                     ))}
                   </select>
-                  <select
-                    className="form-select form-select-sm"
-                    value={materialSort}
-                    onChange={(e) => {
-                      console.log('Sort changed to:', e.target.value);
-                      setMaterialSort(e.target.value);
-                    }}
+                  <div 
+                    className="sort-dropdown-wrapper" 
                     style={{ 
-                      minWidth: '220px',
-                      borderRadius: '8px',
-                      border: '2px solid #6c757d',
-                      padding: '0.5rem 1rem'
+                      position: 'relative',
+                      display: 'inline-block'
                     }}
-                    title="Sort materials"
                   >
+                    <select
+                      className="form-select form-select-sm sort-dropdown-upward"
+                      value={materialSort}
+                      onChange={(e) => {
+                        console.log('Sort changed to:', e.target.value);
+                        setMaterialSort(e.target.value);
+                      }}
+                      onFocus={(e) => {
+                        // Try to position dropdown upwards by scrolling into view from bottom
+                        const rect = e.target.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+                        const spaceBelow = viewportHeight - rect.bottom;
+                        const spaceAbove = rect.top;
+                        
+                        // If there's more space above than below, scroll to show more space above
+                        if (spaceAbove > spaceBelow && spaceBelow < 300) {
+                          e.target.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                        }
+                      }}
+                      style={{ 
+                        minWidth: '220px',
+                        borderRadius: '8px',
+                        border: '2px solid #6c757d',
+                        padding: '0.5rem 1rem',
+                        paddingRight: '2rem'
+                      }}
+                      title="Sort materials"
+                    >
                     <option value="none">Sort by...</option>
-                    <option value="quantity_low_high">Sort by quantity (low → high)</option>
-                    <option value="price_high_low">Sort by price (high → low)</option>
-                    <option value="category_alphabetical">Sort by category (alphabetical)</option>
-                    <option value="date_newest_oldest">Sort by date added (newest → oldest)</option>
+                    
+                    {/* Quantity Sorting */}
+                    <optgroup label="Available Quantity">
+                      <option value="quantity_low_high">Quantity: Low to High</option>
+                      <option value="quantity_high_low">Quantity: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Price/Cost Sorting */}
+                    <optgroup label="Unit Cost">
+                      <option value="price_low_high">Unit Cost: Low to High</option>
+                      <option value="price_high_low">Unit Cost: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Total Value Sorting */}
+                    <optgroup label="Total Value">
+                      <option value="value_low_high">Total Value: Low to High</option>
+                      <option value="value_high_low">Total Value: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Reorder Level Sorting */}
+                    <optgroup label="Reorder Level">
+                      <option value="reorder_level_low_high">Reorder Level: Low to High</option>
+                      <option value="reorder_level_high_low">Reorder Level: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Quantity on Hand Sorting */}
+                    <optgroup label="Quantity on Hand">
+                      <option value="on_hand_low_high">On Hand: Low to High</option>
+                      <option value="on_hand_high_low">On Hand: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Quantity Reserved Sorting */}
+                    <optgroup label="Quantity Reserved">
+                      <option value="reserved_low_high">Reserved: Low to High</option>
+                      <option value="reserved_high_low">Reserved: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Max Level Sorting */}
+                    <optgroup label="Max Level">
+                      <option value="max_level_low_high">Max Level: Low to High</option>
+                      <option value="max_level_high_low">Max Level: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Critical Stock Sorting */}
+                    <optgroup label="Critical Stock">
+                      <option value="critical_stock_low_high">Critical Stock: Low to High</option>
+                      <option value="critical_stock_high_low">Critical Stock: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Lead Time Sorting */}
+                    <optgroup label="Lead Time">
+                      <option value="lead_time_low_high">Lead Time: Low to High</option>
+                      <option value="lead_time_high_low">Lead Time: High to Low</option>
+                    </optgroup>
+                    
+                    {/* Name Sorting */}
+                    <optgroup label="Material Name">
+                      <option value="name_a_z">Name: A to Z</option>
+                      <option value="name_z_a">Name: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Code Sorting */}
+                    <optgroup label="Material Code">
+                      <option value="code_a_z">Code: A to Z</option>
+                      <option value="code_z_a">Code: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Category Sorting */}
+                    <optgroup label="Category">
+                      <option value="category_a_z">Category: A to Z</option>
+                      <option value="category_z_a">Category: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Location Sorting */}
+                    <optgroup label="Location">
+                      <option value="location_a_z">Location: A to Z</option>
+                      <option value="location_z_a">Location: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Supplier Sorting */}
+                    <optgroup label="Supplier">
+                      <option value="supplier_a_z">Supplier: A to Z</option>
+                      <option value="supplier_z_a">Supplier: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Status Sorting */}
+                    <optgroup label="Status">
+                      <option value="status_a_z">Status: A to Z</option>
+                      <option value="status_z_a">Status: Z to A</option>
+                    </optgroup>
+                    
+                    {/* Date Sorting */}
+                    <optgroup label="Date Added">
+                      <option value="date_newest_oldest">Date: Newest to Oldest</option>
+                      <option value="date_oldest_newest">Date: Oldest to Newest</option>
+                    </optgroup>
                   </select>
+                  </div>
                 </div>
               </div>
               
