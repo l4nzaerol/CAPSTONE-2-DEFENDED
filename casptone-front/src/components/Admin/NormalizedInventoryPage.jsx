@@ -1952,9 +1952,6 @@ const NormalizedInventoryPage = () => {
                             </td>
                             <td className="py-3 px-3">
                               <div className="fw-semibold text-dark">{material.material_name}</div>
-                              {material.description && (
-                                <small className="text-muted">{material.description.substring(0, 50)}...</small>
-                              )}
                             </td>
                             <td className="py-3 px-3 text-end">
                               <div className="fw-bold text-dark">{material.available_quantity}</div>
@@ -2317,7 +2314,7 @@ const NormalizedInventoryPage = () => {
                                 {new Date(output.date).toLocaleDateString()}
                               </div>
                               <small className="text-muted">
-                                {new Date(output.date).toLocaleTimeString()}
+                                {output.created_at ? new Date(output.created_at).toLocaleTimeString() : new Date().toLocaleTimeString()}
                               </small>
                             </td>
                             <td className="py-3 px-3 text-end" style={{ padding: '1rem' }}>

@@ -807,7 +807,7 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
                                   </div>
                                   <div className="col-md-1">
                                     <label className="form-label small fw-semibold text-muted">Total</label>
-                                    <div className="form-control-plaintext fw-bold text-success">
+                                    <div className="form-control-plaintext fw-bold text-success" style={{ whiteSpace: 'nowrap' }}>
                                       ₱{(totalCost || 0).toFixed(2)}
                                     </div>
                                   </div>
@@ -838,7 +838,7 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
                               <div className="col-md-4">
                                 <div className="d-flex justify-content-between align-items-center">
                                   <span className="fw-bold">Total BOM Cost:</span>
-                                  <span className="fw-bold text-success fs-5">
+                                  <span className="fw-bold text-success fs-5" style={{ whiteSpace: 'nowrap' }}>
                                     ₱{formData.bom.reduce((sum, item) => {
                                       const material = materials.find(m => m.material_id === item.material_id);
                                       return sum + (item.quantity_per_product * (parseFloat(material?.standard_cost) || 0));
@@ -861,7 +861,7 @@ const ProductFormModal = ({ show, onHide, product, onSave }) => {
                           <i className="fas fa-box me-1"></i>
                           {formData.bom.length} material{formData.bom.length !== 1 ? 's' : ''} added
                         </span>
-                        <span className="fw-semibold text-success">
+                        <span className="fw-semibold text-success" style={{ whiteSpace: 'nowrap' }}>
                           Total: ₱{formData.bom.reduce((sum, item) => {
                             const material = materials.find(m => m.material_id === item.material_id);
                             return sum + (item.quantity_per_product * (parseFloat(material?.standard_cost) || 0));
@@ -1414,7 +1414,7 @@ const ProductPage = () => {
                       
                       return (
                         <div key={product.id} className="col-lg-4 col-md-6 mb-4">
-                          <div className="product-card h-100 position-relative">
+                          <div className="product-card h-100 position-relative d-flex flex-column">
                             <div className="position-relative product-image-container">
                               <img
                                 src={getImageUrl(product)}
@@ -1429,9 +1429,9 @@ const ProductPage = () => {
                                 {product.category_name === "Made to Order" ? "Made to Order" : "Stocked"}
                               </div>
                             </div>
-                            <div className="p-3">
+                            <div className="p-3 d-flex flex-column flex-grow-1">
                               <h5 className="mb-2">{product.product_name || product.name}</h5>
-                              <p className="text-muted small mb-2">{product.description}</p>
+                              <p className="text-muted small mb-2" style={{ maxHeight: '3em', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{product.description}</p>
                               <div className="mb-2">
                                 <code className="small bg-light px-2 py-1 rounded">{product.product_code}</code>
                               </div>
@@ -1459,19 +1459,24 @@ const ProductPage = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="d-flex gap-2">
+                              <div className="d-flex gap-2 align-items-center mt-auto">
                                 {(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') && (
                                   <button
                                     className={`btn btn-sm ${product.is_available_for_order === true ? 'btn-outline-success' : 'btn-outline-danger'} action-button`}
                                     onClick={() => handleToggleAvailability(product)}
                                     title={product.is_available_for_order === true ? 'Mark as Not Available' : 'Mark as Available'}
+                                    style={{ minWidth: '38px', width: '38px', padding: '0.25rem' }}
                                   >
                                     <i className={`fas ${product.is_available_for_order === true ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
                                   </button>
                                 )}
+                                {!(product.category_name === 'Made to Order' || product.category_name === 'made_to_order') && (
+                                  <div style={{ minWidth: '38px', width: '38px' }}></div>
+                                )}
                                 <button
-                                  className="btn btn-sm btn-outline-primary action-button flex-fill"
+                                  className="btn btn-sm btn-outline-primary action-button"
                                   onClick={() => handleEditProduct(product)}
+                                  style={{ flex: '1', minWidth: '0' }}
                                 >
                                   <i className="fas fa-edit me-1"></i>
                                   Edit
@@ -1479,6 +1484,7 @@ const ProductPage = () => {
                                 <button
                                   className="btn btn-sm btn-outline-danger action-button"
                                   onClick={() => handleDeleteProduct(product.id)}
+                                  style={{ minWidth: '38px', width: '38px', padding: '0.25rem' }}
                                 >
                                   <i className="fas fa-trash"></i>
                                 </button>

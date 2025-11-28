@@ -157,6 +157,7 @@ const CustomerDashboard = ({ searchTerm = "" }) => {
         {/* Map Section */}
         <motion.section 
           className="map-section-minimal"
+          style={{ marginBottom: '2.5rem' }}
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -196,6 +197,7 @@ const CustomerDashboard = ({ searchTerm = "" }) => {
         {/* Contact Information Section */}
         <motion.section 
             className="contact-section"
+            style={{ marginTop: '2rem' }}
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}

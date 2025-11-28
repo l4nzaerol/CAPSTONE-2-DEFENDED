@@ -495,10 +495,20 @@ class NormalizedInventoryController extends Controller
 
         DB::beginTransaction();
         try {
-            // Find all Alkansya products
+            // Find all Alkansya products (case-insensitive search)
             $alkansyaProducts = Product::where('category_name', 'Stocked Products')
-                ->where('name', 'Alkansya')
+                ->where(function($query) {
+                    $query->whereRaw('LOWER(name) LIKE ?', ['%alkansya%'])
+                          ->orWhereRaw('LOWER(product_name) LIKE ?', ['%alkansya%'])
+                          ->orWhere('name', 'Alkansya')
+                          ->orWhere('product_name', 'Alkansya');
+                })
                 ->get();
+            
+            \Log::info("Found " . $alkansyaProducts->count() . " Alkansya products to update stock");
+            foreach ($alkansyaProducts as $product) {
+                \Log::info("Alkansya product found: ID={$product->id}, name={$product->name}, product_name={$product->product_name}, current_stock={$product->stock}");
+            }
 
             if ($alkansyaProducts->isEmpty()) {
                 throw new \Exception('No Alkansya products found');
@@ -619,7 +629,25 @@ class NormalizedInventoryController extends Controller
 
             // Update stock for ALL Alkansya products
             foreach ($alkansyaProducts as $alkansyaProduct) {
+                $oldStock = $alkansyaProduct->stock;
+                $newStock = $oldStock + $request->quantity_produced;
+                
+                // Use increment method (automatically saves)
                 $alkansyaProduct->increment('stock', $request->quantity_produced);
+                
+                // Refresh to get the updated value
+                $alkansyaProduct->refresh();
+                
+                \Log::info("Updated stock for product ID {$alkansyaProduct->id} ({$alkansyaProduct->name}): {$oldStock} + {$request->quantity_produced} = {$alkansyaProduct->stock}");
+                
+                // Double-check: if increment didn't work, use direct update
+                if ($alkansyaProduct->stock != $newStock) {
+                    \Log::warning("Stock mismatch detected! Expected: {$newStock}, Got: {$alkansyaProduct->stock}. Forcing update...");
+                    $alkansyaProduct->stock = $newStock;
+                    $alkansyaProduct->save();
+                    $alkansyaProduct->refresh();
+                    \Log::info("Forced stock update: {$alkansyaProduct->stock}");
+                }
             }
 
             // Create production output transaction

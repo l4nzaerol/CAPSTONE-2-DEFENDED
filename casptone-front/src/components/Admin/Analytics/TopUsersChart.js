@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 // Brown theme colors - gradient for top customers
 const COLORS = ['#C3B091', '#d0c4a5', '#ddd8b9', '#eaeccd', '#f5f0e1'];
@@ -34,7 +34,7 @@ export default function TopUsersChart({ data }) {
         <div className="card-body" style={{ padding: '1rem 1rem 0 1rem', paddingBottom: 0 }}>
           <div className="d-flex align-items-center mb-3">
             <div className="rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '48px', height: '48px', backgroundColor: '#f5f5f0', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              <i className="fas fa-users" style={{ color: '#C3B091', fontSize: '20px' }}></i>
+              <i className="fas fa-users" style={{ color: '#161513ff', fontSize: '20px' }}></i>
             </div>
             <h5 className="mb-0 fw-bold" style={{ color: '#6b4423', fontSize: '1.1rem' }}>Top Customers</h5>
           </div>
@@ -53,6 +53,7 @@ export default function TopUsersChart({ data }) {
     displayName: item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name,
     fullName: item.name
   }));
+  const highlightCustomers = topCustomers.slice(0, 3);
 
   return (
       <div className="card shadow-sm h-100 w-100" style={{ 
@@ -91,7 +92,7 @@ export default function TopUsersChart({ data }) {
               <XAxis 
                 dataKey="displayName" 
                 stroke="#6b4423" 
-                style={{ fontSize: '11px', fontWeight: '500' }}
+                style={{ fontSize: '12px', fontWeight: '600' }}
                 angle={-45}
                 textAnchor="end"
                 height={100}
@@ -101,7 +102,7 @@ export default function TopUsersChart({ data }) {
               />
               <YAxis 
                 stroke="#6b4423" 
-                style={{ fontSize: '12px', fontWeight: '500' }}
+                style={{ fontSize: '12px', fontWeight: '600' }}
                 tick={{ fill: '#6b4423' }}
                 width={45}
                 tickLine={{ stroke: '#6b4423', strokeWidth: 1 }}
@@ -119,9 +120,48 @@ export default function TopUsersChart({ data }) {
                     style={{ filter: 'drop-shadow(0 2px 4px rgba(195, 176, 145, 0.2))' }}
                   />
                 ))}
+                <LabelList 
+                  dataKey="quantity" 
+                  position="top" 
+                  style={{ fill: '#6b4423', fontWeight: '700', fontSize: '12px' }}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+        <div style={{ marginTop: '1rem', flexShrink: 0 }}>
+          <div className="d-flex flex-column gap-2">
+            {highlightCustomers.map((customer, index) => (
+              <div
+                key={`${customer.fullName}-${index}`}
+                className="d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
+                style={{
+                  backgroundColor: '#fbf8f1',
+                  border: '1px solid #ede4ce'
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="rounded-circle fw-bold text-white d-flex align-items-center justify-content-center"
+                    style={{ width: 32, height: 32, backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>
+                      {customer.fullName}
+                    </div>
+                    <small className="text-muted">
+                      {customer.quantity} total orders
+                    </small>
+                  </div>
+                </div>
+                <span className="fw-bold" style={{ color: '#6b4423', fontSize: '1rem' }}>
+                  {customer.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

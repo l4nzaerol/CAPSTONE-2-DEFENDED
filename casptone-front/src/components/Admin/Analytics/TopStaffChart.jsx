@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 // Brown theme colors - gradient for top staff
 const COLORS = ['#4A2C2A', '#5d3a37', '#704844', '#835651', '#96645e'];
@@ -31,6 +31,8 @@ const TopStaffChart = ({ data }) => {
     displayName: item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name,
     fullName: item.name
   }));
+
+  const highlightStaff = topStaff.slice(0, 3);
 
   return (
       <div className="card shadow-sm h-100 w-100" style={{ 
@@ -68,21 +70,21 @@ const TopStaffChart = ({ data }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#e8e5e0" vertical={false} opacity={0.6} />
               <XAxis 
                 dataKey="displayName" 
-                stroke="#6b4423" 
-                style={{ fontSize: '11px', fontWeight: '500' }}
+                stroke="#422017" 
+                style={{ fontSize: '12px', fontWeight: '600' }}
                 angle={-45}
                 textAnchor="end"
                 height={100}
-                tick={{ fill: '#6b4423' }}
+                tick={{ fill: '#422017' }}
                 interval={0}
-                tickLine={{ stroke: '#6b4423', strokeWidth: 1 }}
+                tickLine={{ stroke: '#422017', strokeWidth: 1 }}
               />
               <YAxis 
-                stroke="#6b4423" 
-                style={{ fontSize: '12px', fontWeight: '500' }}
-                tick={{ fill: '#6b4423' }}
+                stroke="#422017" 
+                style={{ fontSize: '12px', fontWeight: '600' }}
+                tick={{ fill: '#422017' }}
                 width={45}
-                tickLine={{ stroke: '#6b4423', strokeWidth: 1 }}
+                tickLine={{ stroke: '#422017', strokeWidth: 1 }}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -112,9 +114,50 @@ const TopStaffChart = ({ data }) => {
                     style={{ filter: 'drop-shadow(0 2px 4px rgba(74, 44, 42, 0.2))' }}
                   />
                 ))}
+                <LabelList 
+                  dataKey="completed_processes" 
+                  position="top" 
+                  style={{ fill: '#4A2C2A', fontWeight: '700', fontSize: '12px' }}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Highlight list */}
+        <div style={{ marginTop: '1rem', flexShrink: 0 }}>
+          <div className="d-flex flex-column gap-2">
+            {highlightStaff.map((staff, index) => (
+              <div
+                key={`${staff.fullName}-${index}`}
+                className="d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
+                style={{
+                  backgroundColor: '#fdf8f4',
+                  border: '1px solid #f1e6da'
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="rounded-circle fw-bold text-white d-flex align-items-center justify-content-center"
+                    style={{ width: 32, height: 32, backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>
+                      {staff.fullName}
+                    </div>
+                    <small className="text-muted">
+                      {staff.completed_processes} processes completed
+                    </small>
+                  </div>
+                </div>
+                <span className="fw-bold" style={{ color: '#4A2C2A', fontSize: '1rem' }}>
+                  {staff.completed_processes}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -330,7 +330,8 @@ const Sidebar = ({ isMinimized, toggleSidebar }) => {
                             justifyContent: isMinimized ? "center" : "flex-start",
                             cursor: "default", // Make non-clickable
                             position: "relative",
-                            paddingRight: isMinimized ? "0.5rem" : "4rem" // Add space for button
+                            paddingRight: isMinimized ? "0.5rem" : "5rem", // Increased space for button
+                            overflow: "visible" // Allow full text display
                         }}
                         onMouseEnter={(e) => {
                             if (!isMinimized) {
@@ -346,7 +347,17 @@ const Sidebar = ({ isMinimized, toggleSidebar }) => {
                         }}
                     >
                         {/* Removed Factory icon - text only */}
-                        {!isMinimized && <span>Unick Furniture</span>}
+                        {!isMinimized && (
+                            <span style={{ 
+                                whiteSpace: "nowrap", 
+                                display: "block",
+                                textAlign: "left",
+                                flex: "1",
+                                minWidth: 0
+                            }}>
+                                Unick Furniture
+                            </span>
+                        )}
                     </div>
                     
                     {/* Simple Toggle Button - Positioned to avoid overlap */}
@@ -731,7 +742,10 @@ const styles = {
     
     brandSection: {
         position: "relative",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
+        borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center"
     },
     
     simpleToggleButton: {

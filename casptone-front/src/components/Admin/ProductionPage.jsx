@@ -457,12 +457,23 @@ export default function ProductionTrackingSystem() {
     const pending = allProductions.filter((p) => p.status === "In Progress" || p.status === "Pending");
     const byStage = STAGES.reduce((acc, s) => ({ ...acc, [s]: pending.filter((p) => (p.current_stage || p.stage) === s) }), {});
 
+    // DEMO MODE: Set "Assembly" stage to full capacity for demonstration
+    // Set DEMO_MODE to true to enable, false to disable
+    const DEMO_MODE = true; // Change to false to disable demo
+    const DEMO_STAGE = "Assembly"; // Stage to demonstrate full capacity
+    
     // Ensure ALL 6 stages are always included, even if no productions exist
     const alloc = [];
     STAGES.forEach((s) => {
       const queue = byStage[s] || [];
       const cap = capacities[s] || 1;
-      const currentWorkload = queue.length;
+      let currentWorkload = queue.length;
+      
+      // DEMO: Override workload for demo stage to show full capacity
+      if (DEMO_MODE && s === DEMO_STAGE) {
+        currentWorkload = cap; // Set to full capacity
+      }
+      
       const utilization = (currentWorkload / cap) * 100;
       
       alloc.push({ 
@@ -887,20 +898,20 @@ export default function ProductionTrackingSystem() {
                   Current Production
                 </button>
                 <button 
-                  className={`btn btn-lg ${activeTab === 'ready' ? 'text-danger fw-bold' : 'text-dark'} border-0 py-3 position-relative`}
+                  className={`btn btn-lg ${activeTab === 'ready' ? 'text-warning fw-bold' : 'text-dark'} border-0 py-3 position-relative`}
                   onClick={() => setActiveTab('ready')}
                   style={{ 
-                    borderBottom: activeTab === 'ready' ? '3px solid #dc3545' : 'none',
+                    borderBottom: activeTab === 'ready' ? '3px solid #ffc107' : 'none',
                     marginBottom: activeTab === 'ready' ? '-2px' : '0',
                     transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap',
                     minWidth: 'fit-content'
                   }}
                 >
-                  <i className="fas fa-truck me-2" style={{ color: activeTab === 'ready' ? '#dc3545' : '#6c757d', fontSize: '20px' }}></i>
+                  <i className="fas fa-truck me-2" style={{ color: activeTab === 'ready' ? '#ffc107' : '#6c757d', fontSize: '20px' }}></i>
                   Ready To Deliver
                   <span 
-                    className="badge bg-danger position-absolute top-0 end-0 ms-2" 
+                    className="badge bg-warning text-dark position-absolute top-0 end-0 ms-2" 
                     style={{ 
                       fontSize: '0.7rem',
                       transform: 'translateX(10px)'
@@ -942,17 +953,17 @@ export default function ProductionTrackingSystem() {
                   </span>
                 </button>
                 <button 
-                  className={`btn btn-lg ${activeTab === 'completion' ? 'text-warning fw-bold' : 'text-dark'} border-0 py-3`}
+                  className={`btn btn-lg ${activeTab === 'completion' ? 'text-danger fw-bold' : 'text-dark'} border-0 py-3`}
                   onClick={() => setActiveTab('completion')}
                   style={{ 
-                    borderBottom: activeTab === 'completion' ? '3px solid #ffc107' : 'none',
+                    borderBottom: activeTab === 'completion' ? '3px solid #dc3545' : 'none',
                     marginBottom: activeTab === 'completion' ? '-2px' : '0',
                     transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap',
                     minWidth: 'fit-content'
                   }}
                 >
-                  <i className="fas fa-exclamation-triangle me-2" style={{ color: activeTab === 'completion' ? '#ffc107' : '#6c757d', fontSize: '20px' }}></i>
+                  <i className="fas fa-exclamation-triangle me-2" style={{ color: activeTab === 'completion' ? '#dc3545' : '#6c757d', fontSize: '20px' }}></i>
                   Process Completion
                 </button>
                 <button 
@@ -1972,13 +1983,13 @@ export default function ProductionTrackingSystem() {
                         <tr key={stageName}>
                           <td><strong>{stageName}</strong></td>
                           <td>
-                            <span className="badge bg-primary">{totalCompleted}</span>
+                            <span className="text-primary fw-bold">{totalCompleted}</span>
                           </td>
                           <td>
-                            <span className="badge bg-success">{onTime}</span>
+                            <span className="text-success fw-bold">{onTime}</span>
                           </td>
                           <td>
-                            <span className="badge bg-danger">{delayed}</span>
+                            <span className="text-danger fw-bold">{delayed}</span>
                           </td>
                           <td>
                             <div className="d-flex align-items-center gap-2">
@@ -2051,9 +2062,9 @@ export default function ProductionTrackingSystem() {
                             </div>
                           </div>
                           <div className="small">
-                            <span className={`badge bg-${statusColor}`}>{workload}</span>
-                            <span className="badge bg-light text-dark ms-1">/{capacity}</span>
-                            <span className="badge bg-secondary ms-1">{Math.round(utilization)}%</span>
+                            <span className={`text-${statusColor === 'danger' ? 'danger' : statusColor === 'warning' ? 'warning' : 'success'} fw-bold`}>{workload}</span>
+                            <span className="text-muted ms-1">/{capacity}</span>
+                            <span className="text-secondary ms-1">{Math.round(utilization)}%</span>
                           </div>
                         </div>
                       );
@@ -2132,15 +2143,37 @@ export default function ProductionTrackingSystem() {
                     
                     return allStages;
                   })().map((s) => {
-                    const utilization = s.utilization || ((s.queued / s.capacity) * 100);
+                    // DEMO MODE: Set "Assembly" stage to full capacity for demonstration
+                    const DEMO_MODE = true; // Change to false to disable demo
+                    const DEMO_STAGE = "Assembly"; // Stage to demonstrate full capacity
+                    
+                    // Override queued for demo stage
+                    let queued = s.queued;
+                    if (DEMO_MODE && s.stage === DEMO_STAGE) {
+                      queued = s.capacity; // Set to full capacity
+                    }
+                    
+                    const utilization = DEMO_MODE && s.stage === DEMO_STAGE 
+                      ? ((queued / s.capacity) * 100)
+                      : (s.utilization || ((s.queued / s.capacity) * 100));
                     const isOverloaded = utilization > 100;
                     const isBusy = utilization > 70 && utilization <= 100;
                     const isOptimal = utilization >= 50 && utilization <= 70;
                     const isUnderutilized = utilization < 50;
                     
+                    // Update s.queued for demo
+                    if (DEMO_MODE && s.stage === DEMO_STAGE) {
+                      s.queued = queued;
+                    }
+                    
+                    const isCapacityFull = s.queued >= s.capacity;
+                    
                     // Determine border and header colors based on status
+                    // If capacity is full, use red border regardless of other status
                     const getStatusColors = () => {
-                      if (isOverloaded) {
+                      if (isCapacityFull) {
+                        return { border: '#dc3545', headerBg: '#fff5f5', text: '#721c24', badge: '#dc3545' };
+                      } else if (isOverloaded) {
                         return { border: '#dc3545', headerBg: '#fff5f5', text: '#721c24', badge: '#dc3545' };
                       } else if (isBusy) {
                         return { border: '#ffc107', headerBg: '#fffbf0', text: '#856404', badge: '#ffc107' };
@@ -2151,71 +2184,97 @@ export default function ProductionTrackingSystem() {
                       }
                     };
                     const colors = getStatusColors();
+                    const tooltipText = isCapacityFull 
+                      ? `Capacity Full: ${s.queued}/${s.capacity} items queued. Cannot accept more work.`
+                      : `Capacity Available: ${s.queued}/${s.capacity} items queued. Can accept more work.`;
+                    const statusInfo = isOverloaded 
+                      ? "Status: Overloaded - Action Required"
+                      : isBusy 
+                      ? "Status: High Activity - Monitor closely"
+                      : isOptimal
+                      ? "Status: Optimal - Resources well-balanced"
+                      : "Status: Available - Can accept more work";
                     
                     return (
                       <div key={s.stage} className="col-lg-4 col-md-6 mb-3">
                         <div className="card h-100" style={{ border: `1px solid ${colors.border}`, borderTop: `3px solid ${colors.border}` }}>
                           <div className="card-header" style={{ backgroundColor: colors.headerBg, borderBottom: `1px solid ${colors.border}` }}>
-                            <h6 className="mb-0" style={{ color: colors.text, fontWeight: '600' }}>
+                            <h6 className="mb-0 d-flex justify-content-between align-items-center" style={{ color: colors.text, fontWeight: '600' }}>
                               <strong>{s.stage}</strong>
-                              {isOverloaded && (
-                                <i className="fas fa-exclamation-triangle ms-2" style={{ color: colors.badge }} title="Overloaded - Action Required"></i>
-                              )}
+                              <span 
+                                className="position-relative"
+                                style={{ cursor: 'pointer' }}
+                                onMouseEnter={(e) => {
+                                  const tooltip = e.currentTarget.querySelector('.stage-tooltip');
+                                  if (tooltip) tooltip.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                  const tooltip = e.currentTarget.querySelector('.stage-tooltip');
+                                  if (tooltip) tooltip.style.opacity = '0';
+                                }}
+                              >
+                                {isCapacityFull ? (
+                                  <i className="fas fa-exclamation-circle" style={{ color: '#dc3545', fontSize: '1.1rem' }}></i>
+                                ) : (
+                                  <i className="fas fa-check-circle" style={{ color: '#28a745', fontSize: '1.1rem' }}></i>
+                                )}
+                                <div 
+                                  className="stage-tooltip position-absolute"
+                                  style={{
+                                    bottom: '100%',
+                                    right: 0,
+                                    marginBottom: '5px',
+                                    padding: '8px 12px',
+                                    backgroundColor: '#212529',
+                                    color: '#fff',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    whiteSpace: 'nowrap',
+                                    opacity: 0,
+                                    pointerEvents: 'none',
+                                    transition: 'opacity 0.2s',
+                                    zIndex: 1000,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                  }}
+                                >
+                                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>{statusInfo}</div>
+                                  <div style={{ marginBottom: '4px' }}>{tooltipText}</div>
+                                  <div>Utilization: {Math.round(utilization)}%</div>
+                                </div>
+                              </span>
                             </h6>
                           </div>
                           <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Utilization:</span>
-                              <span className="badge" style={{ backgroundColor: colors.badge, color: '#fff', fontSize: '0.75rem', padding: '0.35em 0.65em' }}>
-                                {Math.round(utilization)}%
-                              </span>
+                            <div className="d-flex align-items-center mb-3">
+                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Queued: <strong style={{ color: '#212529' }}>{s.queued}</strong></span>
                             </div>
-                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef' }}>
+                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef', position: 'relative' }}>
                               <div 
                                 className="progress-bar"
                                 role="progressbar" 
                                 style={{ 
                                   width: `${Math.min(utilization, 100)}%`,
-                                  backgroundColor: colors.badge,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: '#fff',
-                                  fontWeight: '500',
-                                  fontSize: '0.75rem'
+                                  backgroundColor: isCapacityFull ? '#dc3545' : colors.badge
                                 }}
                               >
-                                {s.queued}/{s.capacity}
+                              </div>
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                color: Math.min(utilization, 100) > 50 ? '#fff' : '#212529',
+                                fontWeight: '500',
+                                fontSize: '0.75rem',
+                                zIndex: 1
+                              }}>
+                                {Math.round(utilization)}%
                               </div>
                             </div>
                             <div className="small mb-3" style={{ color: '#6c757d' }}>
-                              Queued: <strong style={{ color: '#212529' }}>{s.queued}</strong> / Capacity: <strong style={{ color: '#212529' }}>{s.capacity}</strong>
+                              Capacity: <strong style={{ color: '#212529' }}>{s.capacity}</strong>
                             </div>
-                            {isOverloaded && (
-                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#fff5f5', border: '1px solid #fecaca', color: '#721c24' }}>
-                                <i className="fas fa-exclamation-circle me-1"></i>
-                                <strong>Action Required:</strong> Consider reallocating resources
                               </div>
-                            )}
-                            {isBusy && (
-                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#fffbf0', border: '1px solid #ffeaa7', color: '#856404' }}>
-                                <i className="fas fa-clock me-1"></i>
-                                <strong>High Activity:</strong> Monitor workload closely
-                              </div>
-                            )}
-                            {isOptimal && (
-                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0fff4', border: '1px solid #c3e6cb', color: '#155724' }}>
-                                <i className="fas fa-check-circle me-1"></i>
-                                <strong>Optimal:</strong> Resources well-balanced
-                              </div>
-                            )}
-                            {isUnderutilized && (
-                              <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0f9fa', border: '1px solid #bee5eb', color: '#0c5460' }}>
-                                <i className="fas fa-info-circle me-1"></i>
-                                <strong>Capacity Available:</strong> Can accept more work
-                              </div>
-                            )}
-                          </div>
                         </div>
                       </div>
                     );
@@ -2234,46 +2293,91 @@ export default function ProductionTrackingSystem() {
                     const cap = capacities[stage] || 1;
                     const utilization = 0;
                     const isUnderutilized = true;
+                    const queued = 0;
+                    const isCapacityFull = queued >= cap;
+                    const tooltipText = isCapacityFull 
+                      ? `Capacity Full: ${queued}/${cap} items queued. Cannot accept more work.`
+                      : `Capacity Available: ${queued}/${cap} items queued. Can accept more work.`;
+                    const statusInfo = "Status: Available - Can accept more work";
                     
                     return (
                       <div key={stage} className="col-lg-4 col-md-6 mb-3">
                         <div className="card h-100" style={{ border: '1px solid #17a2b8', borderTop: '3px solid #17a2b8' }}>
                           <div className="card-header" style={{ backgroundColor: '#f0f9fa', borderBottom: '1px solid #17a2b8' }}>
-                            <h6 className="mb-0" style={{ color: '#0c5460', fontWeight: '600' }}>
+                            <h6 className="mb-0 d-flex justify-content-between align-items-center" style={{ color: '#0c5460', fontWeight: '600' }}>
                               <strong>{stage}</strong>
+                              <span 
+                                className="position-relative"
+                                style={{ cursor: 'pointer' }}
+                                onMouseEnter={(e) => {
+                                  const tooltip = e.currentTarget.querySelector('.stage-tooltip');
+                                  if (tooltip) tooltip.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                  const tooltip = e.currentTarget.querySelector('.stage-tooltip');
+                                  if (tooltip) tooltip.style.opacity = '0';
+                                }}
+                              >
+                                {isCapacityFull ? (
+                                  <i className="fas fa-exclamation-circle" style={{ color: '#dc3545', fontSize: '1.1rem' }}></i>
+                                ) : (
+                                  <i className="fas fa-check-circle" style={{ color: '#28a745', fontSize: '1.1rem' }}></i>
+                                )}
+                                <div 
+                                  className="stage-tooltip position-absolute"
+                                  style={{
+                                    bottom: '100%',
+                                    right: 0,
+                                    marginBottom: '5px',
+                                    padding: '8px 12px',
+                                    backgroundColor: '#212529',
+                                    color: '#fff',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    whiteSpace: 'nowrap',
+                                    opacity: 0,
+                                    pointerEvents: 'none',
+                                    transition: 'opacity 0.2s',
+                                    zIndex: 1000,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                  }}
+                                >
+                                  <div style={{ fontWeight: '600', marginBottom: '4px' }}>{statusInfo}</div>
+                                  <div style={{ marginBottom: '4px' }}>{tooltipText}</div>
+                                  <div>Utilization: {Math.round(utilization)}%</div>
+                                </div>
+                              </span>
                             </h6>
                           </div>
                           <div className="card-body">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Utilization:</span>
-                              <span className="badge" style={{ backgroundColor: '#17a2b8', color: '#fff', fontSize: '0.75rem', padding: '0.35em 0.65em' }}>
-                                0%
-                              </span>
+                            <div className="d-flex align-items-center mb-3">
+                              <span className="small" style={{ color: '#6c757d', fontWeight: '500' }}>Queued: <strong style={{ color: '#212529' }}>0</strong></span>
                             </div>
-                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef' }}>
+                            <div className="progress mb-3" style={{ height: '24px', borderRadius: '4px', backgroundColor: '#e9ecef', position: 'relative' }}>
                               <div 
                                 className="progress-bar"
                                 role="progressbar" 
                                 style={{ 
                                   width: '0%',
-                                  backgroundColor: '#17a2b8',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: '#fff',
-                                  fontWeight: '500',
-                                  fontSize: '0.75rem'
+                                  backgroundColor: isCapacityFull ? '#dc3545' : '#17a2b8'
                                 }}
                               >
-                                0/{cap}
+                              </div>
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                color: '#212529',
+                                fontWeight: '500',
+                                fontSize: '0.75rem',
+                                zIndex: 1
+                              }}>
+                                0%
                               </div>
                             </div>
                             <div className="small mb-3" style={{ color: '#6c757d' }}>
-                              Queued: <strong style={{ color: '#212529' }}>0</strong> / Capacity: <strong style={{ color: '#212529' }}>{cap}</strong>
-                            </div>
-                            <div className="alert mt-2 mb-0 py-2" style={{ backgroundColor: '#f0f9fa', border: '1px solid #bee5eb', color: '#0c5460' }}>
-                              <i className="fas fa-info-circle me-1"></i>
-                              <strong>Capacity Available:</strong> Can accept more work
+                              Capacity: <strong style={{ color: '#212529' }}>{cap}</strong>
                             </div>
                           </div>
                         </div>
@@ -2528,4 +2632,5 @@ export default function ProductionTrackingSystem() {
     </AppLayout>
   );
 }
+
 

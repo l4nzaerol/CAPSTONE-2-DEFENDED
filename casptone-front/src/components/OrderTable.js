@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Spinner, Badge, Collapse, Card, ProgressBar, Button } from "react-bootstrap";
-import { FaBox, FaClock, FaTruck, FaCheckCircle, FaHammer, FaTools, FaPaintBrush, FaCut, FaTimes } from "react-icons/fa";
+import { FaBox, FaClock, FaTruck, FaCheckCircle, FaHammer, FaTools, FaPaintBrush, FaCut, FaTimes, FaCreditCard } from "react-icons/fa";
 import { toast } from "sonner";
 import "./OrderTable.css";
 
@@ -273,13 +273,6 @@ const OrderTable = () => {
               <Collapse in={expandedOrder === order.id}>
                 <div>
                   <Card.Body>
-                    {/* === STATUS TRACKER === */}
-                    <div className="mb-3">
-                      <strong>Status Tracker:</strong>
-                      <div className="d-flex align-items-center mt-2 status-tracker" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                        {renderStatusSteps(order.status)}
-                      </div>
-                    </div>
 
                     {/* === RECEIPT CONFIRMATION === */}
                     {order.status === 'ready_for_delivery' && (order.receipt_confirmed === null || order.receipt_confirmed === undefined) && (
@@ -425,32 +418,69 @@ const OrderTable = () => {
                       </span>
                     </div>
                     
-                    {/* === BASIC INFO === */}
-                    <div className="mt-3 text-muted small">
-                      <p>
-                        <FaClock className="me-2" />
-                        Placed on: {new Date(order.created_at).toLocaleString()}
-                      </p>
-                      <p>
-                        Payment: <strong>{(order.payment_method || 'cod').toUpperCase()}</strong>
+                    {/* === STATUS TRACKER - Right Side === */}
+                    <div className="d-flex justify-content-between py-2 border-top mt-2">
+                      <span className="fw-bold">Status:</span>
+                      <Badge bg={getCurrentStatusInfo(order.status).color} className="d-flex align-items-center gap-1">
+                        {getCurrentStatusInfo(order.status).icon}
+                        {getCurrentStatusInfo(order.status).label}
+                      </Badge>
+                    </div>
+                    
+                    {/* === BASIC INFO - Right Side === */}
+                    <div className="d-flex justify-content-between py-2 border-top">
+                      <span className="fw-bold">
+                        <FaClock className="me-1" />
+                        Placed on:
+                      </span>
+                      <span className="text-muted">
+                        {new Date(order.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between py-2">
+                      <span className="fw-bold">
+                        <FaCreditCard className="me-1" />
+                        Payment:
+                      </span>
+                      <span className="text-muted">
+                        {(order.payment_method || 'cod').toUpperCase()}
                         {order.transaction_ref && (<span className="ms-2">Ref: {order.transaction_ref}</span>)}
-                      </p>
-                      <p>
-                        <FaTruck className="me-2" />
-                        Estimated Delivery:{" "}
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between py-2">
+                      <span className="fw-bold">
+                        <FaTruck className="me-1" />
+                        Estimated Delivery:
+                      </span>
+                      <span className="text-muted">
                         {order.delivery_date ||
                           new Date(
                             new Date(order.created_at).getTime() +
                               14 * 24 * 60 * 60 * 1000
                           ).toLocaleDateString()}
-                      </p>
+                      </span>
                     </div>
 
                     {/* === ACCEPTANCE STATUS === */}
                     {order.acceptance_status && (
                       <div className="mt-3">
                         <h6 className="fw-bold">Order Acceptance Status</h6>
-                        <div className={`alert ${order.acceptance_status === 'accepted' ? 'alert-success' : order.acceptance_status === 'rejected' ? 'alert-danger' : 'alert-info'}`}>
+                        <div className={`alert ${
+                          order.acceptance_status === 'pending' ? 'alert-warning' : 
+                          order.acceptance_status === 'accepted' ? (
+                            order.status === 'processing' || order.status === 'in_production' ? 'alert-info' :
+                            order.status === 'ready_for_delivery' ? 'alert-primary' :
+                            order.status === 'delivered' || order.status === 'completed' ? 'alert-success' :
+                            'alert-success'
+                          ) : 
+                          order.acceptance_status === 'rejected' ? 'alert-danger' : 
+                          'alert-info'
+                        }`}
+                        style={order.acceptance_status === 'pending' ? {
+                          backgroundColor: '#ffc107',
+                          borderColor: '#ffc107',
+                          color: '#000'
+                        } : {}}>
                           {order.acceptance_status === 'pending' && (
                             <>
                               <FaClock className="me-2" />
@@ -459,13 +489,33 @@ const OrderTable = () => {
                           )}
                           {order.acceptance_status === 'accepted' && (
                             <>
+                              {order.status === 'processing' || order.status === 'in_production' ? (
+                                <>
+                                  <FaTools className="me-2" />
+                                  Your order has been <strong>accepted</strong> and is now <strong>in production</strong>!
+                                </>
+                              ) : order.status === 'ready_for_delivery' ? (
+                                <>
+                                  <FaTruck className="me-2" />
+                                  Your order has been <strong>accepted</strong> and is <strong>ready for delivery</strong>!
+                                </>
+                              ) : order.status === 'delivered' || order.status === 'completed' ? (
+                                <>
+                                  <FaCheckCircle className="me-2" />
+                                  Your order has been <strong>accepted</strong> and has been <strong>delivered</strong>!
+                                </>
+                              ) : (
+                            <>
                               <FaCheckCircle className="me-2" />
                               Your order has been <strong>accepted</strong> and is now in production!
+                                </>
+                              )}
                             </>
                           )}
                           {order.acceptance_status === 'rejected' && (
                             <>
-                              ❌ Your order has been <strong>rejected</strong>.
+                              <FaTimes className="me-2" />
+                              Your order has been <strong>rejected</strong>.
                               {order.rejection_reason && <div className="mt-2">Reason: {order.rejection_reason}</div>}
                             </>
                           )}
@@ -620,54 +670,43 @@ const getStatusVariant = (status) => {
     case "pending":
       return "warning";
     case "processing":
+    case "in_production":
       return "info";
+    case "ready_for_delivery":
+      return "primary";
+    case "delivered":
     case "completed":
       return "success";
     case "canceled":
+    case "cancelled":
       return "danger";
     default:
       return "secondary";
   }
 };
 
-const renderStatusSteps = (status) => {
-  const steps = ["Pending", "Processing", "Ready for Delivery", "Delivered"];
-  const statusIndex = steps.findIndex(
-    (s) => s.toLowerCase() === status.toLowerCase().replace('_', ' ')
-  );
-
-  // Use shorter labels on mobile
-  const getStepLabel = (step) => {
-    if (window.innerWidth <= 768) {
-      return step === "Ready for Delivery" ? "Ready" : 
-             step === "Delivered" ? "Delivered" : 
-             step === "Processing" ? "Processing" : 
-             step;
-    }
-    return step;
-  };
-
-  return (
-    <div className="d-flex flex-wrap gap-2 align-items-center">
-      {steps.map((step, idx) => (
-        <div key={step} className="d-flex align-items-center flex-wrap">
-          {idx < statusIndex ? (
-            <FaCheckCircle className="text-success me-1" style={{ fontSize: '1rem' }} />
-          ) : idx === statusIndex ? (
-            <FaClock className="text-warning me-1" style={{ fontSize: '1rem' }} />
-          ) : (
-            <FaBox className="text-muted me-1" style={{ fontSize: '1rem' }} />
-          )}
-          <small
-            className={`${idx <= statusIndex ? "fw-bold text-dark" : "text-muted"} text-nowrap`}
-            style={{ fontSize: '0.75rem' }}
-          >
-            {getStepLabel(step)}
-          </small>
-        </div>
-      ))}
-    </div>
-  );
+// Get status label and color for current status display
+const getCurrentStatusInfo = (status) => {
+  const normalizedStatus = status?.toLowerCase() || 'pending';
+  
+  switch (normalizedStatus) {
+    case "pending":
+      return { label: "Pending", color: "warning", icon: <FaClock /> };
+    case "processing":
+    case "in_production":
+      return { label: "Processing", color: "info", icon: <FaTools /> };
+    case "ready_for_delivery":
+      return { label: "Ready for Delivery", color: "primary", icon: <FaTruck /> };
+    case "delivered":
+      return { label: "Delivered", color: "success", icon: <FaCheckCircle /> };
+    case "completed":
+      return { label: "Completed", color: "success", icon: <FaCheckCircle /> };
+    case "canceled":
+    case "cancelled":
+      return { label: "Cancelled", color: "danger", icon: <FaTimes /> };
+    default:
+      return { label: status || "Unknown", color: "secondary", icon: <FaBox /> };
+  }
 };
 
 export default OrderTable;

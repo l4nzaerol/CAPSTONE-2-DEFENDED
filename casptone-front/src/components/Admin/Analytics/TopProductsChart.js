@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, LabelList } from "recharts";
 
 // Brown theme colors - gradient for top products
 const COLORS = ['#7F5112', '#9d6a1a', '#b87d22', '#d4902a', '#e6a332'];
@@ -30,6 +30,8 @@ export default function TopProductsChart({ data }) {
     displayName: item.name.length > 25 ? item.name.substring(0, 25) + '...' : item.name,
     fullName: item.name
   }));
+
+  const highlightProducts = topProducts.slice(0, 3);
 
   return (
       <div className="card shadow-sm h-100 w-100" style={{ 
@@ -67,21 +69,21 @@ export default function TopProductsChart({ data }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#e8e5e0" vertical={false} opacity={0.6} />
               <XAxis 
                 dataKey="displayName" 
-                stroke="#6b4423" 
-                style={{ fontSize: '11px', fontWeight: '500' }}
+                stroke="#5a3710" 
+                style={{ fontSize: '12px', fontWeight: '600' }}
                 angle={-45}
                 textAnchor="end"
                 height={100}
-                tick={{ fill: '#6b4423' }}
+                tick={{ fill: '#5a3710' }}
                 interval={0}
-                tickLine={{ stroke: '#6b4423', strokeWidth: 1 }}
+                tickLine={{ stroke: '#5a3710', strokeWidth: 1 }}
               />
               <YAxis 
-                stroke="#6b4423" 
-                style={{ fontSize: '12px', fontWeight: '500' }}
-                tick={{ fill: '#6b4423' }}
+                stroke="#5a3710" 
+                style={{ fontSize: '12px', fontWeight: '600' }}
+                tick={{ fill: '#5a3710' }}
                 width={45}
-                tickLine={{ stroke: '#6b4423', strokeWidth: 1 }}
+                tickLine={{ stroke: '#5a3710', strokeWidth: 1 }}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -116,9 +118,49 @@ export default function TopProductsChart({ data }) {
                     style={{ filter: 'drop-shadow(0 2px 4px rgba(127, 81, 18, 0.2))' }}
                   />
                 ))}
+                <LabelList 
+                  dataKey="quantity" 
+                  position="top" 
+                  style={{ fill: '#7F5112', fontWeight: '700', fontSize: '12px' }}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+
+        <div style={{ marginTop: '1rem', flexShrink: 0 }}>
+          <div className="d-flex flex-column gap-2">
+            {highlightProducts.map((product, index) => (
+              <div
+                key={`${product.fullName}-${index}`}
+                className="d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
+                style={{
+                  backgroundColor: '#fff8f0',
+                  border: '1px solid #f3dfc6'
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="rounded-circle fw-bold text-white d-flex align-items-center justify-content-center"
+                    style={{ width: 32, height: 32, backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>
+                      {product.fullName}
+                    </div>
+                    <small className="text-muted">
+                      {product.quantity} units ordered
+                    </small>
+                  </div>
+                </div>
+                <span className="fw-bold" style={{ color: '#7F5112', fontSize: '1rem' }}>
+                  {product.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
